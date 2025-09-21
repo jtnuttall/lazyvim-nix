@@ -352,11 +352,7 @@ in {
     programs.neovim = {
       enable = true;
       package = pkgs.neovim-unwrapped;
-      
-      viAlias = true;
-      vimAlias = true;
-      vimdiffAlias = true;
-      
+            
       withNodeJs = true;
       withPython3 = true;
       withRuby = false;
@@ -414,10 +410,5 @@ in {
         '';
       }
     ) cfg.plugins);
-    
-    # Set up environment
-    home.sessionVariables = {
-      EDITOR = "nvim";
-    };
   };
 }
