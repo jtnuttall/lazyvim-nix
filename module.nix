@@ -228,16 +228,15 @@ in {
     
     treesitterParsers = mkOption {
       type = types.listOf types.package;
-      default = with pkgs.tree-sitter-grammars; [ 
-        tree-sitter-lua 
-        tree-sitter-vim 
-        tree-sitter-vimdoc 
-        tree-sitter-query 
-        tree-sitter-markdown 
-        tree-sitter-markdown-inline 
-      ];
+      default = [];
       example = literalExpression ''
         with pkgs.tree-sitter-grammars; [
+          # Minimal for LazyVim itself
+          tree-sitter-lua
+          tree-sitter-vim
+          tree-sitter-query
+          
+          # Common languages
           tree-sitter-rust
           tree-sitter-go
           tree-sitter-typescript
@@ -247,7 +246,13 @@ in {
       '';
       description = ''
         List of Treesitter parser packages to install.
+        
+        Empty by default - add parsers based on languages you use.
         These should be packages from pkgs.tree-sitter-grammars.
+        
+        NOTE: Parser compatibility issues may occur if there's a version mismatch
+        between nvim-treesitter and the parsers. If you see "Invalid node type" 
+        errors, try using a matching nixpkgs channel or pinning versions.
       '';
     };
     
@@ -375,8 +380,10 @@ in {
     xdg.configFile = {
       "nvim/init.lua".text = lazyConfig;
       
-      # Link treesitter parsers - exact same approach as your old config
-      "nvim/parser".source = "${treesitterGrammars}/parser";
+      # Link treesitter parsers only if parsers are configured
+      "nvim/parser" = mkIf (cfg.treesitterParsers != []) {
+        source = "${treesitterGrammars}/parser";
+      };
       
       # LazyVim config files
       "nvim/lua/config/autocmds.lua" = mkIf (cfg.config.autocmds != "") {
