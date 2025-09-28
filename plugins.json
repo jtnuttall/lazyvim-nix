@@ -1,323 +1,421 @@
 {
   "version": "v15.5.0",
   "commit": "060e6dfaf7d4157b1a144df7d83179640dc52400",
-  "generated": "2025-09-27 18:58:30",
+  "generated": "2025-09-28 10:38:48",
   "extraction_report": {
     "total_plugins": 44,
     "mapped_plugins": 44,
     "unmapped_plugins": 0,
     "multi_module_plugins": 4,
-    "mapping_suggestions": {
-    }
+    "mapping_suggestions": {}
   },
   "plugins": [
     {
       "name": "LazyVim/LazyVim",
+      "owner": "LazyVim",
+      "repo": "LazyVim",
       "loadOrder": 1,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
       "lazy": false,
-      "priority": 10000
+      "priority": 10000,
+      "version_info": {
+        "commit": "060e6dfaf7d4157b1a144df7d83179640dc52400",
+        "tag": "v15.5.0",
+        "sha256": "0jq7pll46j56h9rc8686zpgpnh2mzgcz4p9nn8z36na63kq857jx",
+        "fetched_at": "2025-09-28T17:40:03Z"
+      }
     },
     {
       "name": "MagicDuck/grug-far.nvim",
+      "owner": "MagicDuck",
+      "repo": "grug-far.nvim",
       "loadOrder": 2,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
       "cmd": [
         "GrugFar",
         "GrugFarWithin"
-      ]
+      ],
+      "version_info": {
+        "commit": "50d9ee2b5a19634670441948e7e4afaa042f1059",
+        "tag": null,
+        "sha256": "0pbwlp5i4aq1ffqbcnjf62ygb73b1svyh5ly4vyq6x7jnc0g416g",
+        "fetched_at": "2025-09-28T17:40:05Z"
+      }
     },
     {
       "name": "MunifTanjim/nui.nvim",
+      "owner": "MunifTanjim",
+      "repo": "nui.nvim",
       "loadOrder": 3,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "lazy": true
+      "lazy": true,
+      "version_info": {
+        "commit": "f535005e6ad1016383f24e39559833759453564e",
+        "tag": "0.4.0",
+        "sha256": "1px6zqkj1plsydav6zpw8in92bqz4byv4mh4cd570wksynfkv5s8",
+        "fetched_at": "2025-09-28T17:40:07Z"
+      }
     },
     {
       "name": "RRethy/vim-illuminate",
+      "owner": "RRethy",
+      "repo": "vim-illuminate",
       "loadOrder": 4,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {
+        "commit": "0d1e93684da00ab7c057410fecfc24f434698898",
+        "tag": null,
+        "sha256": "0456q474765p0r0q7frn1n9drl05d16alv7kn9qnw1235d20k81a",
+        "fetched_at": "2025-09-28T17:40:08Z"
+      }
     },
     {
       "name": "akinsho/bufferline.nvim",
+      "owner": "akinsho",
+      "repo": "bufferline.nvim",
       "loadOrder": 5,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {
+        "commit": "655133c3b4c3e5e05ec549b9f8cc2894ac6f51b3",
+        "tag": "v4.9.1",
+        "sha256": "0m5363rpbjgvsnbhp9yrivbqj17lmrb5m57lpnq7dgxsmw3hrvk9",
+        "fetched_at": "2025-09-28T17:40:10Z"
+      }
     },
     {
       "name": "catppuccin/nvim",
+      "owner": "catppuccin",
+      "repo": "nvim",
       "loadOrder": 6,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "lazy": true
+      "lazy": true,
+      "version_info": {}
     },
     {
       "name": "dstein64/vim-startuptime",
+      "owner": "dstein64",
+      "repo": "vim-startuptime",
       "loadOrder": 7,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "echasnovski/mini.icons",
+      "owner": "echasnovski",
+      "repo": "mini.icons",
       "loadOrder": 8,
-      "dependencies": {
-      },
+      "dependencies": {},
       "multiModule": {
         "basePackage": "mini-nvim",
         "module": "mini.icons",
         "repository": "echasnovski/mini.nvim"
       },
-      "source_file": "extra"
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "folke/flash.nvim",
+      "owner": "folke",
+      "repo": "flash.nvim",
       "loadOrder": 9,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "folke/lazy.nvim",
+      "owner": "folke",
+      "repo": "lazy.nvim",
       "loadOrder": 10,
-      "dependencies": {
-      },
-      "source_file": "table_spec"
+      "dependencies": {},
+      "source_file": "table_spec",
+      "version_info": {
+        "commit": "*"
+      }
     },
     {
       "name": "folke/lazydev.nvim",
+      "owner": "folke",
+      "repo": "lazydev.nvim",
       "loadOrder": 11,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
       "cmd": "LazyDev",
-      "ft": "lua"
+      "ft": "lua",
+      "version_info": {}
     },
     {
       "name": "folke/neoconf.nvim",
+      "owner": "folke",
+      "repo": "neoconf.nvim",
       "loadOrder": 12,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "folke/neodev.nvim",
+      "owner": "folke",
+      "repo": "neodev.nvim",
       "loadOrder": 13,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "folke/noice.nvim",
+      "owner": "folke",
+      "repo": "noice.nvim",
       "loadOrder": 14,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "folke/persistence.nvim",
+      "owner": "folke",
+      "repo": "persistence.nvim",
       "loadOrder": 15,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "BufReadPre"
+      "event": "BufReadPre",
+      "version_info": {}
     },
     {
       "name": "folke/snacks.nvim",
+      "owner": "folke",
+      "repo": "snacks.nvim",
       "loadOrder": 16,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
       "lazy": false,
-      "priority": 1000
+      "priority": 1000,
+      "version_info": {}
     },
     {
       "name": "folke/todo-comments.nvim",
+      "owner": "folke",
+      "repo": "todo-comments.nvim",
       "loadOrder": 17,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
       "event": "LazyFile",
       "cmd": [
         "TodoTrouble",
         "TodoTelescope"
-      ]
+      ],
+      "version_info": {}
     },
     {
       "name": "folke/tokyonight.nvim",
+      "owner": "folke",
+      "repo": "tokyonight.nvim",
       "loadOrder": 18,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "lazy": true
+      "lazy": true,
+      "version_info": {}
     },
     {
       "name": "folke/trouble.nvim",
+      "owner": "folke",
+      "repo": "trouble.nvim",
       "loadOrder": 19,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
       "cmd": [
         "Trouble"
-      ]
+      ],
+      "version_info": {}
     },
     {
       "name": "folke/ts-comments.nvim",
+      "owner": "folke",
+      "repo": "ts-comments.nvim",
       "loadOrder": 20,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "folke/which-key.nvim",
+      "owner": "folke",
+      "repo": "which-key.nvim",
       "loadOrder": 21,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "ibhagwan/fzf-lua",
+      "owner": "ibhagwan",
+      "repo": "fzf-lua",
       "loadOrder": 22,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "kdheepak/lazygit.nvim",
+      "owner": "kdheepak",
+      "repo": "lazygit.nvim",
       "loadOrder": 23,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "lewis6991/gitsigns.nvim",
+      "owner": "lewis6991",
+      "repo": "gitsigns.nvim",
       "loadOrder": 24,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "LazyFile"
+      "event": "LazyFile",
+      "version_info": {}
     },
     {
       "name": "mason-org/mason-lspconfig.nvim",
+      "owner": "mason-org",
+      "repo": "mason-lspconfig.nvim",
       "loadOrder": 25,
-      "dependencies": {
-      },
-      "source_file": "table_spec"
+      "dependencies": {},
+      "source_file": "table_spec",
+      "version_info": {}
     },
     {
       "name": "mason-org/mason.nvim",
+      "owner": "mason-org",
+      "repo": "mason.nvim",
       "loadOrder": 26,
-      "dependencies": {
-      },
-      "source_file": "string_spec"
+      "dependencies": {},
+      "source_file": "string_spec",
+      "version_info": {}
     },
     {
       "name": "mfussenegger/nvim-lint",
+      "owner": "mfussenegger",
+      "repo": "nvim-lint",
       "loadOrder": 27,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "LazyFile"
+      "event": "LazyFile",
+      "version_info": {}
     },
     {
       "name": "neovim/nvim-lspconfig",
+      "owner": "neovim",
+      "repo": "nvim-lspconfig",
       "loadOrder": 28,
       "dependencies": [
         "mason-org/mason.nvim",
         "mason-org/mason-lspconfig.nvim"
       ],
       "source_file": "table_spec",
-      "event": "LazyFile"
+      "event": "LazyFile",
+      "version_info": {}
     },
     {
       "name": "nvim-lua/plenary.nvim",
+      "owner": "nvim-lua",
+      "repo": "plenary.nvim",
       "loadOrder": 29,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "lazy": true
+      "lazy": true,
+      "version_info": {}
     },
     {
       "name": "nvim-lualine/lualine.nvim",
+      "owner": "nvim-lualine",
+      "repo": "lualine.nvim",
       "loadOrder": 30,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "nvim-mini/mini.ai",
+      "owner": "nvim-mini",
+      "repo": "mini.ai",
       "loadOrder": 31,
-      "dependencies": {
-      },
+      "dependencies": {},
       "multiModule": {
         "basePackage": "mini-nvim",
         "module": "mini.ai",
         "repository": "nvim-mini/mini.nvim"
       },
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "nvim-mini/mini.icons",
+      "owner": "nvim-mini",
+      "repo": "mini.icons",
       "loadOrder": 32,
-      "dependencies": {
-      },
+      "dependencies": {},
       "multiModule": {
         "basePackage": "mini-nvim",
         "module": "mini.icons",
         "repository": "nvim-mini/mini.nvim"
       },
       "source_file": "table_spec",
-      "lazy": true
+      "lazy": true,
+      "version_info": {}
     },
     {
       "name": "nvim-mini/mini.pairs",
+      "owner": "nvim-mini",
+      "repo": "mini.pairs",
       "loadOrder": 33,
-      "dependencies": {
-      },
+      "dependencies": {},
       "multiModule": {
         "basePackage": "mini-nvim",
         "module": "mini.pairs",
         "repository": "nvim-mini/mini.nvim"
       },
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "nvim-neo-tree/neo-tree.nvim",
+      "owner": "nvim-neo-tree",
+      "repo": "neo-tree.nvim",
       "loadOrder": 34,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "nvim-tree/nvim-web-devicons",
+      "owner": "nvim-tree",
+      "repo": "nvim-web-devicons",
       "loadOrder": 35,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "nvim-treesitter/nvim-treesitter",
+      "owner": "nvim-treesitter",
+      "repo": "nvim-treesitter",
       "loadOrder": 36,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
       "event": [
         "LazyFile",
@@ -329,68 +427,88 @@
         "TSLog",
         "TSUninstall"
       ],
-      "lazy": true
+      "lazy": true,
+      "version_info": {
+        "commit": false
+      }
     },
     {
       "name": "nvim-treesitter/nvim-treesitter-context",
+      "owner": "nvim-treesitter",
+      "repo": "nvim-treesitter-context",
       "loadOrder": 37,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "nvim-treesitter/nvim-treesitter-textobjects",
+      "owner": "nvim-treesitter",
+      "repo": "nvim-treesitter-textobjects",
       "loadOrder": 38,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "VeryLazy"
+      "event": "VeryLazy",
+      "version_info": {}
     },
     {
       "name": "nvimdev/dashboard-nvim",
+      "owner": "nvimdev",
+      "repo": "dashboard-nvim",
       "loadOrder": 39,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "rafamadriz/friendly-snippets",
+      "owner": "rafamadriz",
+      "repo": "friendly-snippets",
       "loadOrder": 40,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "rcarriga/nvim-notify",
+      "owner": "rcarriga",
+      "repo": "nvim-notify",
       "loadOrder": 41,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "saghen/blink.cmp",
+      "owner": "saghen",
+      "repo": "blink.cmp",
       "loadOrder": 42,
-      "dependencies": {
-      },
-      "source_file": "extra"
+      "dependencies": {},
+      "source_file": "extra",
+      "version_info": {}
     },
     {
       "name": "stevearc/conform.nvim",
+      "owner": "stevearc",
+      "repo": "conform.nvim",
       "loadOrder": 43,
       "dependencies": [
         "mason-org/mason.nvim"
       ],
       "source_file": "table_spec",
       "cmd": "ConformInfo",
-      "lazy": true
+      "lazy": true,
+      "version_info": {}
     },
     {
       "name": "windwp/nvim-ts-autotag",
+      "owner": "windwp",
+      "repo": "nvim-ts-autotag",
       "loadOrder": 44,
-      "dependencies": {
-      },
+      "dependencies": {},
       "source_file": "table_spec",
-      "event": "LazyFile"
+      "event": "LazyFile",
+      "version_info": {}
     }
   ]
 }

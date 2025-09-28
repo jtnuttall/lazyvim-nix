@@ -117,10 +117,21 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
       if normalized and not seen[normalized] then
         seen[normalized] = true
         
+        -- Extract repository info
+        local owner, repo = normalized:match("^([^/]+)/(.+)$")
+
         local plugin_info = {
           name = normalized,
+          owner = owner,
+          repo = repo,
           dependencies = {},
-          source_file = "string_spec"
+          source_file = "string_spec",
+          -- Placeholder for version info to be filled later
+          version_info = {
+            commit = nil,
+            tag = nil,
+            sha256 = nil
+          }
         }
         
         -- Add multi-module info if applicable
@@ -156,9 +167,14 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
           -- Normalize dependencies
           local deps = normalize_deps(spec.dependencies)
           
+          -- Extract repository info
+          local owner, repo = normalized:match("^([^/]+)/(.+)$")
+
           -- Check if plugin has mapping
           local plugin_info = {
             name = normalized,
+            owner = owner,
+            repo = repo,
             dependencies = deps,
             event = spec.event,
             cmd = spec.cmd,
@@ -166,7 +182,13 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
             enabled = spec.enabled,
             lazy = spec.lazy,
             priority = spec.priority,
-            source_file = "table_spec"
+            source_file = "table_spec",
+            -- Extract version/commit if specified in spec
+            version_info = {
+              commit = spec.commit or spec.tag or spec.version,
+              tag = spec.tag,
+              sha256 = nil  -- To be filled by update script
+            }
           }
           
           -- Add multi-module info if applicable
@@ -266,10 +288,21 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
     if not seen[plugin_name] then
       seen[plugin_name] = true
       
+      -- Extract repository info
+      local owner, repo = plugin_name:match("^([^/]+)/(.+)$")
+
       local plugin_info = {
         name = plugin_name,
+        owner = owner,
+        repo = repo,
         dependencies = {},
-        source_file = "extra"
+        source_file = "extra",
+        -- Placeholder for version info
+        version_info = {
+          commit = nil,
+          tag = nil,
+          sha256 = nil
+        }
       }
       
       -- Add multi-module info if applicable
@@ -352,7 +385,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
         -- Object
         local result = "{\n"
         local first = true
-        local ordered_keys = {"version", "commit", "generated", "extraction_report", "plugins", "name", "loadOrder", "dependencies", "multiModule", "source_file", "event", "cmd", "ft", "enabled", "lazy", "priority", "total_plugins", "mapped_plugins", "unmapped_plugins", "multi_module_plugins", "mapping_suggestions", "basePackage", "module", "repository"}
+        local ordered_keys = {"version", "commit", "generated", "extraction_report", "plugins", "name", "owner", "repo", "loadOrder", "dependencies", "multiModule", "source_file", "event", "cmd", "ft", "enabled", "lazy", "priority", "version_info", "total_plugins", "mapped_plugins", "unmapped_plugins", "multi_module_plugins", "mapping_suggestions", "basePackage", "module", "repository", "tag", "sha256"}
         
         for _, k in ipairs(ordered_keys) do
           local v = data[k]

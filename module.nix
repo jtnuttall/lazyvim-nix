@@ -4,11 +4,55 @@ with lib;
 
 let
   cfg = config.programs.lazyvim;
-  
+
   # Load plugin data and mappings
   pluginData = pkgs.lazyvimPluginData or (builtins.fromJSON (builtins.readFile ./plugins.json));
   pluginMappings = pkgs.lazyvimPluginMappings or (import ./plugin-mappings.nix);
   pluginOverrides = pkgs.lazyvimOverrides or (import ./overrides/default.nix { inherit pkgs; });
+
+  # Helper function to build a vim plugin from source
+  buildVimPluginFromSource = pluginSpec:
+    let
+      owner = pluginSpec.owner or (builtins.elemAt (lib.splitString "/" pluginSpec.name) 0);
+      repo = pluginSpec.repo or (builtins.elemAt (lib.splitString "/" pluginSpec.name) 1);
+      versionInfo = pluginSpec.version_info or {};
+
+      # Use tag if available, otherwise commit, otherwise HEAD
+      rev = if versionInfo.tag != null then versionInfo.tag
+            else if versionInfo.commit != null then versionInfo.commit
+            else "HEAD";
+
+      # SHA256 hash is required for deterministic builds
+      sha256 = versionInfo.sha256 or lib.fakeSha256;
+    in
+      if owner != null && repo != null then
+        pkgs.vimUtils.buildVimPlugin {
+          pname = repo;
+          version = rev;
+          src = pkgs.fetchFromGitHub {
+            inherit owner repo rev sha256;
+          };
+          meta = {
+            description = "LazyVim plugin: ${pluginSpec.name}";
+            homepage = "https://github.com/${owner}/${repo}";
+          };
+        }
+      else
+        null;
+
+  # Function to check if nixpkgs plugin version matches required version
+  checkPluginVersion = pluginSpec: nixPlugin:
+    let
+      versionInfo = pluginSpec.version_info or {};
+      requiredCommit = versionInfo.commit or null;
+      requiredTag = versionInfo.tag or null;
+    in
+      # For now, we'll be conservative and only use nixpkgs if we don't have version info
+      # or if explicitly enabled. This can be enhanced later with actual version checking
+      if cfg.preferNixpkgs or (requiredCommit == null && requiredTag == null) then
+        true
+      else
+        false;
   
   # Helper function to resolve plugin names
   resolvePluginName = lazyName:
@@ -121,18 +165,56 @@ let
   
   # Build the list of all plugins from plugins.json
   allPluginSpecs = pluginData.plugins or [];
-  
-  # Resolve all plugins to their nixpkgs equivalents
-  resolvedPlugins = map (pluginSpec:
+
+  # Smart plugin resolver that chooses between nixpkgs and source builds
+  resolvePlugin = pluginSpec:
     let
       nixName = resolvePluginName pluginSpec.name;
-      plugin = pkgs.vimPlugins.${nixName} or null;
+      nixPlugin = pkgs.vimPlugins.${nixName} or null;
+      versionInfo = pluginSpec.version_info or {};
+      hasVersionInfo = versionInfo.sha256 != null && versionInfo.sha256 != "";
+
+      # Decision logic for plugin source
+      useNixpkgs =
+        # Use nixpkgs if user explicitly prefers it
+        cfg.preferNixpkgs ||
+        # Use nixpkgs if we don't have version info
+        (!hasVersionInfo) ||
+        # Use nixpkgs if alwaysLatest is disabled and plugin exists in nixpkgs
+        (!cfg.alwaysLatest && nixPlugin != null) ||
+        # Use nixpkgs if plugin not available and we can't build from source
+        (nixPlugin == null && !hasVersionInfo);
+
+      # Build from source if needed
+      sourcePlugin = if hasVersionInfo then buildVimPluginFromSource pluginSpec else null;
+
+      # Final plugin selection
+      finalPlugin =
+        if useNixpkgs && nixPlugin != null then
+          nixPlugin
+        else if sourcePlugin != null then
+          sourcePlugin
+        else if nixPlugin != null then
+          nixPlugin  # Fallback to nixpkgs even if outdated
+        else
+          null;
+
+      # Debug trace for important plugins
+      debugTrace =
+        if pluginSpec.name == "LazyVim/LazyVim" && finalPlugin != null then
+          builtins.trace "LazyVim: Using ${if useNixpkgs then "nixpkgs" else "source build"} version"
+        else
+          (x: x);
     in
-      if plugin == null then
-        builtins.trace "Warning: Could not find plugin ${pluginSpec.name} (tried ${nixName})" null
-      else
-        plugin
-  ) allPluginSpecs;
+      debugTrace (
+        if finalPlugin == null then
+          builtins.trace "Warning: Could not resolve plugin ${pluginSpec.name}" null
+        else
+          finalPlugin
+      );
+
+  # Resolve all plugins using the smart resolver
+  resolvedPlugins = map resolvePlugin allPluginSpecs;
   
   # Create the dev path with proper symlinks
   devPath = createDevPath allPluginSpecs resolvedPlugins;
@@ -227,7 +309,29 @@ let
 in {
   options.programs.lazyvim = {
     enable = mkEnableOption "LazyVim - A Neovim configuration framework";
-    
+
+    preferNixpkgs = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Whether to prefer nixpkgs versions of plugins over building from source.
+        When false (default), the flake will build plugins from source when version
+        information is available to ensure you get the exact versions specified.
+        When true, nixpkgs versions are used whenever possible for faster builds.
+      '';
+    };
+
+    alwaysLatest = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Whether to always use the latest plugin versions by building from source.
+        When true (default), plugins with version info will be built from source.
+        When false, nixpkgs versions are preferred unless unavailable.
+        This option is ignored if preferNixpkgs is true.
+      '';
+    };
+
     extraPackages = mkOption {
       type = types.listOf types.package;
       default = [];

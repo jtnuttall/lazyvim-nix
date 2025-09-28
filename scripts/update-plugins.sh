@@ -14,11 +14,24 @@ LAZYVIM_REPO="https://github.com/LazyVim/LazyVim.git"
 
 # Parse command line arguments
 VERIFY_PACKAGES=""
+FETCH_VERSIONS=""
 for arg in "$@"; do
     case $arg in
         --verify)
             VERIFY_PACKAGES="1"
             echo "==> Package verification enabled"
+            ;;
+        --fetch-versions)
+            FETCH_VERSIONS="1"
+            echo "==> Version fetching enabled"
+            ;;
+        --help)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  --verify         Enable nixpkgs package verification"
+            echo "  --fetch-versions Fetch latest version info and SHA256 hashes for plugins"
+            echo "  --help           Show this help message"
+            exit 0
             ;;
     esac
 done
@@ -133,4 +146,12 @@ if [ "$UNMAPPED_COUNT" -gt 0 ]; then
     echo "2. Update plugin-mappings.nix with approved mappings"
     echo "3. Re-run this script to regenerate plugins.json"
     echo "4. Commit both plugins.json and plugin-mappings.nix together"
+fi
+
+# Fetch version information if requested
+if [ "$FETCH_VERSIONS" = "1" ]; then
+    echo ""
+    echo "==> Fetching latest version information for all plugins..."
+    UPDATE_MAIN_FILE=1 "$SCRIPT_DIR/fetch-plugin-versions.sh"
+    echo "==> plugins.json has been updated with version information"
 fi
