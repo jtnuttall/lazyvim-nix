@@ -172,7 +172,7 @@ let
       nixName = resolvePluginName pluginSpec.name;
       nixPlugin = pkgs.vimPlugins.${nixName} or null;
       versionInfo = pluginSpec.version_info or {};
-      hasVersionInfo = versionInfo.sha256 != null && versionInfo.sha256 != "";
+      hasVersionInfo = versionInfo ? sha256 && versionInfo.sha256 != null && versionInfo.sha256 != "";
 
       # Decision logic for plugin source
       useNixpkgs =
