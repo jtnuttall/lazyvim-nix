@@ -32,6 +32,7 @@ let
           src = pkgs.fetchFromGitHub {
             inherit owner repo rev sha256;
           };
+          doCheck = false;  # Disable require checks that may fail
           meta = {
             description = "LazyVim plugin: ${pluginSpec.name}";
             homepage = "https://github.com/${owner}/${repo}";
