@@ -31,10 +31,10 @@
   "nvim-mini/mini.indentscope" = { package = "mini-nvim"; module = "mini.indentscope"; };
   "nvim-mini/mini.pairs" = { package = "mini-nvim"; module = "mini.pairs"; };
   "nvim-mini/mini.surround" = { package = "mini-nvim"; module = "mini.surround"; };
-  
-  # Some extras still use the old echasnovski name
+
+  # Legacy mini.nvim references (LazyVim extras still use these)
   "echasnovski/mini.icons" = { package = "mini-nvim"; module = "mini.icons"; };
-  
+
   # Plugins that don't follow standard naming conventions
   "L3MON4D3/LuaSnip" = "luasnip";
   "catppuccin/nvim" = "catppuccin-nvim";

@@ -80,22 +80,40 @@ let
       getRepoName = specName:
         let parts = lib.splitString "/" specName;
         in if length parts == 2 then elemAt parts 1 else specName;
-      
-      # Create symlinks using the repository names that LazyVim expects
-      mainLinks = lib.zipListsWith (spec: plugin:
+
+      # Separate multi-module plugins from regular plugins
+      pluginWithType = lib.zipListsWith (spec: plugin:
         if plugin != null then
-          let repoName = getRepoName spec.name;
-          in "ln -sf ${plugin} $out/${repoName}"
-        else
-          null
+          let
+            mapping = pluginMappings.${spec.name} or null;
+            isMultiModule = mapping != null && builtins.isAttrs mapping && mapping ? module;
+          in {
+            spec = spec;
+            plugin = plugin;
+            isMultiModule = isMultiModule;
+            linkName = if isMultiModule then mapping.module else getRepoName spec.name;
+          }
+        else null
       ) allPluginSpecs allResolvedPlugins;
-      
+
       # Filter out null entries
-      validLinks = filter (link: link != null) mainLinks;
+      validPlugins = filter (p: p != null) pluginWithType;
+
+      # Deduplicate multi-module plugins by module name
+      deduplicatedPlugins =
+        let
+          # Group by link name
+          grouped = lib.groupBy (p: p.linkName) validPlugins;
+          # Take first entry for each unique link name
+          deduplicated = lib.mapAttrsToList (linkName: plugins: lib.head plugins) grouped;
+        in deduplicated;
+
+      # Create symlink commands
+      linkCommands = map (p: "ln -sf ${p.plugin} $out/${p.linkName}") deduplicatedPlugins;
     in
       pkgs.runCommand "lazyvim-dev-path" {} ''
         mkdir -p $out
-        ${lib.concatStringsSep "\n" validLinks}
+        ${lib.concatStringsSep "\n" linkCommands}
       '';
 
   # Expand multi-module plugins and separate regular plugins
