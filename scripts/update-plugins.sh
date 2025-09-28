@@ -28,12 +28,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> Cloning LazyVim repository..."
-git clone --depth 1 "$LAZYVIM_REPO" "$TEMP_DIR/LazyVim"
+echo "==> Getting latest LazyVim release from GitHub API..."
+LATEST_TAG=$(curl -s "https://api.github.com/repos/LazyVim/LazyVim/releases/latest" | jq -r '.tag_name')
+
+if [ "$LATEST_TAG" = "null" ] || [ -z "$LATEST_TAG" ]; then
+    echo "Error: Could not fetch latest LazyVim release"
+    exit 1
+fi
+
+echo "==> Cloning LazyVim $LATEST_TAG..."
+git clone --depth 1 --branch "$LATEST_TAG" "$LAZYVIM_REPO" "$TEMP_DIR/LazyVim"
 
 echo "==> Getting LazyVim version..."
 cd "$TEMP_DIR/LazyVim"
-LAZYVIM_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "main")
+LAZYVIM_VERSION="$LATEST_TAG"
 LAZYVIM_COMMIT=$(git rev-parse HEAD)
 
 echo "    Version: $LAZYVIM_VERSION"
