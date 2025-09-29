@@ -4,6 +4,9 @@
 -- Load mapping suggestion engine
 local suggest_mappings = require('suggest-mappings')
 
+-- Load user plugin scanner
+local user_scanner = require('scan-user-plugins')
+
 -- Function to parse plugin-mappings.nix
 local function parse_plugin_mappings(mappings_file)
   local mappings = {}
@@ -327,15 +330,47 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
     end
   end
   
+  -- Scan for user plugins and merge them with core plugins
+  print("=== Scanning for user plugins ===")
+  local user_plugins = user_scanner.scan_user_plugins()
+
+  if #user_plugins > 0 then
+    print(string.format("Found %d user plugins, merging with core plugins", #user_plugins))
+
+    -- Process user plugins through the same logic as core plugins
+    for _, user_plugin in ipairs(user_plugins) do
+      if not seen[user_plugin.name] then
+        seen[user_plugin.name] = true
+
+        -- Mark as user plugin and track mapping status
+        user_plugin.user_plugin = true
+        user_plugin.source_file = "user_config"
+
+        if is_plugin_mapped(user_plugin.name) then
+          extraction_report.mapped_plugins = extraction_report.mapped_plugins + 1
+        else
+          extraction_report.unmapped_plugins = extraction_report.unmapped_plugins + 1
+          table.insert(unmapped_plugins, user_plugin.name)
+        end
+
+        table.insert(plugins, user_plugin)
+      else
+        print(string.format("Skipping user plugin %s (already exists in core)", user_plugin.name))
+      end
+    end
+  else
+    print("No user plugins found")
+  end
+
   -- Sort and assign load order
   table.sort(plugins, function(a, b)
     return a.name < b.name
   end)
-  
+
   for i, plugin in ipairs(plugins) do
     plugin.loadOrder = i
   end
-  
+
   -- Finalize extraction report
   extraction_report.total_plugins = #plugins
   

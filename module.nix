@@ -161,11 +161,71 @@ let
         ${lib.concatStringsSep "\n" linkCommands}
       '';
 
+  # Function to scan user plugins from LazyVim configuration
+  scanUserPlugins = config_path:
+    let
+      # Use Nix to call the Lua scanner script
+      scanResult = pkgs.runCommand "scan-user-plugins" {
+        buildInputs = [ pkgs.lua pkgs.neovim ];
+      } ''
+        # Copy scanner script to build directory
+        cp ${./scripts/scan-user-plugins.lua} scan-user-plugins.lua
+
+        # Create a simple Lua runner script
+        cat > run-scanner.lua << 'EOF'
+        -- Initialize vim.loop for the scanner
+        _G.vim = _G.vim or {}
+        vim.loop = vim.loop or require('luv')
+
+        -- Load the scanner
+        local scanner = dofile('scan-user-plugins.lua')
+
+        -- Scan for user plugins
+        local user_plugins = scanner.scan_user_plugins("${config_path}")
+
+        -- Output as JSON-like format for Nix to parse
+        local function to_json_array(plugins)
+          local result = "["
+          for i, plugin in ipairs(plugins) do
+            if i > 1 then result = result .. "," end
+            result = result .. string.format(
+              '{"name":"%s","owner":"%s","repo":"%s","source_file":"%s","user_plugin":true}',
+              plugin.name, plugin.owner, plugin.repo, plugin.source_file
+            )
+          end
+          result = result .. "]"
+          return result
+        end
+
+        -- Write result
+        local file = io.open("$out", "w")
+        file:write(to_json_array(user_plugins))
+        file:close()
+        EOF
+
+        # Run the scanner if config path exists
+        if [ -d "${config_path}" ]; then
+          lua run-scanner.lua 2>/dev/null || echo "[]" > $out
+        else
+          echo "[]" > $out
+        fi
+      '';
+      userPluginsJson = builtins.readFile scanResult;
+      userPluginsList = if userPluginsJson == "[]" then [] else builtins.fromJSON userPluginsJson;
+    in
+      userPluginsList;
+
+  # Scan for user plugins from the default LazyVim config directory
+  userPlugins = if cfg.enable then
+    scanUserPlugins "${config.home.homeDirectory}/.config/nvim"
+  else [];
+
+  # Merge core plugins with user plugins
+  corePlugins = pluginData.plugins or [];
+  allPluginSpecs = corePlugins ++ userPlugins;
+
   # Expand multi-module plugins and separate regular plugins
-  pluginSeparation = expandMultiModulePlugins (pluginData.plugins or []);
-  
-  # Build the list of all plugins from plugins.json
-  allPluginSpecs = pluginData.plugins or [];
+  pluginSeparation = expandMultiModulePlugins allPluginSpecs;
 
   # Smart plugin resolver that chooses between nixpkgs and source builds
   resolvePlugin = pluginSpec:

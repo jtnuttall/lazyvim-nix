@@ -61,9 +61,10 @@ echo "    Version: $LAZYVIM_VERSION"
 echo "    Commit: $LAZYVIM_COMMIT"
 
 echo "==> Extracting plugin specifications..."
+echo "    (including user-defined plugins from ~/.config/nvim/lua/plugins/)"
 cd "$REPO_ROOT"
 
-# Add suggest-mappings.lua to the Lua path
+# Add suggest-mappings.lua and scan-user-plugins.lua to the Lua path
 export LUA_PATH="$SCRIPT_DIR/?.lua;${LUA_PATH:-}"
 
 # Set verification environment variable if requested
