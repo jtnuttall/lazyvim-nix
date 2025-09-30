@@ -33,11 +33,12 @@ let
       # For latest/HEAD, use fetchGit which doesn't require a hash
       # For pinned versions with sha256, use fetchFromGitHub
       src = if wantsLatest || sha256 == null then
-        builtins.fetchGit {
+        builtins.fetchGit ({
           url = "https://github.com/${owner}/${repo}";
-          ref = if wantsLatest then "HEAD" else rev;
           shallow = true;
-        }
+        } // lib.optionalAttrs (!wantsLatest && rev != "HEAD") {
+          ref = rev;
+        })
       else
         pkgs.fetchFromGitHub {
           inherit owner repo rev sha256;
