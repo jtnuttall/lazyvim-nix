@@ -65,7 +65,6 @@
   "jose-elias-alvarez/typescript.nvim" = "typescript-nvim";
   "smjonas/inc-rename.nvim" = "inc-rename-nvim";
   "jay-babu/mason-nvim-dap.nvim" = "mason-nvim-dap";
-  "williamboman/mason-lspconfig.nvim" = "mason-lspconfig-nvim";
   "stevearc/conform.nvim" = "conform-nvim";
   "mason-org/mason.nvim" = "mason-nvim";
   "mason-org/mason-lspconfig.nvim" = "mason-lspconfig-nvim";

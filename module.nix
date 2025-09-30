@@ -17,12 +17,17 @@ let
       repo = pluginSpec.repo or (builtins.elemAt (lib.splitString "/" pluginSpec.name) 1);
       versionInfo = pluginSpec.version_info or {};
 
-      # Use tag if available, otherwise commit, otherwise HEAD
-      rev = if versionInfo.tag != null then versionInfo.tag
-            else if versionInfo.commit != null then versionInfo.commit
+      # Handle different version scenarios:
+      # - commit: false means use latest (HEAD)
+      # - commit: "sha" means use specific commit
+      # - tag: "v1.0" means use specific tag
+      rev = if versionInfo.commit == false then "HEAD"
+            else if versionInfo.tag != null then versionInfo.tag
+            else if versionInfo.commit != null && versionInfo.commit != false then versionInfo.commit
             else "HEAD";
 
       # SHA256 hash is required for deterministic builds
+      # For HEAD/latest, we use fakeSha256 and let Nix fetch and compute it
       sha256 = versionInfo.sha256 or lib.fakeSha256;
     in
       if owner != null && repo != null then
@@ -48,9 +53,11 @@ let
       requiredCommit = versionInfo.commit or null;
       requiredTag = versionInfo.tag or null;
     in
-      # For now, we'll be conservative and only use nixpkgs if we don't have version info
-      # or if explicitly enabled. This can be enhanced later with actual version checking
-      if cfg.preferNixpkgs or (requiredCommit == null && requiredTag == null) then
+      # commit: false means LazyVim wants the latest version (not pinned)
+      # In this case, we should build from source if alwaysLatest is enabled
+      if requiredCommit == false then
+        false  # Don't use nixpkgs version when LazyVim wants latest
+      else if cfg.preferNixpkgs or (requiredCommit == null && requiredTag == null) then
         true
       else
         false;
@@ -234,20 +241,21 @@ let
       nixPlugin = pkgs.vimPlugins.${nixName} or null;
       versionInfo = pluginSpec.version_info or {};
       hasVersionInfo = versionInfo ? sha256 && versionInfo.sha256 != null && versionInfo.sha256 != "";
+      wantsLatest = versionInfo.commit or null == false;  # commit: false means want latest
 
       # Decision logic for plugin source
       useNixpkgs =
-        # Use nixpkgs if user explicitly prefers it
-        cfg.preferNixpkgs ||
-        # Use nixpkgs if we don't have version info
-        (!hasVersionInfo) ||
-        # Use nixpkgs if alwaysLatest is disabled and plugin exists in nixpkgs
-        (!cfg.alwaysLatest && nixPlugin != null) ||
+        # Use nixpkgs if user explicitly prefers it (unless plugin wants latest)
+        (cfg.preferNixpkgs && !wantsLatest) ||
+        # Use nixpkgs if we don't have version info and don't want latest
+        (!hasVersionInfo && !wantsLatest) ||
+        # Use nixpkgs if alwaysLatest is disabled and plugin exists in nixpkgs (unless wants latest)
+        (!cfg.alwaysLatest && nixPlugin != null && !wantsLatest) ||
         # Use nixpkgs if plugin not available and we can't build from source
-        (nixPlugin == null && !hasVersionInfo);
+        (nixPlugin == null && !hasVersionInfo && !wantsLatest);
 
       # Build from source if needed
-      sourcePlugin = if hasVersionInfo then buildVimPluginFromSource pluginSpec else null;
+      sourcePlugin = if (hasVersionInfo || wantsLatest) then buildVimPluginFromSource pluginSpec else null;
 
       # Final plugin selection
       finalPlugin =
@@ -325,8 +333,8 @@ let
       spec = {
         { "LazyVim/LazyVim", import = "lazyvim.plugins", dev = true },
         -- Disable Mason.nvim in Nix environment
-        { "williamboman/mason.nvim", enabled = false },
-        { "williamboman/mason-lspconfig.nvim", enabled = false },
+        { "mason-org/mason.nvim", enabled = false },
+        { "mason-org/mason-lspconfig.nvim", enabled = false },
         { "jay-babu/mason-nvim-dap.nvim", enabled = false },
         -- Disable treesitter auto-install - simple approach like your old config
         { 
