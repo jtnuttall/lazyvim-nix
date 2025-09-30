@@ -337,6 +337,7 @@ let
     -- Configure lazy.nvim to use pre-fetched plugins
     require("lazy").setup({
       defaults = { lazy = true },
+      checker = { enabled = false },  -- Disable update checker since Nix manages versions
       dev = {
         path = "${devPath}",
         patterns = {},  -- Don't automatically match, use explicit dev = true
