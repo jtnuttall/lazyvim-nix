@@ -360,6 +360,15 @@ let
           dev = true,
           pin = true,
         },
+        {
+          "nvim-treesitter/nvim-treesitter-textobjects",
+          config = function(_, opts)
+            -- Skip LazyVim's compatibility check and just setup directly
+            require("nvim-treesitter.configs").setup({ textobjects = opts })
+          end,
+          dev = true,
+          pin = true,
+        },
         -- Mark available plugins as dev = true
         ${concatStringsSep "\n        " availableDevSpecs}
         -- User plugins
