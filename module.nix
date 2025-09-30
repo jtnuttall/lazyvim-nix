@@ -21,22 +21,33 @@ let
       # - commit: false means use latest (HEAD)
       # - commit: "sha" means use specific commit
       # - tag: "v1.0" means use specific tag
-      rev = if versionInfo.commit == false then "HEAD"
+      wantsLatest = versionInfo.commit == false;
+      rev = if wantsLatest then "HEAD"
             else if versionInfo.tag != null then versionInfo.tag
             else if versionInfo.commit != null && versionInfo.commit != false then versionInfo.commit
             else "HEAD";
 
-      # SHA256 hash is required for deterministic builds
-      # For HEAD/latest, we use fakeSha256 and let Nix fetch and compute it
-      sha256 = versionInfo.sha256 or lib.fakeSha256;
+      # SHA256 hash is required for fetchFromGitHub
+      sha256 = versionInfo.sha256 or null;
+
+      # For latest/HEAD, use fetchGit which doesn't require a hash
+      # For pinned versions with sha256, use fetchFromGitHub
+      src = if wantsLatest || sha256 == null then
+        builtins.fetchGit {
+          url = "https://github.com/${owner}/${repo}";
+          ref = if wantsLatest then "HEAD" else rev;
+          shallow = true;
+        }
+      else
+        pkgs.fetchFromGitHub {
+          inherit owner repo rev sha256;
+        };
     in
       if owner != null && repo != null then
         pkgs.vimUtils.buildVimPlugin {
           pname = repo;
           version = rev;
-          src = pkgs.fetchFromGitHub {
-            inherit owner repo rev sha256;
-          };
+          inherit src;
           doCheck = false;  # Disable require checks that may fail
           meta = {
             description = "LazyVim plugin: ${pluginSpec.name}";
