@@ -47,8 +47,8 @@ jobs:
             CURRENT_COMMIT="none"
           fi
           
-          # Get latest LazyVim version
-          LATEST_VERSION=$(git ls-remote --tags https://github.com/LazyVim/LazyVim.git | grep -v '\^{}' | tail -1 | sed 's/.*\///')
+          # Get latest LazyVim version using GitHub API (same as update script)
+          LATEST_VERSION=$(curl -s "https://api.github.com/repos/LazyVim/LazyVim/releases/latest" | jq -r '.tag_name')
           LATEST_COMMIT=$(git ls-remote https://github.com/LazyVim/LazyVim.git HEAD | cut -f1)
           
           echo "Current version: $CURRENT_VERSION ($CURRENT_COMMIT)"
