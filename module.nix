@@ -338,6 +338,7 @@ let
     require("lazy").setup({
       defaults = { lazy = true },
       checker = { enabled = false },  -- Disable update checker since Nix manages versions
+      change_detection = { notify = false },  -- Disable config change notifications
       dev = {
         path = "${devPath}",
         patterns = {},  -- Don't automatically match, use explicit dev = true
