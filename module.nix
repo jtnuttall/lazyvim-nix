@@ -353,6 +353,7 @@ let
         -- Disable treesitter auto-install - simple approach like your old config
         {
           "nvim-treesitter/nvim-treesitter",
+          build = false,  -- Disable build function that shows update warnings
           opts = function(_, opts)
             opts.ensure_installed = {}
           end,
