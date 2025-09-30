@@ -308,7 +308,7 @@ let
   # Generate dev plugin specs for available plugins
   devPluginSpecs = lib.zipListsWith (spec: plugin:
     if plugin != null then
-      ''{ "${getRepoName spec.name}", dev = true },''
+      ''{ "${getRepoName spec.name}", dev = true, pin = true },''
     else
       null
   ) allPluginSpecs resolvedPlugins;
@@ -343,18 +343,19 @@ let
         fallback = false,
       },
       spec = {
-        { "LazyVim/LazyVim", import = "lazyvim.plugins", dev = true },
+        { "LazyVim/LazyVim", import = "lazyvim.plugins", dev = true, pin = true },
         -- Disable Mason.nvim in Nix environment
         { "mason-org/mason.nvim", enabled = false },
         { "mason-org/mason-lspconfig.nvim", enabled = false },
         { "jay-babu/mason-nvim-dap.nvim", enabled = false },
         -- Disable treesitter auto-install - simple approach like your old config
-        { 
-          "nvim-treesitter/nvim-treesitter", 
+        {
+          "nvim-treesitter/nvim-treesitter",
           opts = function(_, opts)
             opts.ensure_installed = {}
           end,
           dev = true,
+          pin = true,
         },
         -- Mark available plugins as dev = true
         ${concatStringsSep "\n        " availableDevSpecs}
