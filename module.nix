@@ -66,10 +66,9 @@ let
       requiredTag = versionInfo.tag or null;
     in
       # commit: false means LazyVim wants the latest version (not pinned)
-      # In this case, we should build from source if alwaysLatest is enabled
       if requiredCommit == false then
         false  # Don't use nixpkgs version when LazyVim wants latest
-      else if cfg.preferNixpkgs or (requiredCommit == null && requiredTag == null) then
+      else if cfg.pluginSource == "nixpkgs" or (requiredCommit == null && requiredTag == null) then
         true
       else
         false;
@@ -255,16 +254,15 @@ let
       hasVersionInfo = versionInfo ? sha256 && versionInfo.sha256 != null && versionInfo.sha256 != "";
       wantsLatest = versionInfo.commit or null == false;  # commit: false means want latest
 
-      # Decision logic for plugin source
+      # Decision logic for plugin source based on strategy
       useNixpkgs =
-        # Use nixpkgs if user explicitly prefers it (unless plugin wants latest)
-        (cfg.preferNixpkgs && !wantsLatest) ||
-        # Use nixpkgs if we don't have version info and don't want latest
-        (!hasVersionInfo && !wantsLatest) ||
-        # Use nixpkgs if alwaysLatest is disabled and plugin exists in nixpkgs (unless wants latest)
-        (!cfg.alwaysLatest && nixPlugin != null && !wantsLatest) ||
-        # Use nixpkgs if plugin not available and we can't build from source
-        (nixPlugin == null && !hasVersionInfo && !wantsLatest);
+        if cfg.pluginSource == "latest" then
+          # For "latest": use nixpkgs if it has the version we need
+          # Otherwise fall back to source
+          (nixPlugin != null && !wantsLatest && !hasVersionInfo)
+        else  # cfg.pluginSource == "nixpkgs"
+          # For "nixpkgs": prefer nixpkgs, only use source as fallback
+          (nixPlugin != null);
 
       # Build from source if needed
       sourcePlugin = if (hasVersionInfo || wantsLatest) then buildVimPluginFromSource pluginSpec else null;
@@ -404,25 +402,13 @@ in {
   options.programs.lazyvim = {
     enable = mkEnableOption "LazyVim - A Neovim configuration framework";
 
-    preferNixpkgs = mkOption {
-      type = types.bool;
-      default = false;
+    pluginSource = mkOption {
+      type = types.enum [ "latest" "nixpkgs" ];
+      default = "latest";
       description = ''
-        Whether to prefer nixpkgs versions of plugins over building from source.
-        When false (default), the flake will build plugins from source when version
-        information is available to ensure you get the exact versions specified.
-        When true, nixpkgs versions are used whenever possible for faster builds.
-      '';
-    };
-
-    alwaysLatest = mkOption {
-      type = types.bool;
-      default = true;
-      description = ''
-        Whether to always use the latest plugin versions by building from source.
-        When true (default), plugins with version info will be built from source.
-        When false, nixpkgs versions are preferred unless unavailable.
-        This option is ignored if preferNixpkgs is true.
+        Plugin source strategy:
+        - "latest": Use nixpkgs if it has the required version, otherwise build from source
+        - "nixpkgs": Prefer nixpkgs versions, fallback to source if unavailable
       '';
     };
 

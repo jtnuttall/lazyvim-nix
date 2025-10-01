@@ -127,13 +127,58 @@ This flake:
 - Tracks LazyVim releases automatically
 - Pre-fetches all default LazyVim plugins through Nix
 - Handles Nix-specific quirks (disables Mason.nvim, manages treesitter parsers)
-- Provides a clean upgrade path as LazyVim evolves
 
 ## Differences from Regular LazyVim
 
 - **No Mason.nvim**: LSP servers and tools are installed via `extraPackages`
 - **Treesitter parsers**: Managed via `treesitterParsers` option
+- **Plugins are pinned**: Plugin versions are fixed to match LazyVim's specifications
 - **Plugin updates**: Happen through `nix flake update` instead of `:Lazy update`
+
+## Plugin Management
+
+### How Plugins Work
+
+Plugins are pinned to specific versions that match LazyVim's specifications. You cannot manually update individual plugins - they are updated as a set when LazyVim releases new versions.
+
+### Plugin Source Strategy
+
+Configure where plugins are sourced from:
+
+```nix
+programs.lazyvim = {
+  enable = true;
+
+  # Default: "latest"
+  pluginSource = "latest";  # or "nixpkgs"
+};
+```
+
+**Options:**
+
+- **`"latest"` (default)**: Gets the exact versions LazyVim specifies
+  - Uses nixpkgs when it has the required version
+  - Builds from source when a specific version is needed
+
+- **`"nixpkgs"`**: Uses pre-built packages from nixpkgs
+  - Prefers nixpkgs packages when available
+  - Falls back to source builds for plugins not in nixpkgs
+
+### Updating Plugins
+
+```bash
+# Update the flake inputs
+nix flake update
+
+# Rebuild your configuration
+home-manager switch  # or nixos-rebuild switch
+```
+
+This gets you:
+- Updated nixpkgs packages (if using `pluginSource = "nixpkgs"`)
+- New plugin specifications when LazyVim releases a new version
+
+**Note:** Plugin versions are maintained in `plugins.json`, which is automatically updated by GitHub Actions when new LazyVim versions are released.
 
 ## Development
 
