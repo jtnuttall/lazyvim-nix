@@ -46,15 +46,21 @@ jobs:
             CURRENT_VERSION="none"
             CURRENT_COMMIT="none"
           fi
-          
+
           # Get latest LazyVim version using GitHub API (same as update script)
           LATEST_VERSION=$(curl -s "https://api.github.com/repos/LazyVim/LazyVim/releases/latest" | jq -r '.tag_name')
           LATEST_COMMIT=$(git ls-remote https://github.com/LazyVim/LazyVim.git HEAD | cut -f1)
-          
+
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "Failed to determine latest LazyVim release version"
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           echo "Current version: $CURRENT_VERSION ($CURRENT_COMMIT)"
           echo "Latest version: $LATEST_VERSION ($LATEST_COMMIT)"
-          
-          if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
+
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_needed=true" >> $GITHUB_OUTPUT
             echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
           else
