@@ -4,7 +4,7 @@ A Nix flake for LazyVim that just works
 
 ## What is this?
 
-This flake lets you use [LazyVim](https://www.lazyvim.org/) on NixOS with minimal configuration. It automatically manages plugins and provides the full LazyVim experience without manual maintenance.
+This flake provides [LazyVim](https://www.lazyvim.org/) as a home-manager module, allowing you to install and configure LazyVim declaratively on NixOS. It tracks LazyVim releases and automatically updates plugin specifications within days of each release. By default, it pins plugin versions to match what a fresh LazyVim installation would get at release time, ensuring a consistent and reproducible configuration while keeping you current with upstream LazyVim.
 
 ## Quick Start
 
