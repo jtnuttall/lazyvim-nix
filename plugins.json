@@ -1,7 +1,7 @@
 {
-  "version": "v15.6.0",
-  "commit": "4ebcd611b2c81de9badba26146ee86ed4020cee5",
-  "generated": "2025-09-30 13:28:22",
+  "version": "v15.7.1",
+  "commit": "dc1ffa5bcb66f46284f91a8593dda5c7c54a1824",
+  "generated": "2025-10-03 19:05:01",
   "extraction_report": {
     "total_plugins": 44,
     "mapped_plugins": 44,
@@ -22,7 +22,9 @@
       "lazy": false,
       "priority": 10000,
       "version_info": {
-        "commit": "*"
+        "commit": "dc1ffa5bcb66f46284f91a8593dda5c7c54a1824",
+        "tag": "v15.7.1",
+        "sha256": "0fa8075jmvf6zgvlz70lg0yclxgllmcrfbvazjky96dhvx0wk5gh"
       }
     },
     {
@@ -38,6 +40,9 @@
         "GrugFarWithin"
       ],
       "version_info": {
+        "commit": "48f9afb684de1c191af7bed96bc1db85ba33f6a4",
+        "tag": "1.6.49",
+        "sha256": "006vsz02czw1vv19ib654l959vavxvdy728ia93rwxzfffcnm1xb"
       }
     },
     {
@@ -50,6 +55,9 @@
       "source_file": "table_spec",
       "lazy": true,
       "version_info": {
+        "commit": "f535005e6ad1016383f24e39559833759453564e",
+        "tag": "0.4.0",
+        "sha256": "1px6zqkj1plsydav6zpw8in92bqz4byv4mh4cd570wksynfkv5s8"
       }
     },
     {
@@ -61,6 +69,8 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "0d1e93684da00ab7c057410fecfc24f434698898",
+        "sha256": "0456q474765p0r0q7frn1n9drl05d16alv7kn9qnw1235d20k81a"
       }
     },
     {
@@ -73,6 +83,9 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "655133c3b4c3e5e05ec549b9f8cc2894ac6f51b3",
+        "tag": "v4.9.1",
+        "sha256": "0m5363rpbjgvsnbhp9yrivbqj17lmrb5m57lpnq7dgxsmw3hrvk9"
       }
     },
     {
@@ -85,6 +98,9 @@
       "source_file": "table_spec",
       "lazy": true,
       "version_info": {
+        "commit": "cb5665990a797b102715188e73c44c3931b3b42e",
+        "tag": "v1.11.0",
+        "sha256": "1p5j53vzi14vm39qyb9c8wpbzd2ywy1z9cqw782vz3gccis1zngs"
       }
     },
     {
@@ -96,6 +112,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "97a88e688482a09c3c4b777d07b509b328a5ec29",
+        "tag": "v4.5.0",
+        "sha256": "1l2vlndyvy3ccw8xawy51bmrwm20wjn067r4w3iis9y4pdxzy3l5"
       }
     },
     {
@@ -112,6 +131,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "397ed3807e96b59709ef3292f0a3e253d5c1dc0a",
+        "tag": "v0.16.0",
+        "sha256": "110bglbbyafjym4md2slgccyjhf90bgg8h9h2ipya6cfqfs4pizy"
       }
     },
     {
@@ -124,6 +146,9 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "ec0bf2842189f65f60fd40bf3557cac1029cc932",
+        "tag": "v2.1.0",
+        "sha256": "0pv5czj11ckfxlgn252ynwm80npl67lgwi3wm6vi9d9idz5ns7s2"
       }
     },
     {
@@ -135,7 +160,9 @@
       },
       "source_file": "table_spec",
       "version_info": {
-        "commit": "*"
+        "commit": "6c3bda4aca61a13a9c63f1c1d1b16b9d3be90d7a",
+        "tag": "v11.17.1",
+        "sha256": "0nz6w4h863g3vq90q3bgcmrk1yz88gjqmmbacwx3hxyks13hy3wx"
       }
     },
     {
@@ -149,6 +176,9 @@
       "cmd": "LazyDev",
       "ft": "lua",
       "version_info": {
+        "commit": "f59bd14a852ca43db38e3662395354cb2a9b13e0",
+        "tag": "v1.9.0",
+        "sha256": "102sxfdq6ajvfs95r4084xvbcjv2qiv5cmyrqbwijmc05isg9d8j"
       }
     },
     {
@@ -160,6 +190,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "054c602dcf143337151ecaa7fd4465ecfa7d27f0",
+        "tag": "v1.4.0",
+        "sha256": "1ckfqylw2mfs5w2qzj4ar1xwxmz98f7m2sbm3fimg4kzscyxmxl4"
       }
     },
     {
@@ -171,6 +204,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "1f4ebcc10852518166ce165e57d425a4265a10d4",
+        "tag": "v3.0.0",
+        "sha256": "1lfj7ww8fplmj0xmm2qa4f8ifqapvmdra9s8gwz770b7dyraj615"
       }
     },
     {
@@ -183,6 +219,9 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "cf758e9df66451889aab56613a21b8673f045ec2",
+        "tag": "v4.10.0",
+        "sha256": "091rxd8qxa634mzknmy6449k9h40xh1vam6kjpaqivkh2vyx5bc2"
       }
     },
     {
@@ -195,6 +234,9 @@
       "source_file": "table_spec",
       "event": "BufReadPre",
       "version_info": {
+        "commit": "c45ff862b53ce07a853a753fb0b33e148dbb99d2",
+        "tag": "v3.1.0",
+        "sha256": "1kghf77pv3j1im97mwrk360690ssr6dxinfzf1b8q0i34vwa7665"
       }
     },
     {
@@ -208,6 +250,9 @@
       "lazy": false,
       "priority": 1000,
       "version_info": {
+        "commit": "da230e3ca8146da4b73752daaf0a1d07d343c12d",
+        "tag": "v2.23.0",
+        "sha256": "15zcvxsxkihjk5x0bfa1zgx1ky7icjbi9iihsqw8wbi5jyfwnasm"
       }
     },
     {
@@ -224,6 +269,9 @@
         "TodoTelescope"
       ],
       "version_info": {
+        "commit": "ae0a2afb47cf7395dc400e5dc4e05274bf4fb9e0",
+        "tag": "v1.4.0",
+        "sha256": "0v6vn3f9svj756ds8cp0skpw65xixlx1f3aj0fh374wdpb5i4zhh"
       }
     },
     {
@@ -236,6 +284,9 @@
       "source_file": "table_spec",
       "lazy": true,
       "version_info": {
+        "commit": "4d159616aee17796c2c94d2f5f87d2ee1a3f67c7",
+        "tag": "v4.13.0",
+        "sha256": "1bpki7gglch1n77kcrnyabmz7r41d6b6yq5fa70w4pxwp7y62d6h"
       }
     },
     {
@@ -250,6 +301,9 @@
         "Trouble"
       ],
       "version_info": {
+        "commit": "748ca2789044607f19786b1d837044544c55e80a",
+        "tag": "v3.7.1",
+        "sha256": "1zsvvmkjhgwhik7gslax4yjnnwbvjpjwm75p4g2c85w0b01x4whp"
       }
     },
     {
@@ -262,6 +316,9 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "79e4337e4231ff8ca33dab85162b5ee8e78f22ce",
+        "tag": "v1.5.0",
+        "sha256": "1yix8wwf2kj09vi4d40p67vx1l2h84515gqvhdb0qjjjm7j591wx"
       }
     },
     {
@@ -274,6 +331,9 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "fcbf4eea17cb299c02557d576f0d568878e354a4",
+        "tag": "v3.17.0",
+        "sha256": "17ny4b84f5m32mlp5gy0vhy4hwjhbqvajmbkzq0rxfxjck1n52li"
       }
     },
     {
@@ -285,6 +345,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "47b85a25c0c0b2c20b4e75199ed01bb71e7814f5",
+        "tag": "0.7",
+        "sha256": "1znlhvb84x3lipa5n1cdk1kpid49h647hnnwy01xw447vk49p11p"
       }
     },
     {
@@ -296,6 +359,8 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "2305deed25bc61b866d5d39189e9105a45cf1cfb",
+        "sha256": "1ds4dqr004ffnb58vw1zapgk9jdj08d2n2k0lrm2p5rz5lgva46g"
       }
     },
     {
@@ -308,6 +373,9 @@
       "source_file": "table_spec",
       "event": "LazyFile",
       "version_info": {
+        "commit": "7010000889bfb6c26065e0b0f7f1e6aa9163edd9",
+        "tag": "v1.0.2",
+        "sha256": "0hl572j5l1bqg51rg545bavxs8kxya02ss3fj5fxvp9ylrnaqsx9"
       }
     },
     {
@@ -319,6 +387,9 @@
       },
       "source_file": "table_spec",
       "version_info": {
+        "commit": "f2fa60409630ec2d24acf84494fb55e1d28d593c",
+        "tag": "v2.1.0",
+        "sha256": "0sqwylfwcrwcla8pvflly7cms9rpfdx92m7k398isbb70qprcswq"
       }
     },
     {
@@ -342,6 +413,8 @@
       "source_file": "table_spec",
       "event": "LazyFile",
       "version_info": {
+        "commit": "335a6044be16d7701001059cba9baa36fbeef422",
+        "sha256": "1bqaljh4wbhxkyhdm75wgfgk29431mbji6z0sbzdvgs0qrzd1s9w"
       }
     },
     {
@@ -356,6 +429,9 @@
       "source_file": "table_spec",
       "event": "LazyFile",
       "version_info": {
+        "commit": "5bfcc89fd155b4ffc02d18ab3b7d19c2d4e246a7",
+        "tag": "v2.5.0",
+        "sha256": "10akq2j943m0cgr453arayqv1hx2brpqakrkqhkc0ambd2bkidh6"
       }
     },
     {
@@ -368,6 +444,9 @@
       "source_file": "table_spec",
       "lazy": true,
       "version_info": {
+        "commit": "50012918b2fc8357b87cff2a7f7f0446e47da174",
+        "tag": "v0.1.4",
+        "sha256": "1sn7vpsbwpyndsjyxb4af8fvz4sfhlbavvw6jjsv3h18sdvkh7nd"
       }
     },
     {
@@ -380,6 +459,8 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "b8c23159c0161f4b89196f74ee3a6d02cdc3a955",
+        "sha256": "12xpjwzzd26rxkv9kq1dn8797100zsznlbfzbb6c91myjn97cswm"
       }
     },
     {
@@ -397,6 +478,9 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "e139eb1101beb0250fea322f8c07a42f0f175688",
+        "tag": "v0.16.0",
+        "sha256": "1lc7nwxlm4ndf2d2m4y90dybscig39qh5ijacns5r40w31rfgpmc"
       }
     },
     {
@@ -414,6 +498,9 @@
       "source_file": "table_spec",
       "lazy": true,
       "version_info": {
+        "commit": "397ed3807e96b59709ef3292f0a3e253d5c1dc0a",
+        "tag": "v0.16.0",
+        "sha256": "110bglbbyafjym4md2slgccyjhf90bgg8h9h2ipya6cfqfs4pizy"
       }
     },
     {
@@ -431,6 +518,9 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "69864a2efb36c030877421634487fd90db1e4298",
+        "tag": "v0.16.0",
+        "sha256": "0avjjikmz3b8676hzcqck3r2lv0zxsdr8hqs65zn2dr12q8zh41r"
       }
     },
     {
@@ -442,6 +532,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "b529fb2ae9206ca1d84ee72b596deecbc088ac59",
+        "tag": "v2.71",
+        "sha256": "148zz016mjhvi6s5jnbn3jifa07bh7qrw91bni5yxckzmn5gx063"
       }
     },
     {
@@ -453,6 +546,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "5b9067899ee6a2538891573500e8fd6ff008440f",
+        "tag": "v0.100",
+        "sha256": "0d7gzk06f6z9wq496frbaavx90mcxvdhrswqd3pcayj2872i698d"
       }
     },
     {
@@ -475,7 +571,9 @@
       ],
       "lazy": true,
       "version_info": {
-        "commit": false
+        "commit": "42fc28ba918343ebfd5565147a42a26580579482",
+        "tag": "v0.10.0",
+        "sha256": "1ck1qslxwi18qxrga68blvk1dg9j4jn65xiw8snq5pk06waksnq9"
       }
     },
     {
@@ -487,6 +585,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "ed1cf48d5af252248c55f50b9427e8ce883a2c6b",
+        "tag": "v1.0.0",
+        "sha256": "1y2z2z8h8nmrpcg2igrbmbzs96y9dmcgfajbljqci5fbihqh7vbz"
       }
     },
     {
@@ -499,6 +600,8 @@
       "source_file": "table_spec",
       "event": "VeryLazy",
       "version_info": {
+        "commit": "71385f191ec06ffc60e80e6b0c9a9d5daed4824c",
+        "sha256": "0pp8s0wljwhc93jp47ad4pigqm8q7v173374c1vpydhx09qwl4ga"
       }
     },
     {
@@ -510,6 +613,8 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "0775e567b6c0be96d01a61795f7b64c1758262f6",
+        "sha256": "0h46n9hgyivqm43p8jq6dwnaln0y7ilayvd04vfb0mc8bmxcmrfi"
       }
     },
     {
@@ -521,6 +626,8 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "572f5660cf05f8cd8834e096d7b4c921ba18e175",
+        "sha256": "08q7vs7p4grav819b6hl5y9zla8bbb461b6m1w0mjz6n6rqjjc0p"
       }
     },
     {
@@ -532,6 +639,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "a3020c2cf4dfc4c4f390c4a21e84e35e46cf5d17",
+        "tag": "v3.15.0",
+        "sha256": "0841kdr25cmi3n0binxpgsa9z1spknn2diijl0b3qv4q4h8y7q8b"
       }
     },
     {
@@ -543,6 +653,9 @@
       },
       "source_file": "extra",
       "version_info": {
+        "commit": "327fff91fe6af358e990be7be1ec8b78037d2138",
+        "tag": "v1.7.0",
+        "sha256": "02527v0lnk5r5dpyb3avh4da081wgkd3sdam351fgdc2dn60xibq"
       }
     },
     {
@@ -557,6 +670,9 @@
       "cmd": "ConformInfo",
       "lazy": true,
       "version_info": {
+        "commit": "3543d000dafbc41cc7761d860cfdb24e82154f75",
+        "tag": "v9.1.0",
+        "sha256": "16wqwjmlavgzj468pikz92711kylgm0j8p2lp6ck03r8jhbpshd5"
       }
     },
     {
@@ -569,6 +685,8 @@
       "source_file": "table_spec",
       "event": "LazyFile",
       "version_info": {
+        "commit": "c4ca798ab95b316a768d51eaaaee48f64a4a46bc",
+        "sha256": "1zi3wrlq6jy7f0plp4q3f2dimb6apcwjxvfcxk7zq4c50bk9cgcx"
       }
     }
   ]

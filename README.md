@@ -156,13 +156,28 @@ programs.lazyvim = {
 
 **Options:**
 
-- **`"latest"` (default)**: Gets the exact versions LazyVim specifies
-  - Uses nixpkgs when it has the required version
-  - Builds from source when a specific version is needed
+- **`"latest"` (default)**: Ensures you get the latest plugin versions
+  - For plugins where LazyVim specifies a version: uses that exact version
+  - For plugins without specified versions: uses the latest release at the time of the last LazyVim update
+  - Uses nixpkgs when it matches the required version, otherwise builds from source
 
-- **`"nixpkgs"`**: Uses pre-built packages from nixpkgs
-  - Prefers nixpkgs packages when available
-  - Falls back to source builds for plugins not in nixpkgs
+- **`"nixpkgs"`**: Prioritizes stability and pre-built packages
+  - Always uses nixpkgs versions when available
+  - Only builds from source when LazyVim specifies a version not available in nixpkgs
+  - Provides maximum stability by relying on tested nixpkgs packages
+
+### Plugin Versioning
+
+This flake captures plugin versions at the time of each LazyVim release:
+
+1. **When LazyVim specifies a version** (rare): That exact version is used
+2. **When no version is specified** (most plugins): The latest GitHub release/commit at update time is captured
+
+This means:
+- You get reproducible builds with consistent plugin versions
+- Plugin versions are tied to LazyVim releases, not your system build time
+- The `"latest"` strategy replicates a fresh LazyVim installation from that point in time
+- **Note:** This may include bleeding-edge plugin versions that could have regressions
 
 ### Updating Plugins
 
@@ -177,8 +192,9 @@ home-manager switch  # or nixos-rebuild switch
 This gets you:
 - Updated nixpkgs packages (if using `pluginSource = "nixpkgs"`)
 - New plugin specifications when LazyVim releases a new version
+- Latest plugin versions captured at the time of the LazyVim update
 
-**Note:** Plugin versions are maintained in `plugins.json`, which is automatically updated by GitHub Actions when new LazyVim versions are released.
+**Note:** Plugin versions are maintained in `plugins.json`, which is automatically updated by GitHub Actions when new LazyVim versions are released. Each update captures the latest plugin versions available at that time.
 
 ## Development
 

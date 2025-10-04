@@ -14,22 +14,16 @@ LAZYVIM_REPO="https://github.com/LazyVim/LazyVim.git"
 
 # Parse command line arguments
 VERIFY_PACKAGES=""
-FETCH_VERSIONS=""
 for arg in "$@"; do
     case $arg in
         --verify)
             VERIFY_PACKAGES="1"
             echo "==> Package verification enabled"
             ;;
-        --fetch-versions)
-            FETCH_VERSIONS="1"
-            echo "==> Version fetching enabled"
-            ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
             echo "  --verify         Enable nixpkgs package verification"
-            echo "  --fetch-versions Fetch latest version info and SHA256 hashes for plugins"
             echo "  --help           Show this help message"
             exit 0
             ;;
@@ -41,10 +35,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> Getting latest LazyVim release from GitHub API..."
-LATEST_TAG=$(curl -s "https://api.github.com/repos/LazyVim/LazyVim/releases/latest" | jq -r '.tag_name')
+echo "==> Getting latest LazyVim release..."
+# Use git ls-remote to avoid GitHub API rate limits
+LATEST_TAG=$(git ls-remote --tags https://github.com/LazyVim/LazyVim 2>/dev/null | \
+    sed 's/.*refs\/tags\///' | \
+    grep -E '^v[0-9]+\.[0-9]+' | \
+    sort -rV | \
+    head -1)
 
-if [ "$LATEST_TAG" = "null" ] || [ -z "$LATEST_TAG" ]; then
+if [ -z "$LATEST_TAG" ]; then
     echo "Error: Could not fetch latest LazyVim release"
     exit 1
 fi
@@ -149,10 +148,5 @@ if [ "$UNMAPPED_COUNT" -gt 0 ]; then
     echo "4. Commit both plugins.json and plugin-mappings.nix together"
 fi
 
-# Fetch version information if requested
-if [ "$FETCH_VERSIONS" = "1" ]; then
-    echo ""
-    echo "==> Fetching latest version information for all plugins..."
-    UPDATE_MAIN_FILE=1 "$SCRIPT_DIR/fetch-plugin-versions.sh"
-    echo "==> plugins.json has been updated with version information"
-fi
+# Note: Version information is now fetched during extraction
+echo "==> Plugin extraction with version information completed"

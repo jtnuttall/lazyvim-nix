@@ -8,7 +8,6 @@ let
   # Load plugin data and mappings
   pluginData = pkgs.lazyvimPluginData or (builtins.fromJSON (builtins.readFile ./plugins.json));
   pluginMappings = pkgs.lazyvimPluginMappings or (import ./plugin-mappings.nix);
-  pluginOverrides = pkgs.lazyvimOverrides or (import ./overrides/default.nix { inherit pkgs; });
 
   # Helper function to build a vim plugin from source
   buildVimPluginFromSource = pluginSpec:
@@ -17,14 +16,16 @@ let
       repo = pluginSpec.repo or (builtins.elemAt (lib.splitString "/" pluginSpec.name) 1);
       versionInfo = pluginSpec.version_info or {};
 
-      # Handle different version scenarios:
-      # - commit: false means use latest (HEAD)
-      # - commit: "sha" means use specific commit
-      # - tag: "v1.0" means use specific tag
-      wantsLatest = versionInfo.commit == false;
-      rev = if wantsLatest then "HEAD"
-            else if versionInfo.tag != null then versionInfo.tag
-            else if versionInfo.commit != null && versionInfo.commit != false then versionInfo.commit
+      # Determine which version to build
+      # Priority: lazyvim_version > tag > latest_version > commit
+      rev = if versionInfo ? lazyvim_version && versionInfo.lazyvim_version != null && versionInfo.lazyvim_version != "*" then
+              versionInfo.lazyvim_version
+            else if versionInfo ? tag && versionInfo.tag != null then
+              versionInfo.tag
+            else if versionInfo ? latest_version && versionInfo.latest_version != null then
+              versionInfo.latest_version
+            else if versionInfo ? commit && versionInfo.commit != null && versionInfo.commit != "*" then
+              versionInfo.commit
             else "HEAD";
 
       # SHA256 hash is required for fetchFromGitHub
@@ -32,11 +33,11 @@ let
 
       # For latest/HEAD, use fetchGit which doesn't require a hash
       # For pinned versions with sha256, use fetchFromGitHub
-      src = if wantsLatest || sha256 == null then
+      src = if rev == "HEAD" || sha256 == null then
         builtins.fetchGit ({
           url = "https://github.com/${owner}/${repo}";
           shallow = true;
-        } // lib.optionalAttrs (!wantsLatest && rev != "HEAD") {
+        } // lib.optionalAttrs (rev != "HEAD") {
           ref = rev;
         })
       else
@@ -58,21 +59,6 @@ let
       else
         null;
 
-  # Function to check if nixpkgs plugin version matches required version
-  checkPluginVersion = pluginSpec: nixPlugin:
-    let
-      versionInfo = pluginSpec.version_info or {};
-      requiredCommit = versionInfo.commit or null;
-      requiredTag = versionInfo.tag or null;
-    in
-      # commit: false means LazyVim wants the latest version (not pinned)
-      if requiredCommit == false then
-        false  # Don't use nixpkgs version when LazyVim wants latest
-      else if cfg.pluginSource == "nixpkgs" or (requiredCommit == null && requiredTag == null) then
-        true
-      else
-        false;
-  
   # Helper function to resolve plugin names
   resolvePluginName = lazyName:
     let
@@ -90,51 +76,6 @@ let
         mapping
       else
         mapping.package;
-  
-  # Helper function to detect multi-module plugins
-  detectMultiModulePlugins = pluginSpecs:
-    let
-      isMultiModulePlugin = pluginSpec:
-        let
-          mapping = pluginMappings.${pluginSpec.name} or null;
-        in
-          mapping != null && builtins.isAttrs mapping && mapping ? module;
-    in
-      filter isMultiModulePlugin pluginSpecs;
-  
-  # Helper function to expand multi-module plugins into individual entries
-  expandMultiModulePlugins = pluginSpecs:
-    let
-      multiModulePlugins = detectMultiModulePlugins pluginSpecs;
-      regularPlugins = filter (spec: 
-        let
-          mapping = pluginMappings.${spec.name} or null;
-        in
-          mapping == null || builtins.isString mapping || !(mapping ? module)
-      ) pluginSpecs;
-      
-      # Create individual entries for multi-module plugins
-      expandedEntries = map (pluginSpec:
-        let
-          mapping = pluginMappings.${pluginSpec.name};
-          nixName = resolvePluginName pluginSpec.name;
-          plugin = pkgs.vimPlugins.${nixName} or null;
-        in
-          if plugin == null then
-            null
-          else
-            {
-              name = mapping.module;  # Use module name for LazyVim to find
-              nixName = nixName;
-              plugin = plugin;
-              originalSpec = pluginSpec;
-            }
-      ) multiModulePlugins;
-    in
-      {
-        regular = regularPlugins;
-        expanded = filter (entry: entry != null) expandedEntries;
-      };
 
   # Helper function to create dev path with proper symlinks for all plugins
   createDevPath = allPluginSpecs: allResolvedPlugins:
@@ -242,30 +183,60 @@ let
   corePlugins = pluginData.plugins or [];
   allPluginSpecs = corePlugins ++ userPlugins;
 
-  # Expand multi-module plugins and separate regular plugins
-  pluginSeparation = expandMultiModulePlugins allPluginSpecs;
+  # Note: Multi-module plugin expansion is handled in the final package building
 
-  # Smart plugin resolver that chooses between nixpkgs and source builds
+  # Enhanced plugin resolver with version-aware strategy
   resolvePlugin = pluginSpec:
     let
       nixName = resolvePluginName pluginSpec.name;
       nixPlugin = pkgs.vimPlugins.${nixName} or null;
       versionInfo = pluginSpec.version_info or {};
-      hasVersionInfo = versionInfo ? sha256 && versionInfo.sha256 != null && versionInfo.sha256 != "";
-      wantsLatest = versionInfo.commit or null == false;  # commit: false means want latest
 
-      # Decision logic for plugin source based on strategy
+      # Extract version information
+      lazyvimVersion = versionInfo.lazyvim_version or null;
+      latestVersion = versionInfo.latest_version or null;
+      tagVersion = versionInfo.tag or null;
+      commitVersion = versionInfo.commit or null;
+      nixpkgsVersion = if nixPlugin != null then
+        nixPlugin.src.rev or nixPlugin.version or null
+      else null;
+
+      # Determine target version and source strategy
+      # Priority: lazyvim_version > tag > latest_version > commit
+      targetVersion = if lazyvimVersion != null && lazyvimVersion != "*" then
+        lazyvimVersion
+      else if tagVersion != null then
+        tagVersion
+      else if latestVersion != null then
+        latestVersion
+      else
+        commitVersion;
+
+      # Check if versions match
+      nixpkgsMatchesTarget = targetVersion != null && nixpkgsVersion != null &&
+                            (targetVersion == nixpkgsVersion || targetVersion == "*");
+
+      # Decision logic based on strategy
       useNixpkgs =
         if cfg.pluginSource == "latest" then
-          # For "latest": use nixpkgs if it has the version we need
-          # Otherwise fall back to source
-          (nixPlugin != null && !wantsLatest && !hasVersionInfo)
+          # Strategy "latest": Use nixpkgs only if it matches our target version
+          nixpkgsMatchesTarget
         else  # cfg.pluginSource == "nixpkgs"
-          # For "nixpkgs": prefer nixpkgs, only use source as fallback
-          (nixPlugin != null);
+          # Strategy "nixpkgs": Prefer nixpkgs unless we need a specific version
+          if targetVersion != null && targetVersion != "*" then
+            # If we have a specific version, use nixpkgs only if it matches
+            nixpkgsMatchesTarget
+          else
+            # No specific version required, use nixpkgs if available
+            nixPlugin != null;
 
-      # Build from source if needed
-      sourcePlugin = if (hasVersionInfo || wantsLatest) then buildVimPluginFromSource pluginSpec else null;
+      # Build from source if we need a specific version not in nixpkgs
+      needsSourceBuild = targetVersion != null && !useNixpkgs && versionInfo.sha256 != null;
+
+      # Build source plugin with the target version
+      sourcePlugin = if needsSourceBuild then
+        buildVimPluginFromSource pluginSpec
+      else null;
 
       # Final plugin selection
       finalPlugin =
@@ -274,14 +245,18 @@ let
         else if sourcePlugin != null then
           sourcePlugin
         else if nixPlugin != null then
-          nixPlugin  # Fallback to nixpkgs even if outdated
+          nixPlugin  # Fallback to nixpkgs even if version doesn't match
         else
           null;
 
-      # Debug trace for important plugins
+      # Enhanced debug trace
       debugTrace =
-        if pluginSpec.name == "LazyVim/LazyVim" && finalPlugin != null then
-          builtins.trace "LazyVim: Using ${if useNixpkgs then "nixpkgs" else "source build"} version"
+        if builtins.elem pluginSpec.name ["LazyVim/LazyVim" "folke/lazy.nvim"] then
+          builtins.trace "${pluginSpec.name}: Using ${
+            if useNixpkgs then "nixpkgs (${if nixpkgsVersion != null then nixpkgsVersion else "unknown"})"
+            else if sourcePlugin != null then "source (${if targetVersion != null then targetVersion else "latest"})"
+            else "fallback nixpkgs"
+          }"
         else
           (x: x);
     in
