@@ -214,27 +214,6 @@ nix develop
 ./test/test.sh
 ```
 
-### Automated Updates
-
-This flake includes GitHub workflows for automated maintenance:
-
-1. **Daily Plugin Updates** (`update-plugins.yml`)
-   - Runs daily at 2 AM UTC
-   - Checks for new LazyVim releases
-   - Creates PRs with plugin updates
-   - Automatically adds verified plugin mappings
-
-2. **On-Demand Mapping Updates** (`update-mappings.yml`)
-   - Triggered manually via GitHub Actions
-   - Or by commenting `/update-mappings` on a PR
-   - Verifies and adds new plugin mappings
-
-The workflows will:
-- ✅ Verify new plugins exist in nixpkgs
-- 🔄 Automatically add verified mappings
-- 📋 Create PRs with detailed change summaries
-- 🎯 Handle multi-module plugins correctly
-
 ## Acknowledgments
 
 - [LazyVim](https://github.com/LazyVim/LazyVim) by [@folke](https://github.com/folke) - The amazing Neovim configuration framework that this flake packages
