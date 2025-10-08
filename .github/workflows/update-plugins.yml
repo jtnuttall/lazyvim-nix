@@ -12,6 +12,8 @@ on:
       - 'scripts/update-plugins.sh'
       - 'scripts/extract-plugins.lua'
       - 'scripts/suggest-mappings.lua'
+      - 'scripts/generate-extras-metadata.sh'
+      - 'scripts/extract-extras-plugins.lua'
       - '.github/workflows/update-plugins.yml'
 
 permissions:
@@ -67,12 +69,15 @@ jobs:
             echo "update_needed=false" >> $GITHUB_OUTPUT
           fi
           
-      - name: Update plugins
+      - name: Update plugins and extras
         if: steps.check-updates.outputs.update_needed == 'true'
         id: update-plugins
         run: |
-          # Run with verification enabled
+          # Update core plugins with verification enabled
           nix develop --command ./scripts/update-plugins.sh --verify
+
+          # Update extras metadata
+          ./scripts/generate-extras-metadata.sh
           
           # Check if there are unmapped plugins
           UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins // 0' plugins.json)
@@ -124,10 +129,11 @@ jobs:
           commit-message: "chore: update LazyVim plugins to ${{ steps.check-updates.outputs.latest_version }}"
           title: "Update LazyVim plugins to ${{ steps.check-updates.outputs.latest_version }}"
           body: |
-            This PR updates the LazyVim plugin specifications to the latest version.
-            
+            This PR updates the LazyVim plugin specifications and extras metadata to the latest version.
+
             ## Changes
             - Updated `plugins.json` with latest LazyVim plugin list
+            - Updated `extras.nix` with latest LazyVim extras metadata
             - Version: ${{ steps.check-updates.outputs.latest_version }}
             ${{ steps.update-plugins.outputs.has_verified_mappings == 'true' && '- Added new verified plugin mappings to `plugin-mappings.nix`' || '' }}
             ${{ steps.update-plugins.outputs.unmapped_count > 0 && steps.update-plugins.outputs.has_verified_mappings != 'true' && '- ⚠️ Found unmapped plugins that need manual review (see mapping-analysis-report.md)' || '' }}
@@ -150,6 +156,7 @@ jobs:
           add-paths: |
             plugins.json
             plugin-mappings.nix
+            extras.nix
           
   test-flake:
     runs-on: ubuntu-latest
