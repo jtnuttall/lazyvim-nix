@@ -2,6 +2,8 @@
 
 A bleeding edge Nix flake for [LazyVim](https://www.lazyvim.org/) for NixOS and home-manager users.
 
+This flake tracks LazyVim releases automatically, and uses the latest plugin versions at the time of a LazyVim release.
+
 ## Quick Start
 
 ```nix
