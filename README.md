@@ -151,8 +151,17 @@ programs.lazyvim = {
     lang.nix.enable = true;
     lang.python.enable = true;
   };
+
+  # IMPORTANT: Extras don't install treesitter parsers automatically
+  # You must add them manually for syntax highlighting
+  treesitterParsers = with pkgs.tree-sitter-grammars; [
+    tree-sitter-nix
+    tree-sitter-python
+  ];
 };
 ```
+
+**Note**: LazyVim extras configure language features (LSP, formatters, etc.) but **do not** install treesitter parsers. You must add parsers manually via `treesitterParsers` to get syntax highlighting.
 
 ### Installing Tools and LSP Servers
 
