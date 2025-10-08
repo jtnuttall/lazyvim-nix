@@ -1,14 +1,8 @@
 # lazyvim-nix
 
-A Nix flake for LazyVim that just works
-
-## What is this?
-
-This flake provides [LazyVim](https://www.lazyvim.org/) as a home-manager module, allowing you to install and configure LazyVim declaratively on NixOS. It tracks LazyVim releases and automatically updates plugin specifications within days of each release. By default, it pins plugin versions to match what a fresh LazyVim installation would get at release time, ensuring a consistent and reproducible configuration while keeping you current with upstream LazyVim.
+A bleeding edge Nix flake for [LazyVim](https://www.lazyvim.org/) for NixOS and home-manager users.
 
 ## Quick Start
-
-1. Add the flake to your `flake.nix`:
 
 ```nix
 {
@@ -24,7 +18,19 @@ This flake provides [LazyVim](https://www.lazyvim.org/) as a home-manager module
 }
 ```
 
-2. Enable LazyVim in your home-manager configuration:
+```nix
+{
+  imports = [ lazyvim.homeManagerModules.default ];
+
+  programs.lazyvim.enable = true;
+}
+```
+
+That's it! Open `nvim` and enjoy LazyVim.
+
+## Complete Configuration Example
+
+Here's every available option with explanations:
 
 ```nix
 {
@@ -32,192 +38,329 @@ This flake provides [LazyVim](https://www.lazyvim.org/) as a home-manager module
 
   programs.lazyvim = {
     enable = true;
+
+    # Plugin source strategy:
+    # - "latest" (default): Uses exact versions from LazyVim specifications
+    # - "nixpkgs": Prioritizes nixpkgs versions for stability
+    pluginSource = "latest";
+
+    # LazyVim extras - enable by category and name
+    extras = {
+      # Language support
+      lang = {
+        nix = {
+          enable = true;
+          # Optional: Override default configuration
+          config = ''
+            "stevearc/conform.nvim",
+            opts = {
+              formatters_by_ft = {
+                nix = { "alejandra" }
+              }
+            }
+          '';
+        };
+        python.enable = true;
+      };
+
+      editor = {
+        telescope.enable = true;
+        neo-tree.enable = true;
+      };
+    };
+
+    # LSP servers, formatters, and tools (installed via Nix)
+    extraPackages = with pkgs; [
+      # LSP servers
+      lua-language-server
+      nixd
+      rust-analyzer
+
+      # Formatters
+      alejandra
+      stylua
+
+      # Tools
+      ripgrep
+      fd
+    ];
+
+    # Treesitter parsers (managed by Nix, not auto-installed)
+    treesitterParsers = with pkgs.tree-sitter-grammars; [
+      tree-sitter-bash
+      tree-sitter-lua
+    ];
+
+    # LazyVim configuration files (maps to lua/config/)
+    config = {
+      # lua/config/options.lua
+      options = ''
+        vim.opt.relativenumber = false
+        vim.opt.wrap = true
+      '';
+
+      # lua/config/keymaps.lua
+      keymaps = ''
+        vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", { desc = "Save" })
+      '';
+
+      # lua/config/autocmds.lua
+      autocmds = ''
+        vim.api.nvim_create_autocmd("FocusLost", {
+          command = "silent! wa",
+        })
+      '';
+    };
+
+    # Plugin configurations (maps to lua/plugins/)
+    plugins = {
+      # Each key creates lua/plugins/{key}.lua
+      colorscheme = ''
+        return {
+          "folke/tokyonight.nvim",
+          opts = {
+            style = "night",
+            transparent = true,
+          },
+        }
+      '';
+    };
   };
 }
 ```
 
-3. That's it! Open `nvim` and enjoy LazyVim.
+## Configuration Guide
 
-## Configuration
+### Starting Simple
+
+The minimal configuration just enables LazyVim:
+
+```nix
+programs.lazyvim.enable = true;
+```
 
 ### Adding Language Support
+
+Use LazyVim extras for comprehensive language support:
 
 ```nix
 programs.lazyvim = {
   enable = true;
-  
-  # Add LSP servers and tools
+
+  extras = {
+    lang.nix.enable = true;
+    lang.python.enable = true;
+  };
+};
+```
+
+### Installing Tools and LSP Servers
+
+Since Mason.nvim is disabled, install tools through Nix:
+
+```nix
+programs.lazyvim = {
+  enable = true;
+
   extraPackages = with pkgs; [
-    rust-analyzer
-    gopls
-    nodePackages.typescript-language-server
-  ];
-  
-  # Add treesitter parsers
-  treesitterParsers = with pkgs.tree-sitter-grammars; [
-    tree-sitter-rust
-    tree-sitter-go
-    tree-sitter-typescript
-    tree-sitter-tsx
+    # LSP servers
+    nixd
+    pyright
+
+    # Formatters
+    black
+    alejandra
+
+    # Tools
+    ripgrep
+    fd
   ];
 };
 ```
 
-### Customizing LazyVim
+### Managing Treesitter Parsers
 
-Configure LazyVim using the same directory structure as a standard LazyVim setup, but directly in your Nix configuration:
+Treesitter parsers are managed through Nix instead of auto-installing:
 
 ```nix
 programs.lazyvim = {
   enable = true;
 
-  # Maps to lua/config/ directory
+  treesitterParsers = with pkgs.tree-sitter-grammars; [
+    tree-sitter-bash
+    tree-sitter-lua
+    tree-sitter-python
+  ];
+};
+```
+
+### Customizing LazyVim Settings
+
+Add your own Vim options, keymaps, and autocmds:
+
+```nix
+programs.lazyvim = {
+  enable = true;
+
   config = {
-    # Custom autocmds → lua/config/autocmds.lua
-    autocmds = ''
-      vim.api.nvim_create_autocmd("FocusLost", {
-        command = "silent! wa",
-      })
-    '';
-
-    # Custom keymaps → lua/config/keymaps.lua
-    keymaps = ''
-      vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", { desc = "Save file" })
-    '';
-
-    # Custom options → lua/config/options.lua
     options = ''
       vim.opt.relativenumber = false
       vim.opt.wrap = true
     '';
-  };
 
-  # Maps to lua/plugins/ directory
-  plugins = {
-    # Each key becomes lua/plugins/{key}.lua
-    custom-theme = ''
-      return {
-        "folke/tokyonight.nvim",
-        opts = { style = "night", transparent = true },
-      }
-    '';
-    
-    lsp-config = ''
-      return {
-        "neovim/nvim-lspconfig",
-        opts = function(_, opts)
-          opts.servers.rust_analyzer = {
-            settings = {
-              ["rust-analyzer"] = {
-                checkOnSave = { command = "clippy" },
-              },
-            },
-          }
-          return opts
-        end,
-      }
+    keymaps = ''
+      vim.keymap.set("n", "<leader>w", "<cmd>w<cr>", { desc = "Save" })
     '';
   };
 };
 ```
 
-## How It Works
+### Adding and Configuring Plugins
 
-This flake:
-- Tracks LazyVim releases automatically
-- Pre-fetches all default LazyVim plugins through Nix
-- Handles Nix-specific quirks (disables Mason.nvim, manages treesitter parsers)
-
-## Differences from Regular LazyVim
-
-- **No Mason.nvim**: LSP servers and tools are installed via `extraPackages`
-- **Treesitter parsers**: Managed via `treesitterParsers` option
-- **Plugins are pinned**: Plugin versions are fixed to match LazyVim's specifications
-- **Plugin updates**: Happen through `nix flake update` instead of `:Lazy update`
-
-## Plugin Management
-
-### How Plugins Work
-
-Plugins are pinned to specific versions that match LazyVim's specifications. You cannot manually update individual plugins - they are updated as a set when LazyVim releases new versions.
-
-### Plugin Source Strategy
-
-Configure where plugins are sourced from:
+Add custom plugins or override existing ones:
 
 ```nix
 programs.lazyvim = {
   enable = true;
 
-  # Default: "latest"
-  pluginSource = "latest";  # or "nixpkgs"
+  plugins = {
+    # Add a new plugin
+    my-theme = ''
+      return {
+        "catppuccin/nvim",
+        name = "catppuccin",
+        opts = { flavour = "mocha" },
+      }
+    '';
+
+    # Override existing plugin configuration
+    telescope = ''
+      return {
+        "nvim-telescope/telescope.nvim",
+        opts = {
+          defaults = {
+            layout_strategy = "horizontal",
+          },
+        },
+      }
+    '';
+  };
 };
 ```
 
-**Options:**
+### Customizing LazyVim Extras
 
-- **`"latest"` (default)**: Ensures you get the latest plugin versions
-  - For plugins where LazyVim specifies a version: uses that exact version
-  - For plugins without specified versions: uses the latest release at the time of the last LazyVim update
-  - Uses nixpkgs when it matches the required version, otherwise builds from source
+Override default configurations for extras:
 
-- **`"nixpkgs"`**: Prioritizes stability and pre-built packages
-  - Always uses nixpkgs versions when available
-  - Only builds from source when LazyVim specifies a version not available in nixpkgs
-  - Provides maximum stability by relying on tested nixpkgs packages
+```nix
+programs.lazyvim = {
+  enable = true;
 
-### Plugin Versioning
+  extras = {
+    lang.rust = {
+      enable = true;
+      config = ''
+        opts = {
+          servers = {
+            rust_analyzer = {
+              settings = {
+                ["rust-analyzer"] = {
+                  cargo = {
+                    features = "all",
+                  },
+                },
+              },
+            },
+          },
+        }
+      '';
+    };
+  };
+};
+```
 
-This flake captures plugin versions at the time of each LazyVim release:
+### Plugin Source Strategy
 
-1. **When LazyVim specifies a version** (rare): That exact version is used
-2. **When no version is specified** (most plugins): The latest GitHub release/commit at update time is captured
+Control where plugins are sourced from:
 
-This means:
-- You get reproducible builds with consistent plugin versions
-- Plugin versions are tied to LazyVim releases, not your system build time
-- The `"latest"` strategy replicates a fresh LazyVim installation from that point in time
-- **Note:** This may include bleeding-edge plugin versions that could have regressions
+```nix
+programs.lazyvim = {
+  enable = true;
 
-### Updating Plugins
+  # "latest": Latest versions at LazyVim release time (default)
+  # "nixpkgs": Prefer nixpkgs versions
+  pluginSource = "nixpkgs";
+};
+```
+
+## Available LazyVim Extras
+
+### Categories
+
+- **ai**: AI coding assistants (copilot, codeium, supermaven)
+- **coding**: Editing enhancements (yanky, luasnip, mini-surround)
+- **dap**: Debug adapter protocol support
+- **editor**: Editor features (telescope, fzf, neo-tree, aerial)
+- **formatting**: Code formatters (prettier, black)
+- **lang**: Language support (50+ languages including nix, rust, python, go)
+- **linting**: Linters (eslint)
+- **lsp**: LSP tools (none-ls, neoconf)
+- **test**: Testing frameworks
+- **ui**: UI enhancements (alpha, dashboard, mini-animate)
+- **util**: Utilities (chezmoi, gitui)
+
+## How It Works
+
+This flake:
+1. **Tracks LazyVim releases** - Automatically updates when LazyVim releases
+2. **Manages plugins through Nix** - All plugins are pre-fetched, no runtime downloads
+3. **Disables Mason.nvim** - LSP servers and tools come from Nix packages
+4. **Handles Nix quirks** - Treesitter parsers managed declaratively
+5. **Pins plugin versions** - Reproducible builds with consistent versions
+
+### Differences from Regular LazyVim
+
+| Regular LazyVim | lazyvim-nix |
+|-----------------|-------------|
+| Mason.nvim installs tools | Tools via `extraPackages` |
+| Auto-installs treesitter parsers | Parsers via `treesitterParsers` |
+| `:Lazy update` updates plugins | `nix flake update` updates plugins |
+| Plugin versions float | Versions pinned to LazyVim releases |
+
+## Updating
 
 ```bash
-# Update the flake inputs
+# Update the flake (gets new LazyVim version if available)
 nix flake update
 
 # Rebuild your configuration
 home-manager switch  # or nixos-rebuild switch
 ```
 
-This gets you:
-- Updated nixpkgs packages (if using `pluginSource = "nixpkgs"`)
-- New plugin specifications when LazyVim releases a new version
-- Latest plugin versions captured at the time of the LazyVim update
-
-**Note:** Plugin versions are maintained in `plugins.json`, which is automatically updated by GitHub Actions when new LazyVim versions are released. Each update captures the latest plugin versions available at that time.
-
 ## Development
-
-### Manual Updates
 
 ```bash
 # Enter development shell
 nix develop
 
-# Update plugin list from LazyVim
+# Update plugin specifications from LazyVim
 ./scripts/update-plugins.sh
-
-# Update with nixpkgs verification (recommended)
-./scripts/update-plugins.sh --verify
 
 # Run tests
 ./test/test.sh
 ```
 
+### Automated Updates
+
+This flake includes GitHub workflows that:
+- Check for new LazyVim releases daily
+- Update plugin specifications automatically
+- Create PRs with detailed changelogs
+
 ## Acknowledgments
 
-- [LazyVim](https://github.com/LazyVim/LazyVim) by [@folke](https://github.com/folke) - The amazing Neovim configuration framework that this flake packages
-- This flake is heavily inspired by the setup from [@azuwis](https://github.com/azuwis). Thank you for the great foundation!
+- [LazyVim](https://github.com/LazyVim/LazyVim) by [@folke](https://github.com/folke)
+- Inspired by [@azuwis](https://github.com/azuwis)'s Nix setup
 
 ## License
 

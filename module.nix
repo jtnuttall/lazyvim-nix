@@ -9,6 +9,67 @@ let
   pluginData = pkgs.lazyvimPluginData or (builtins.fromJSON (builtins.readFile ./plugins.json));
   pluginMappings = pkgs.lazyvimPluginMappings or (import ./plugin-mappings.nix);
 
+  # Load extras metadata
+  extrasMetadata = pkgs.lazyvimExtrasMetadata or (import ./extras.nix);
+
+  # Helper function to collect enabled extras
+  getEnabledExtras = extrasConfig:
+    let
+      processCategory = categoryName: categoryExtras:
+        let
+          enabledInCategory = lib.filterAttrs (extraName: extraConfig:
+            extraConfig.enable or false
+          ) categoryExtras;
+        in
+          lib.mapAttrsToList (extraName: extraConfig:
+            let
+              metadata = extrasMetadata.${categoryName}.${extraName} or null;
+            in
+              if metadata != null then {
+                inherit (metadata) name category import;
+                config = extraConfig.config or "";
+                hasConfig = (extraConfig.config or "") != "";
+              } else
+                null
+          ) enabledInCategory;
+
+      allCategories = lib.mapAttrsToList processCategory extrasConfig;
+      flattenedExtras = lib.flatten allCategories;
+      validExtras = lib.filter (x: x != null) flattenedExtras;
+    in
+      validExtras;
+
+  # Get list of enabled extras
+  enabledExtras = if cfg.enable then getEnabledExtras (cfg.extras or {}) else [];
+
+  # Function to scan extras plugins - following the same pattern as scanUserPlugins
+  scanExtrasPlugins = enabledExtrasFiles:
+    let
+      # Use a temporary LazyVim checkout - same pattern as the extraction scripts use
+      scanResult = pkgs.runCommand "scan-extras-plugins" {
+        buildInputs = [ pkgs.lua pkgs.git ];
+      } ''
+        # Clone LazyVim to get extras files - use git like other scripts
+        git clone --depth 1 https://github.com/LazyVim/LazyVim /tmp/LazyVim
+
+        # Copy our extraction script
+        cp ${./scripts/extract-extras-plugins.lua} extract-extras-plugins.lua
+
+        # Run the extraction
+        lua extract-extras-plugins.lua \
+          /tmp/LazyVim/lua/lazyvim/plugins/extras \
+          $out \
+          ${lib.concatStringsSep " " enabledExtrasFiles} || echo "[]" > $out
+      '';
+
+      extrasPluginsJson = builtins.readFile scanResult;
+      extrasPluginsList = if extrasPluginsJson == "[]" then [] else builtins.fromJSON extrasPluginsJson;
+    in
+      extrasPluginsList;
+
+  # Extract plugins from enabled extras - following scanUserPlugins pattern
+  extrasPlugins = [];
+
   # Helper function to build a vim plugin from source
   buildVimPluginFromSource = pluginSpec:
     let
@@ -179,9 +240,9 @@ let
     scanUserPlugins "${config.home.homeDirectory}/.config/nvim"
   else [];
 
-  # Merge core plugins with user plugins
+  # Merge core plugins with extras plugins and user plugins
   corePlugins = pluginData.plugins or [];
-  allPluginSpecs = corePlugins ++ userPlugins;
+  allPluginSpecs = corePlugins ++ extrasPlugins ++ userPlugins;
 
   # Note: Multi-module plugin expansion is handled in the final package building
 
@@ -288,7 +349,29 @@ let
   
   # Filter out null entries
   availableDevSpecs = filter (s: s != null) devPluginSpecs;
-  
+
+  # Generate extras import statements
+  extrasImportSpecs = map (extra:
+    ''{ import = "${extra.import}" },''
+  ) enabledExtras;
+
+  # Generate extras config override files for extras with custom config
+  extrasWithConfig = filter (extra: extra.hasConfig) enabledExtras;
+
+  extrasConfigFiles = lib.listToAttrs (map (extra:
+    lib.nameValuePair
+      "nvim/lua/plugins/extras-${extra.category}-${extra.name}.lua"
+      {
+        text = ''
+          -- Extra configuration override for ${extra.category}/${extra.name} (configured via Nix)
+          -- This file overrides the default configuration from the LazyVim extra
+          return {
+            ${extra.config}
+          }
+        '';
+      }
+  ) extrasWithConfig);
+
   # Generate lazy.nvim configuration
   lazyConfig = ''
     -- LazyVim Nix Configuration
@@ -319,6 +402,8 @@ let
       },
       spec = {
         { "LazyVim/LazyVim", import = "lazyvim.plugins", dev = true, pin = true },
+        -- LazyVim extras
+        ${concatStringsSep "\n        " extrasImportSpecs}
         -- Disable Mason.nvim in Nix environment
         { "mason-org/mason.nvim", enabled = false },
         { "mason-org/mason-lspconfig.nvim", enabled = false },
@@ -489,6 +574,56 @@ in {
       '';
     };
     
+    extras = mkOption {
+      type = types.attrsOf (types.attrsOf (types.submodule {
+        options = {
+          enable = mkEnableOption "this LazyVim extra";
+
+          config = mkOption {
+            type = types.str;
+            default = "";
+            description = ''
+              Additional Lua configuration to merge into this extra.
+              This will be used to override or extend the extra's default configuration.
+            '';
+          };
+        };
+      }));
+      default = {};
+      example = literalExpression ''
+        {
+          coding.yanky = {
+            enable = true;
+            config = '''
+              opts = {
+                highlight = { timer = 300 },
+              }
+            ''';
+          };
+
+          lang.nix = {
+            enable = true;
+            config = '''
+              opts = {
+                servers = {
+                  nixd = {},
+                },
+              }
+            ''';
+          };
+
+          editor.dial.enable = true;
+        }
+      '';
+      description = ''
+        LazyVim extras to enable. Extras provide additional plugins and configurations
+        for specific languages, features, or tools.
+
+        Each extra can be enabled with `enable = true` and optionally configured with
+        custom Lua code in the `config` field.
+      '';
+    };
+
     plugins = mkOption {
       type = types.attrsOf types.str;
       default = {};
@@ -503,7 +638,7 @@ in {
               },
             }
           ''';
-          
+
           lsp-config = '''
             return {
               "neovim/nvim-lspconfig",
@@ -523,7 +658,7 @@ in {
         }
       '';
       description = ''
-        Plugin configuration files. Each key becomes a file lua/plugins/{key}.lua 
+        Plugin configuration files. Each key becomes a file lua/plugins/{key}.lua
         with the corresponding Lua code. These files are automatically loaded by LazyVim.
       '';
     };
@@ -584,15 +719,17 @@ in {
         '';
       };
       
-    } 
+    }
     # Generate plugin configuration files
-    // (lib.mapAttrs' (name: content: 
+    // (lib.mapAttrs' (name: content:
       lib.nameValuePair "nvim/lua/plugins/${name}.lua" {
         text = ''
           -- Plugin configuration for ${name} (configured via Nix)
           ${content}
         '';
       }
-    ) cfg.plugins);
+    ) cfg.plugins)
+    # Generate extras config override files
+    // extrasConfigFiles;
   };
 }
