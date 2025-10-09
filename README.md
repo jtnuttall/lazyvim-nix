@@ -95,18 +95,7 @@ programs.lazyvim = {
 
 - 🚀 **Always up-to-date** - Automatically tracks LazyVim releases with latest plugin versions
 - ✅ **Zero-configuration setup** - Just enable and go
-- ✅ **50+ language support** - Via LazyVim extras
-- ✅ **Reproducible builds** - All plugins managed through Nix
-- ✅ **No runtime downloads** - Everything pre-fetched
-
-## How It Differs from Regular LazyVim
-
-| Regular LazyVim | lazyvim-nix |
-|-----------------|-------------|
-| Mason.nvim installs tools | Tools via `extraPackages` |
-| Auto-installs treesitter parsers | Parsers via `treesitterParsers` |
-| `:Lazy update` updates plugins | `nix flake update` updates plugins |
-| Plugin versions float | Versions pinned to LazyVim releases |
+- 🤖 **Reproducible builds** - All plugins managed through Nix
 
 ## Documentation
 
