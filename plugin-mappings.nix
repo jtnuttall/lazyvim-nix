@@ -27,9 +27,12 @@
   "nvim-mini/mini.ai" = { package = "mini-nvim"; module = "mini.ai"; };
   "nvim-mini/mini.bufremove" = { package = "mini-nvim"; module = "mini.bufremove"; };
   "nvim-mini/mini.comment" = { package = "mini-nvim"; module = "mini.comment"; };
+  "nvim-mini/mini.diff" = { package = "mini-nvim"; module = "mini.diff"; };
   "nvim-mini/mini.icons" = { package = "mini-nvim"; module = "mini.icons"; };
   "nvim-mini/mini.indentscope" = { package = "mini-nvim"; module = "mini.indentscope"; };
+  "nvim-mini/mini.move" = { package = "mini-nvim"; module = "mini.move"; };
   "nvim-mini/mini.pairs" = { package = "mini-nvim"; module = "mini.pairs"; };
+  "nvim-mini/mini.starter" = { package = "mini-nvim"; module = "mini.starter"; };
   "nvim-mini/mini.surround" = { package = "mini-nvim"; module = "mini.surround"; };
 
   # Legacy mini.nvim references (LazyVim extras still use these)
@@ -131,10 +134,52 @@
   
   # Core dependencies
   "nvim-lua/plenary.nvim" = "plenary-nvim";
-  
+
   # Miscellaneous
   "kevinhwang91/nvim-ufo" = "nvim-ufo";
   "kevinhwang91/promise-async" = "promise-async";
   "windwp/nvim-autopairs" = "nvim-autopairs";
   "mfussenegger/nvim-lint" = "nvim-lint";
+
+  # Verified mappings from plugin extraction analysis (2025-10-10)
+  "p00f/clangd_extensions.nvim" = "clangd_extensions-nvim";
+  "mfussenegger/nvim-jdtls" = "nvim-jdtls";
+  "b0o/SchemaStore.nvim" = "SchemaStore-nvim";
+  "nvim-neotest/neotest" = "neotest";
+  "julienvincent/nvim-paredit" = "nvim-paredit";
+  "m00qek/baleia.nvim" = "baleia-nvim";
+  "Olical/conjure" = "conjure";
+  "mrcjkb/haskell-tools.nvim" = "haskell-tools-nvim";
+  "mrcjkb/haskell-snippets.nvim" = "haskell-snippets-nvim";
+  "luc-tielen/telescope_hoogle" = "telescope_hoogle";
+  "Hoffs/omnisharp-extended-lsp.nvim" = "omnisharp-extended-lsp-nvim";
+  "nvimtools/none-ls.nvim" = "none-ls-nvim";
+  "iamcco/markdown-preview.nvim" = "markdown-preview-nvim";
+  "MeanderingProgrammer/render-markdown.nvim" = "render-markdown-nvim";
+  "lervag/vimtex" = "vimtex";
+  "tpope/vim-dadbod" = "vim-dadbod";
+  "kristijanhusak/vim-dadbod-completion" = "vim-dadbod-completion";
+  "kristijanhusak/vim-dadbod-ui" = "vim-dadbod-ui";
+  "folke/edgy.nvim" = "edgy-nvim";
+  "towolf/vim-helm" = "vim-helm";
+  "nvim-telescope/telescope.nvim" = "telescope-nvim";
+  "Civitasv/cmake-tools.nvim" = "cmake-tools-nvim";
+  "scalameta/nvim-metals" = "nvim-metals";
+  "CopilotC-Nvim/CopilotChat.nvim" = "CopilotChat-nvim";
+  "pwntester/octo.nvim" = "octo-nvim";
+  "ahmedkhalf/project.nvim" = "project-nvim";
+  "ggandor/flit.nvim" = "flit-nvim";
+  "ggandor/leap.nvim" = "leap-nvim";
+  "tpope/vim-repeat" = "vim-repeat";
+  "stevearc/overseer.nvim" = "overseer-nvim";
+  "hedyhli/outline.nvim" = "outline-nvim";
+  "stevearc/aerial.nvim" = "aerial-nvim";
+  "ThePrimeagen/refactoring.nvim" = "refactoring-nvim";
+  "SmiteshP/nvim-navic" = "nvim-navic";
+
+  # Additional unmapped plugins (2025-10-10)
+  "R-nvim/R.nvim" = "R-nvim";
+  "mfussenegger/nvim-ansible" = "nvim-ansible";
+  "alker0/chezmoi.vim" = "chezmoi-vim";
+  "xvzc/chezmoi.nvim" = "chezmoi-nvim";
 }

@@ -1,96 +1,14 @@
 {
   "version": "v15.7.1",
   "commit": "dc1ffa5bcb66f46284f91a8593dda5c7c54a1824",
-  "generated": "2025-10-10 12:13:45",
+  "generated": "2025-10-10 13:16:54",
   "extraction_report": {
     "total_plugins": 87,
-    "mapped_plugins": 46,
-    "unmapped_plugins": 41,
-    "multi_module_plugins": 6,
-    "mapping_suggestions": [
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      },
-      {
-      }
-    ]
+    "mapped_plugins": 87,
+    "unmapped_plugins": 0,
+    "multi_module_plugins": 9,
+    "mapping_suggestions": {
+    }
   },
   "plugins": [
     {
@@ -1090,6 +1008,11 @@
       "loadOrder": 60,
       "dependencies": {
       },
+      "multiModule": {
+        "basePackage": "mini-nvim",
+        "module": "mini.diff",
+        "repository": "nvim-mini/mini.nvim"
+      },
       "source_file": "extras.editor.mini-diff",
       "is_core": false,
       "event": "VeryLazy",
@@ -1148,6 +1071,11 @@
       "loadOrder": 63,
       "dependencies": {
       },
+      "multiModule": {
+        "basePackage": "mini-nvim",
+        "module": "mini.move",
+        "repository": "nvim-mini/mini.nvim"
+      },
       "source_file": "extras.editor.mini-move",
       "is_core": false,
       "event": "VeryLazy",
@@ -1184,6 +1112,11 @@
       "repo": "mini.starter",
       "loadOrder": 65,
       "dependencies": {
+      },
+      "multiModule": {
+        "basePackage": "mini-nvim",
+        "module": "mini.starter",
+        "repository": "nvim-mini/mini.nvim"
       },
       "source_file": "extras.ui.mini-starter",
       "is_core": false,
