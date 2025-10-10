@@ -245,7 +245,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	end
 
 	-- Function to collect plugin specs recursively
-	local function collect_plugin(spec)
+	local function collect_plugin(spec, is_core_plugin, source_module)
 		if type(spec) == "string" then
 			local normalized = normalize_name(spec)
 			-- Only add if it's in owner/repo format
@@ -260,7 +260,8 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 					owner = owner,
 					repo = repo,
 					dependencies = {},
-					source_file = "string_spec",
+					source_file = source_module or "string_spec",
+					is_core = is_core_plugin or false,
 					-- Enhanced version info structure
 					version_info = {
 						lazyvim_version = nil,
@@ -322,7 +323,8 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 						enabled = spec.enabled,
 						lazy = spec.lazy,
 						priority = spec.priority,
-						source_file = "table_spec",
+						source_file = source_module or "table_spec",
+						is_core = is_core_plugin or false,
 						-- Enhanced version info structure
 						version_info = {
 							-- LazyVim specified version (if any)
@@ -372,7 +374,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 			-- Recursively process nested specs
 			for _, v in ipairs(spec) do
 				if type(v) == "table" or type(v) == "string" then
-					collect_plugin(v)
+					collect_plugin(v, is_core_plugin, source_module)
 				end
 			end
 
@@ -380,11 +382,179 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 			if spec.dependencies then
 				if type(spec.dependencies) == "table" then
 					for _, dep in ipairs(spec.dependencies) do
-						collect_plugin(dep)
+						collect_plugin(dep, is_core_plugin, source_module)
 					end
 				end
 			end
 		end
+	end
+
+	-- Function to extract plugins from a single LazyVim extra file
+	local function extract_plugins_from_extra(extra_path, relative_path)
+		-- Read the extra file
+		local file = io.open(extra_path, "r")
+		if not file then
+			return {}
+		end
+		local content = file:read("*all")
+		file:close()
+
+		-- Create a safe environment for loading the extra
+		local env = {
+			-- Common Lua functions that extras might use
+			pairs = pairs,
+			ipairs = ipairs,
+			tonumber = tonumber,
+			tostring = tostring,
+			type = type,
+			table = table,
+			string = string,
+			math = math,
+			-- Mock LazyVim functions that some extras might reference
+			LazyVim = {
+				has = function() return false end,
+				on_very_lazy = function() end,
+			},
+			vim = {
+				fn = {},
+				cmd = function() end,
+			},
+		}
+
+		-- Load the extra file
+		local chunk, err = load(content, extra_path, "t", env)
+		if not chunk then
+			print("Warning: Failed to parse extra " .. relative_path .. ": " .. err)
+			return {}
+		end
+
+		-- Execute and get the result
+		local success, result = pcall(chunk)
+		if not success then
+			print("Warning: Failed to execute extra " .. relative_path .. ": " .. result)
+			return {}
+		end
+
+		-- The extra should return a table
+		if type(result) ~= "table" then
+			return {}
+		end
+
+		local plugins = {}
+
+		-- Extract plugin specs from the result
+		-- Extras return an array-like table where each entry is either:
+		-- 1. A plugin spec table with a plugin name as [1]
+		-- 2. Metadata like "recommended"
+		for _, item in ipairs(result) do
+			if type(item) == "table" and item[1] and type(item[1]) == "string" then
+				-- This is a plugin spec
+				local plugin_name = item[1]
+
+				-- Normalize the plugin name
+				local normalized = normalize_name(plugin_name)
+				if normalized and not seen[normalized] then
+					seen[normalized] = true
+
+					-- Extract owner/repo from the plugin name
+					local owner, repo = normalized:match("^([^/]+)/(.+)$")
+					if owner and repo then
+						-- Convert relative path to source_file format
+						-- e.g., "ai/copilot.lua" -> "extras.ai.copilot"
+						local source_file = "extras." .. relative_path:gsub("/", "."):gsub("%.lua$", "")
+
+						local plugin_info = {
+							name = normalized,
+							owner = owner,
+							repo = repo,
+							dependencies = normalize_deps(item.dependencies),
+							event = item.event,
+							cmd = item.cmd,
+							ft = item.ft,
+							enabled = item.enabled,
+							lazy = item.lazy,
+							priority = item.priority,
+							source_file = source_file,
+							is_core = false,  -- Extras are never core
+							-- Enhanced version info structure
+							version_info = {
+								lazyvim_version = item.version or item.tag or item.commit or item.branch,
+								lazyvim_version_type = item.version and "version"
+									or item.tag and "tag"
+									or item.commit and "commit"
+									or item.branch and "branch"
+									or nil,
+								latest_version = nil,
+								latest_tag = nil,
+								nixpkgs_version = nil,
+								sha256 = nil,
+							},
+						}
+
+						-- Add multi-module info if applicable
+						if multi_module_mappings[normalized] then
+							plugin_info.multiModule = {
+								basePackage = multi_module_mappings[normalized].package,
+								module = multi_module_mappings[normalized].module,
+								repository = normalized:match("^(.+)/")
+									.. "/"
+									.. multi_module_mappings[normalized].package:gsub("%-nvim$", ".nvim"),
+							}
+							extraction_report.multi_module_plugins = extraction_report.multi_module_plugins + 1
+						end
+
+						-- Track mapping status
+						if is_plugin_mapped(normalized) then
+							extraction_report.mapped_plugins = extraction_report.mapped_plugins + 1
+						else
+							extraction_report.unmapped_plugins = extraction_report.unmapped_plugins + 1
+							table.insert(unmapped_plugins, normalized)
+						end
+
+						-- Fetch version information
+						enrich_plugin_version_info(plugin_info)
+
+						table.insert(plugins, plugin_info)
+					end
+				end
+			end
+		end
+
+		return plugins
+	end
+
+	-- Function to scan LazyVim extras directory recursively
+	local function scan_lazyvim_extras(lazyvim_path)
+		local extras_path = lazyvim_path .. "/lua/lazyvim/plugins/extras"
+		local extras_plugins = {}
+
+		-- Helper function to scan directory recursively
+		local function scan_directory(dir_path, relative_base)
+			local handle = io.popen("find '" .. dir_path .. "' -name '*.lua' -type f 2>/dev/null")
+			if not handle then
+				print("Warning: Could not scan extras directory: " .. dir_path)
+				return
+			end
+
+			for line in handle:lines() do
+				-- Get relative path from extras directory
+				local relative_path = line:sub(#extras_path + 2) -- +2 to remove leading slash
+				if relative_path and relative_path ~= "" then
+					print("  Processing extra: " .. relative_path)
+					local plugins = extract_plugins_from_extra(line, relative_path)
+					for _, plugin in ipairs(plugins) do
+						table.insert(extras_plugins, plugin)
+					end
+				end
+			end
+			handle:close()
+		end
+
+		print("=== Scanning LazyVim extras ===")
+		scan_directory(extras_path, "")
+		print(string.format("Found %d plugins from extras", #extras_plugins))
+
+		return extras_plugins
 	end
 
 	-- Load core LazyVim plugins (matching LazyVim's init.lua)
@@ -395,7 +565,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	}
 
 	for _, spec in ipairs(core_specs) do
-		collect_plugin(spec)
+		collect_plugin(spec, true, "core.init")
 	end
 
 	-- Try to load LazyVim plugin modules
@@ -419,83 +589,15 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 
 		if ok and type(module_specs) == "table" then
 			for _, spec in ipairs(module_specs) do
-				collect_plugin(spec)
+				collect_plugin(spec, true, "core." .. module)
 			end
 		end
 	end
 
-	-- Add common plugins that might be in extras
-	local extra_plugins = {
-		"neovim/nvim-lspconfig",
-		"nvim-neo-tree/neo-tree.nvim",
-		"nvim-lualine/lualine.nvim",
-		"akinsho/bufferline.nvim",
-		"folke/noice.nvim",
-		"rcarriga/nvim-notify",
-		"nvimdev/dashboard-nvim",
-		"echasnovski/mini.icons",
-		"nvim-tree/nvim-web-devicons",
-		"MunifTanjim/nui.nvim",
-		"ibhagwan/fzf-lua",
-		"kdheepak/lazygit.nvim",
-		"RRethy/vim-illuminate",
-		"dstein64/vim-startuptime",
-		"nvim-treesitter/nvim-treesitter-context",
-		"folke/neoconf.nvim",
-		"folke/neodev.nvim",
-		"rafamadriz/friendly-snippets",
-		"saghen/blink.cmp",
-	}
-
-	for _, plugin_name in ipairs(extra_plugins) do
-		if not seen[plugin_name] then
-			seen[plugin_name] = true
-
-			-- Extract repository info
-			local owner, repo = plugin_name:match("^([^/]+)/(.+)$")
-
-			local plugin_info = {
-				name = plugin_name,
-				owner = owner,
-				repo = repo,
-				dependencies = {},
-				source_file = "extra",
-				-- Enhanced version info structure
-				version_info = {
-					lazyvim_version = nil,
-					lazyvim_version_type = nil,
-					latest_version = nil,
-					latest_tag = nil,
-					nixpkgs_version = nil,
-					sha256 = nil,
-				},
-			}
-
-			-- Add multi-module info if applicable
-			if multi_module_mappings[plugin_name] then
-				plugin_info.multiModule = {
-					basePackage = multi_module_mappings[plugin_name].package,
-					module = multi_module_mappings[plugin_name].module,
-					repository = plugin_name:match("^(.+)/")
-						.. "/"
-						.. multi_module_mappings[plugin_name].package:gsub("%-nvim$", ".nvim"),
-				}
-				extraction_report.multi_module_plugins = extraction_report.multi_module_plugins + 1
-			end
-
-			-- Track mapping status
-			if is_plugin_mapped(plugin_name) then
-				extraction_report.mapped_plugins = extraction_report.mapped_plugins + 1
-			else
-				extraction_report.unmapped_plugins = extraction_report.unmapped_plugins + 1
-				table.insert(unmapped_plugins, plugin_name)
-			end
-
-			-- Fetch version information
-			enrich_plugin_version_info(plugin_info)
-
-			table.insert(plugins, plugin_info)
-		end
+	-- Scan LazyVim extras and add them to plugins list
+	local extras_plugins = scan_lazyvim_extras(lazyvim_path)
+	for _, plugin in ipairs(extras_plugins) do
+		table.insert(plugins, plugin)
 	end
 
 	-- Scan for user plugins and merge them with core plugins
@@ -606,6 +708,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 					"dependencies",
 					"multiModule",
 					"source_file",
+					"is_core",
 					"event",
 					"cmd",
 					"ft",

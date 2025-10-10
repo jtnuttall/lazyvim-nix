@@ -67,8 +67,6 @@ let
     in
       extrasPluginsList;
 
-  # Extract plugins from enabled extras - following scanUserPlugins pattern
-  extrasPlugins = [];
 
   # Helper function to build a vim plugin from source
   buildVimPluginFromSource = pluginSpec:
@@ -240,8 +238,25 @@ let
     scanUserPlugins "${config.home.homeDirectory}/.config/nvim"
   else [];
 
-  # Merge core plugins with extras plugins and user plugins
-  corePlugins = pluginData.plugins or [];
+  # Filter plugins by category: only build core plugins by default
+  corePlugins = builtins.filter (p: p.is_core or false) (pluginData.plugins or []);
+
+  # Get plugins from enabled extras only
+  extrasPlugins =
+    let
+      # Get list of enabled extras files (e.g., ["extras.ai.copilot", "extras.lang.python"])
+      enabledExtrasFiles = map (extra: "extras.${extra.category}.${extra.name}") enabledExtras;
+
+      # Check if a plugin belongs to an enabled extra
+      isExtraEnabled = plugin: builtins.elem (plugin.source_file or "") enabledExtrasFiles;
+
+      # Get all non-core plugins (i.e., extras plugins)
+      allExtrasPlugins = builtins.filter (p: !(p.is_core or false)) (pluginData.plugins or []);
+    in
+      # Only include extras that are enabled
+      builtins.filter isExtraEnabled allExtrasPlugins;
+
+  # Merge core plugins with enabled extras plugins and user plugins
   allPluginSpecs = corePlugins ++ extrasPlugins ++ userPlugins;
 
   # Note: Multi-module plugin expansion is handled in the final package building
