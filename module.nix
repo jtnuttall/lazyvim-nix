@@ -436,8 +436,11 @@ let
         {
           "nvim-treesitter/nvim-treesitter-textobjects",
           config = function(_, opts)
-            -- Skip LazyVim's compatibility check and just setup directly
-            require("nvim-treesitter.configs").setup({ textobjects = opts })
+            -- Use new nvim-treesitter API (main branch)
+            local TS = require("nvim-treesitter")
+            if TS.setup then
+              TS.setup(opts)
+            end
           end,
           dev = true,
           pin = true,

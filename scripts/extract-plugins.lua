@@ -204,23 +204,38 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 
 		print(string.format("    Fetching version info for %s...", plugin_info.name))
 
-		-- Try to get latest tag first
-		local latest_tag = get_latest_tag(plugin_info.owner, plugin_info.repo)
+		-- Special case for nvim-treesitter plugins: LazyVim uses main branch with version = false
+		-- The last release is way too old and doesn't have the required API
+		local use_main_branch = plugin_info.name == "nvim-treesitter/nvim-treesitter" or
+		                        plugin_info.name == "nvim-treesitter/nvim-treesitter-textobjects"
 
 		local version_data
-		if latest_tag and latest_tag ~= "" then
-			print(string.format("      Found tag: %s", latest_tag))
-			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, latest_tag)
-			if version_data then
-				plugin_info.version_info.tag = latest_tag
-				plugin_info.version_info.latest_tag = latest_tag
-			end
-		else
-			print("      No tags found, fetching latest commit...")
-			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, nil)
+		if use_main_branch then
+			print("      Using main branch (LazyVim requirement - last release too old)")
+			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, "refs/heads/main")
 			if version_data then
 				plugin_info.version_info.tag = nil
 				plugin_info.version_info.latest_tag = nil
+				plugin_info.version_info.branch = "main"
+			end
+		else
+			-- Try to get latest tag first
+			local latest_tag = get_latest_tag(plugin_info.owner, plugin_info.repo)
+
+			if latest_tag and latest_tag ~= "" then
+				print(string.format("      Found tag: %s", latest_tag))
+				version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, latest_tag)
+				if version_data then
+					plugin_info.version_info.tag = latest_tag
+					plugin_info.version_info.latest_tag = latest_tag
+				end
+			else
+				print("      No tags found, fetching latest commit...")
+				version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, nil)
+				if version_data then
+					plugin_info.version_info.tag = nil
+					plugin_info.version_info.latest_tag = nil
+				end
 			end
 		end
 

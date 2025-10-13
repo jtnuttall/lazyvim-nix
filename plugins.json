@@ -1,7 +1,7 @@
 {
   "version": "v15.7.1",
   "commit": "dc1ffa5bcb66f46284f91a8593dda5c7c54a1824",
-  "generated": "2025-10-10 13:16:54",
+  "generated": "2025-10-13 08:35:26",
   "extraction_report": {
     "total_plugins": 87,
     "mapped_plugins": 87,
@@ -284,8 +284,8 @@
       "is_core": false,
       "lazy": true,
       "version_info": {
-        "commit": "0a900e539511a4461701f241278626ce6ec8d331",
-        "sha256": "0dvmnqr34v1y937z6y4jp2042ac36mjbrgp3xvfjwxnff0d71rnv"
+        "commit": "caad5439cc80809be7475b625a5e36d1bb06cc7e",
+        "sha256": "1ylsvr9s9plvvcjxaz0r6yqa3kk0z1jgf8afipa4ja6v83jd4n94"
       }
     },
     {
@@ -528,8 +528,8 @@
       "is_core": false,
       "enabled": true,
       "version_info": {
-        "commit": "f5fe479e20d809df7b54ad53142c2bdb0624c62a",
-        "sha256": "08i7rh3rz0fx6acdhi7zqsps91pk9nv0g0f263y1zc55hxqdkfhv"
+        "commit": "89b8481b14c72222e4d63e4c791a165f1c340a06",
+        "sha256": "11zqklzsgdch3h2lw69rapkqvnw6qbzppa2p4hbqgjih9fl3d068"
       }
     },
     {
@@ -738,8 +738,8 @@
         "cabalproject"
       ],
       "version_info": {
-        "commit": "5c2ae51bcf905a7101134a597e6f7be2dc05f975",
-        "sha256": "0nmzpyh9sdbvxf0hzvga748i4wnd0l6jmlwp8bmx84zazp93c667"
+        "commit": "14be34fd5c464e3da0992ad094f157b0b8b098f9",
+        "sha256": "0m3gnjyz3xaga2i71bc2v3524i0ln5rna8ssmcs462n8sq895cb7"
       }
     },
     {
@@ -1173,9 +1173,9 @@
       "source_file": "extras.lang.zig",
       "is_core": false,
       "version_info": {
-        "commit": "2cf3544fb55cdd428a9a1b7154aea9c9823426e8",
-        "tag": "v5.11.1",
-        "sha256": "1zz376wb3vyw984zjszg8hda4rzskaq7q93ajwdy63ssx8sc9vy4"
+        "commit": "7166dc36af2760a76479e021e0521e23f62165f1",
+        "tag": "v5.13.0",
+        "sha256": "1mfdlns4y4dxf1im7rwcq264jqwm3814dlnf37c41yq13pc7fd13"
       }
     },
     {
@@ -1214,9 +1214,8 @@
       ],
       "lazy": true,
       "version_info": {
-        "commit": "42fc28ba918343ebfd5565147a42a26580579482",
-        "tag": "v0.10.0",
-        "sha256": "1ck1qslxwi18qxrga68blvk1dg9j4jn65xiw8snq5pk06waksnq9"
+        "commit": "0606c7a9dcaa5c5beee0b0f09043e9fdd1ba0a68",
+        "sha256": "0fmjil79wngw84wvv3rkzi7qc437zcfbi9250g5bpcsg4v4fr3sf"
       }
     },
     {
@@ -1230,8 +1229,8 @@
       "is_core": true,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "71385f191ec06ffc60e80e6b0c9a9d5daed4824c",
-        "sha256": "0pp8s0wljwhc93jp47ad4pigqm8q7v173374c1vpydhx09qwl4ga"
+        "commit": "1b2d85d3de6114c4bcea89ffb2cd1ce9e3a19931",
+        "sha256": "07nixa3qmjygchjws2jbk2n0ag6j7kcpd62ax6k0l95q32jqxagq"
       }
     },
     {
