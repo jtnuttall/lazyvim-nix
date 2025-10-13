@@ -54,14 +54,16 @@ programs.lazyvim = {
     tree-sitter-python
   ];
 
-  # LSP servers and tools
+  # Language servers, formatters, linters (since Mason is disabled)
   extraPackages = with pkgs; [
-    nixd
-    pyright
-    alejandra
+    nixd       # Nix LSP
+    pyright    # Python LSP
+    alejandra  # Nix formatter
   ];
 };
 ```
+
+**Note:** LazyVim extras install Neovim plugins (LSP configs, syntax highlighting) but NOT the actual language tools (LSP servers, formatters, linters). You must provide these via `extraPackages`.
 
 ### Custom Configuration
 
