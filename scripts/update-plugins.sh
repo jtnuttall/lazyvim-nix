@@ -76,7 +76,7 @@ nvim --headless -u NONE \
     -c "set runtimepath+=$TEMP_DIR/LazyVim" \
     -c "luafile $SCRIPT_DIR/extract-plugins.lua" \
     -c "lua ExtractLazyVimPlugins('$TEMP_DIR/LazyVim', '$REPO_ROOT/plugins.json.tmp', '$LAZYVIM_VERSION', '$LAZYVIM_COMMIT')" \
-    -c "quit" 2>/dev/null || {
+    -c "quit" || {
         echo "Error: Failed to extract LazyVim plugins"
         exit 1
     }

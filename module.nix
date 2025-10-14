@@ -270,16 +270,24 @@ let
 
       # Extract version information
       lazyvimVersion = versionInfo.lazyvim_version or null;
+      lazyvimVersionType = versionInfo.lazyvim_version_type or null;
       latestVersion = versionInfo.latest_version or null;
       tagVersion = versionInfo.tag or null;
       commitVersion = versionInfo.commit or null;
+      branchVersion = versionInfo.branch or null;
       nixpkgsVersion = if nixPlugin != null then
         nixPlugin.src.rev or nixPlugin.version or null
       else null;
 
-      # Determine target version and source strategy
-      # Priority: lazyvim_version > tag > latest_version > commit
-      targetVersion = if lazyvimVersion != null && lazyvimVersion != "*" then
+      # Determine LazyVim-specified source requirements
+      lazyvimRequiresBranch = lazyvimVersionType == "branch";
+      lazyvimRequiresNoReleases = lazyvimVersion == false; # version = false
+      lazyvimHasSpecificCommit = lazyvimVersionType == "commit";
+      lazyvimHasSpecificTag = lazyvimVersionType == "tag";
+
+      # Determine target version based on LazyVim specifications
+      # Priority: respect LazyVim's exact specifications first
+      targetVersion = if lazyvimVersion != null && lazyvimVersion != "*" && lazyvimVersion != false then
         lazyvimVersion
       else if tagVersion != null then
         tagVersion
@@ -288,18 +296,28 @@ let
       else
         commitVersion;
 
-      # Check if versions match
-      nixpkgsMatchesTarget = targetVersion != null && nixpkgsVersion != null &&
-                            (targetVersion == nixpkgsVersion || targetVersion == "*");
+      # Check if versions match (but respect LazyVim branch/version=false requirements)
+      nixpkgsMatchesTarget =
+        # Never use nixpkgs if LazyVim requires a specific branch
+        if lazyvimRequiresBranch then false
+        # Never use nixpkgs if LazyVim specifies version = false (no releases)
+        else if lazyvimRequiresNoReleases then false
+        # For other cases, check if versions match
+        else targetVersion != null && nixpkgsVersion != null &&
+             (targetVersion == nixpkgsVersion || targetVersion == "*");
 
       # Decision logic based on strategy
       useNixpkgs =
         if cfg.pluginSource == "latest" then
-          # Strategy "latest": Use nixpkgs only if it matches our target version
-          nixpkgsMatchesTarget
+          # Strategy "latest": Follow LazyVim specifications exactly
+          # Use nixpkgs only if it matches AND LazyVim doesn't require special handling
+          nixpkgsMatchesTarget && !lazyvimRequiresBranch && !lazyvimRequiresNoReleases
         else  # cfg.pluginSource == "nixpkgs"
-          # Strategy "nixpkgs": Prefer nixpkgs unless we need a specific version
-          if targetVersion != null && targetVersion != "*" then
+          # Strategy "nixpkgs": Prefer nixpkgs but respect LazyVim branch/version=false requirements
+          if lazyvimRequiresBranch || lazyvimRequiresNoReleases then
+            # LazyVim has specific source requirements, must build from source
+            false
+          else if targetVersion != null && targetVersion != "*" then
             # If we have a specific version, use nixpkgs only if it matches
             nixpkgsMatchesTarget
           else
@@ -356,12 +374,14 @@ let
   
   # Generate dev plugin specs for available plugins
   devPluginSpecs = lib.zipListsWith (spec: plugin:
-    if plugin != null then
+    if plugin != null &&
+       spec.name != "nvim-treesitter/nvim-treesitter" &&
+       spec.name != "nvim-treesitter/nvim-treesitter-textobjects" then
       ''{ "${getRepoName spec.name}", dev = true, pin = true },''
     else
       null
   ) allPluginSpecs resolvedPlugins;
-  
+
   # Filter out null entries
   availableDevSpecs = filter (s: s != null) devPluginSpecs;
 
@@ -423,27 +443,13 @@ let
         { "mason-org/mason.nvim", enabled = false },
         { "mason-org/mason-lspconfig.nvim", enabled = false },
         { "jay-babu/mason-nvim-dap.nvim", enabled = false },
-        -- Disable treesitter auto-install - simple approach like your old config
+        -- Disable treesitter auto-install and build warnings (managed by Nix)
         {
           "nvim-treesitter/nvim-treesitter",
           build = false,  -- Disable build function that shows update warnings
           opts = function(_, opts)
             opts.ensure_installed = {}
           end,
-          dev = true,
-          pin = true,
-        },
-        {
-          "nvim-treesitter/nvim-treesitter-textobjects",
-          config = function(_, opts)
-            -- Use new nvim-treesitter API (main branch)
-            local TS = require("nvim-treesitter")
-            if TS.setup then
-              TS.setup(opts)
-            end
-          end,
-          dev = true,
-          pin = true,
         },
         -- Mark available plugins as dev = true
         ${concatStringsSep "\n        " availableDevSpecs}

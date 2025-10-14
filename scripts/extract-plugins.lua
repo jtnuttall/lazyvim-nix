@@ -204,19 +204,44 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 
 		print(string.format("    Fetching version info for %s...", plugin_info.name))
 
-		-- Special case for nvim-treesitter plugins: LazyVim uses main branch with version = false
-		-- The last release is way too old and doesn't have the required API
-		local use_main_branch = plugin_info.name == "nvim-treesitter/nvim-treesitter" or
-		                        plugin_info.name == "nvim-treesitter/nvim-treesitter-textobjects"
+		-- Preserve LazyVim version info that was captured during extraction
+		local lazyvim_version = plugin_info.version_info.lazyvim_version
+		local lazyvim_version_type = plugin_info.version_info.lazyvim_version_type
 
+		-- Determine source strategy based on LazyVim specifications
 		local version_data
-		if use_main_branch then
-			print("      Using main branch (LazyVim requirement - last release too old)")
-			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, "refs/heads/main")
+		if lazyvim_version_type == "branch" then
+			-- LazyVim specified a branch - use it exactly
+			print(string.format("      Using branch '%s' (LazyVim specification)", lazyvim_version))
+			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, "refs/heads/" .. lazyvim_version)
 			if version_data then
 				plugin_info.version_info.tag = nil
 				plugin_info.version_info.latest_tag = nil
-				plugin_info.version_info.branch = "main"
+				plugin_info.version_info.branch = lazyvim_version
+			end
+		elseif lazyvim_version == false or (lazyvim_version_type == "version" and lazyvim_version == false) then
+			-- LazyVim specified version = false - use latest commit, no tags
+			print("      Using latest commit (LazyVim: version = false)")
+			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, nil)
+			if version_data then
+				plugin_info.version_info.tag = nil
+				plugin_info.version_info.latest_tag = nil
+			end
+		elseif lazyvim_version_type == "commit" then
+			-- LazyVim specified a specific commit
+			print(string.format("      Using commit '%s' (LazyVim specification)", lazyvim_version))
+			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, lazyvim_version)
+			if version_data then
+				plugin_info.version_info.tag = nil
+				plugin_info.version_info.latest_tag = nil
+			end
+		elseif lazyvim_version_type == "tag" then
+			-- LazyVim specified a specific tag
+			print(string.format("      Using tag '%s' (LazyVim specification)", lazyvim_version))
+			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, lazyvim_version)
+			if version_data then
+				plugin_info.version_info.tag = lazyvim_version
+				plugin_info.version_info.latest_tag = lazyvim_version
 			end
 		else
 			-- Try to get latest tag first
@@ -241,13 +266,16 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 
 		if version_data then
 			plugin_info.version_info.commit = version_data.commit
-			plugin_info.version_info.latest_version = version_data.commit
 			plugin_info.version_info.sha256 = version_data.sha256
 			plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
 			print(string.format("      ✓ Got commit: %s", version_data.commit:sub(1, 8)))
 		else
 			print("      ⚠ Could not fetch version info")
 		end
+
+		-- Always restore LazyVim version specification information
+		plugin_info.version_info.lazyvim_version = lazyvim_version
+		plugin_info.version_info.lazyvim_version_type = lazyvim_version_type
 
 		-- Add small delay to be respectful to git servers
 		os.execute("sleep 0.2")
@@ -279,12 +307,17 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 					is_core = is_core_plugin or false,
 					-- Enhanced version info structure
 					version_info = {
+						-- LazyVim specification (none for string specs)
 						lazyvim_version = nil,
 						lazyvim_version_type = nil,
-						latest_version = nil,
-						latest_tag = nil,
+						-- Resolved version (filled by fetch script)
+						commit = nil,
+						branch = nil,
+						tag = nil,
+						-- Build metadata
 						nixpkgs_version = nil,
 						sha256 = nil,
+						fetched_at = nil,
 					},
 				}
 
@@ -342,20 +375,24 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 						is_core = is_core_plugin or false,
 						-- Enhanced version info structure
 						version_info = {
-							-- LazyVim specified version (if any)
-							lazyvim_version = spec.version or spec.tag or spec.commit or spec.branch,
-							lazyvim_version_type = spec.version and "version"
-								or spec.tag and "tag"
-								or spec.commit and "commit"
-								or spec.branch and "branch"
+							-- LazyVim specification
+							lazyvim_version = spec.branch and spec.branch
+								or (spec.version ~= nil and spec.version)
+								or spec.tag or spec.commit
 								or nil,
-							-- Latest version from GitHub (to be filled by fetch script)
-							latest_version = nil,
-							latest_tag = nil,
-							-- Nixpkgs version (to be filled at build time)
-							nixpkgs_version = nil,
-							-- SHA256 for source builds
+							lazyvim_version_type = spec.branch and "branch"
+								or (spec.version ~= nil and "version")
+								or (spec.tag and "tag")
+								or (spec.commit and "commit")
+								or nil,
+							-- Resolved version (filled by fetch script)
+							commit = nil,
+							branch = nil,
+							tag = nil,
+							-- Build metadata
+							nixpkgs_version = nil,  -- Nixpkgs version for comparison (filled at build time)
 							sha256 = nil,
+							fetched_at = nil,
 						},
 					}
 
@@ -493,16 +530,22 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 							is_core = false,  -- Extras are never core
 							-- Enhanced version info structure
 							version_info = {
-								lazyvim_version = item.version or item.tag or item.commit or item.branch,
-								lazyvim_version_type = item.version and "version"
+								-- LazyVim specification
+								lazyvim_version = item.version ~= nil and item.version
+									or item.tag or item.commit or item.branch,
+								lazyvim_version_type = item.version ~= nil and "version"
 									or item.tag and "tag"
 									or item.commit and "commit"
 									or item.branch and "branch"
 									or nil,
-								latest_version = nil,
-								latest_tag = nil,
+								-- Resolved version (filled by fetch script)
+								commit = nil,
+								branch = nil,
+								tag = nil,
+								-- Build metadata
 								nixpkgs_version = nil,
 								sha256 = nil,
+								fetched_at = nil,
 							},
 						}
 
@@ -614,6 +657,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	for _, plugin in ipairs(extras_plugins) do
 		table.insert(plugins, plugin)
 	end
+
 
 	-- Scan for user plugins and merge them with core plugins
 	print("=== Scanning for user plugins ===")
@@ -739,8 +783,13 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 					"basePackage",
 					"module",
 					"repository",
+					"lazyvim_version",
+					"lazyvim_version_type",
+					"nixpkgs_version",
+					"branch",
 					"tag",
 					"sha256",
+					"fetched_at",
 				}
 
 				for _, k in ipairs(ordered_keys) do
