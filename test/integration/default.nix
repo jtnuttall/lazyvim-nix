@@ -315,4 +315,199 @@ in {
     ")
     [ "$result" = "true" ]
   '';
+
+  # Test configFiles option functionality
+  test-config-files-basic = testLib.testShell
+    "config-files-basic"
+    ''
+    # Create a test config directory
+    mkdir -p $TMPDIR/test-config/lua/config
+    mkdir -p $TMPDIR/test-config/lua/plugins
+
+    # Create test config files
+    cat > $TMPDIR/test-config/lua/config/keymaps.lua << 'EOF'
+    -- Test keymaps from configFiles
+    vim.keymap.set("n", "<leader>t", "<cmd>echo 'test'<cr>", { desc = "Test" })
+    EOF
+
+    cat > $TMPDIR/test-config/lua/config/options.lua << 'EOF'
+    -- Test options from configFiles
+    vim.opt.number = true
+    vim.opt.relativenumber = true
+    EOF
+
+    cat > $TMPDIR/test-config/lua/plugins/test-plugin.lua << 'EOF'
+    return {
+      "test/plugin",
+      opts = { test = true },
+    }
+    EOF
+
+    # Test module evaluation with configFiles
+    testConfig='{
+      config = {
+        home.homeDirectory = "/tmp/test-configfiles";
+        home.username = "testuser";
+        home.stateVersion = "23.11";
+        programs.lazyvim = {
+          enable = true;
+          configFiles = '$TMPDIR'/test-config;
+        };
+      };
+      lib = (import <nixpkgs> {}).lib;
+      pkgs = import <nixpkgs> {};
+    }'
+
+    result=$(nix-instantiate --eval --expr "
+      let
+        module = import ${../module.nix} $testConfig;
+        configFiles = module.config.xdg.configFile;
+        hasKeymaps = configFiles ? \"nvim/lua/config/keymaps.lua\";
+        hasOptions = configFiles ? \"nvim/lua/config/options.lua\";
+        hasPlugin = configFiles ? \"nvim/lua/plugins/test-plugin.lua\";
+      in hasKeymaps && hasOptions && hasPlugin
+    " 2>/dev/null || echo "false")
+
+    [ "$result" = "true" ]
+  '';
+
+  # Test configFiles conflict detection for config files
+  test-config-files-conflict-config = testLib.testShell
+    "config-files-conflict-config"
+    ''
+    # Create a test config directory with keymaps
+    mkdir -p $TMPDIR/test-conflict/lua/config
+    cat > $TMPDIR/test-conflict/lua/config/keymaps.lua << 'EOF'
+    vim.keymap.set("n", "<leader>t", "<cmd>echo 'test'<cr>", { desc = "Test" })
+    EOF
+
+    # Test that conflict is detected
+    testConfig='{
+      config = {
+        home.homeDirectory = "/tmp/test-conflict";
+        home.username = "testuser";
+        home.stateVersion = "23.11";
+        programs.lazyvim = {
+          enable = true;
+          configFiles = '$TMPDIR'/test-conflict;
+          config.keymaps = "vim.keymap.set(\"n\", \"<leader>x\", \"<cmd>quit<cr>\")";
+        };
+      };
+      lib = (import <nixpkgs> {}).lib;
+      pkgs = import <nixpkgs> {};
+    }'
+
+    # This should fail with a conflict error
+    result=$(nix-instantiate --eval --expr "
+      let module = import ${../module.nix} $testConfig;
+      in module.config.programs.neovim.enable
+    " 2>&1 || echo "conflict-detected")
+
+    echo "$result" | grep -q "Conflict.*keymaps"
+  '';
+
+  # Test configFiles conflict detection for plugins
+  test-config-files-conflict-plugins = testLib.testShell
+    "config-files-conflict-plugins"
+    ''
+    # Create a test config directory with a plugin file
+    mkdir -p $TMPDIR/test-plugin-conflict/lua/plugins
+    cat > $TMPDIR/test-plugin-conflict/lua/plugins/colorscheme.lua << 'EOF'
+    return { "folke/tokyonight.nvim" }
+    EOF
+
+    # Test that conflict is detected
+    testConfig='{
+      config = {
+        home.homeDirectory = "/tmp/test-plugin-conflict";
+        home.username = "testuser";
+        home.stateVersion = "23.11";
+        programs.lazyvim = {
+          enable = true;
+          configFiles = '$TMPDIR'/test-plugin-conflict;
+          plugins.colorscheme = "return { \"catppuccin/nvim\" }";
+        };
+      };
+      lib = (import <nixpkgs> {}).lib;
+      pkgs = import <nixpkgs> {};
+    }'
+
+    # This should fail with a conflict error
+    result=$(nix-instantiate --eval --expr "
+      let module = import ${../module.nix} $testConfig;
+      in module.config.programs.neovim.enable
+    " 2>&1 || echo "conflict-detected")
+
+    echo "$result" | grep -q "Conflict.*colorscheme"
+  '';
+
+  # Test configFiles with flat directory structure
+  test-config-files-flat-structure = testLib.testShell
+    "config-files-flat-structure"
+    ''
+    # Create a test config directory with flat structure
+    mkdir -p $TMPDIR/test-flat/config
+    mkdir -p $TMPDIR/test-flat/plugins
+
+    cat > $TMPDIR/test-flat/config/keymaps.lua << 'EOF'
+    vim.keymap.set("n", "<leader>f", "<cmd>echo 'flat'<cr>", { desc = "Flat" })
+    EOF
+
+    cat > $TMPDIR/test-flat/plugins/flat-plugin.lua << 'EOF'
+    return { "test/flat-plugin" }
+    EOF
+
+    # Test module evaluation with flat structure
+    testConfig='{
+      config = {
+        home.homeDirectory = "/tmp/test-flat";
+        home.username = "testuser";
+        home.stateVersion = "23.11";
+        programs.lazyvim = {
+          enable = true;
+          configFiles = '$TMPDIR'/test-flat;
+        };
+      };
+      lib = (import <nixpkgs> {}).lib;
+      pkgs = import <nixpkgs> {};
+    }'
+
+    result=$(nix-instantiate --eval --expr "
+      let
+        module = import ${../module.nix} $testConfig;
+        configFiles = module.config.xdg.configFile;
+        hasKeymaps = configFiles ? \"nvim/lua/config/keymaps.lua\";
+        hasPlugin = configFiles ? \"nvim/lua/plugins/flat-plugin.lua\";
+      in hasKeymaps && hasPlugin
+    " 2>/dev/null || echo "false")
+
+    [ "$result" = "true" ]
+  '';
+
+  # Test configFiles with missing directory
+  test-config-files-missing-dir = testLib.testShell
+    "config-files-missing-dir"
+    ''
+    # Test that missing directory throws appropriate error
+    testConfig='{
+      config = {
+        home.homeDirectory = "/tmp/test-missing";
+        home.username = "testuser";
+        home.stateVersion = "23.11";
+        programs.lazyvim = {
+          enable = true;
+          configFiles = /nonexistent/path;
+        };
+      };
+      lib = (import <nixpkgs> {}).lib;
+      pkgs = import <nixpkgs> {};
+    }'
+
+    result=$(nix-instantiate --eval --expr "
+      let module = import ${../module.nix} $testConfig;
+      in module.config.programs.neovim.enable
+    " 2>&1 || echo "error-detected")
+
+    echo "$result" | grep -q "does not exist"
+  '';
 }

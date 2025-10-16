@@ -570,6 +570,139 @@ let
     };
   in parsers;
 
+  # Helper function to scan config files from a directory
+  scanConfigFiles = configPath:
+    if configPath == null then
+      { configFiles = {}; pluginFiles = {}; }
+    else if !builtins.pathExists configPath then
+      builtins.throw "configFiles path does not exist: ${toString configPath}"
+    else
+      let
+        # Get all files in the directory recursively
+        allFiles = lib.filesystem.listFilesRecursive configPath;
+
+        # Helper to get relative path from configPath
+        getRelativePath = file:
+          let
+            absPath = toString file;
+            basePath = toString configPath;
+            # Remove the base path and leading slash
+            relPath = lib.removePrefix (basePath + "/") absPath;
+          in relPath;
+
+        # Filter and categorize Lua files
+        processFile = file:
+          let
+            relPath = getRelativePath file;
+            # Check if it's a Lua file
+            isLua = lib.hasSuffix ".lua" relPath;
+
+            # Determine the target path based on the source structure
+            # Support both "lua/config/file.lua" and "config/file.lua" layouts
+            targetPath =
+              if lib.hasPrefix "lua/" relPath then
+                # Already has lua/ prefix, use as-is
+                "nvim/${relPath}"
+              else if lib.hasPrefix "config/" relPath then
+                # config/ at root, add lua/ prefix
+                "nvim/lua/${relPath}"
+              else if lib.hasPrefix "plugins/" relPath then
+                # plugins/ at root, add lua/ prefix
+                "nvim/lua/${relPath}"
+              else
+                # Other structure - put under lua/
+                "nvim/lua/${relPath}";
+
+            # Determine file category for conflict detection
+            category =
+              if lib.hasSuffix "/config/keymaps.lua" targetPath then "keymaps"
+              else if lib.hasSuffix "/config/options.lua" targetPath then "options"
+              else if lib.hasSuffix "/config/autocmds.lua" targetPath then "autocmds"
+              else if lib.hasInfix "/plugins/" targetPath then
+                let
+                  # Extract plugin file name (e.g., "colorscheme" from "nvim/lua/plugins/colorscheme.lua")
+                  pluginName = lib.removeSuffix ".lua" (baseNameOf relPath);
+                in "plugin:${pluginName}"
+              else null;
+          in
+            if isLua && category != null then
+              { inherit file targetPath category; }
+            else
+              null;
+
+        # Process all files and filter out nulls
+        processedFiles = lib.filter (f: f != null) (map processFile allFiles);
+
+        # Separate config files from plugin files
+        configFilesList = lib.filter (f:
+          lib.elem f.category ["keymaps" "options" "autocmds"]
+        ) processedFiles;
+
+        pluginFilesList = lib.filter (f:
+          lib.hasPrefix "plugin:" f.category
+        ) processedFiles;
+
+        # Convert to attribute sets for easier access
+        configFiles = lib.listToAttrs (map (f:
+          lib.nameValuePair f.category f
+        ) configFilesList);
+
+        pluginFiles = lib.listToAttrs (map (f:
+          let
+            pluginName = lib.removePrefix "plugin:" f.category;
+          in
+            lib.nameValuePair pluginName f
+        ) pluginFilesList);
+      in
+        { inherit configFiles pluginFiles; };
+
+  # Scan config files if provided
+  scannedFiles = scanConfigFiles cfg.configFiles;
+
+  # Detect conflicts between configFiles and existing options
+  conflictChecks =
+    let
+      # Check config file conflicts
+      keymapsConflict = scannedFiles.configFiles ? keymaps && cfg.config.keymaps != "";
+      optionsConflict = scannedFiles.configFiles ? options && cfg.config.options != "";
+      autocmdsConflict = scannedFiles.configFiles ? autocmds && cfg.config.autocmds != "";
+
+      # Check plugin file conflicts
+      pluginConflicts = lib.intersectLists
+        (lib.attrNames scannedFiles.pluginFiles)
+        (lib.attrNames cfg.plugins);
+
+      # Build error messages
+      errorMessages = []
+        ++ lib.optional keymapsConflict ''
+          Conflict: Both configFiles provides 'lua/config/keymaps.lua' and config.keymaps is set.
+          Please use only one method to configure keymaps:
+          - Either remove config.keymaps from your configuration
+          - Or remove lua/config/keymaps.lua from your configFiles directory''
+        ++ lib.optional optionsConflict ''
+          Conflict: Both configFiles provides 'lua/config/options.lua' and config.options is set.
+          Please use only one method to configure options:
+          - Either remove config.options from your configuration
+          - Or remove lua/config/options.lua from your configFiles directory''
+        ++ lib.optional autocmdsConflict ''
+          Conflict: Both configFiles provides 'lua/config/autocmds.lua' and config.autocmds is set.
+          Please use only one method to configure autocmds:
+          - Either remove config.autocmds from your configuration
+          - Or remove lua/config/autocmds.lua from your configFiles directory''
+        ++ lib.optionals (pluginConflicts != []) [''
+          Conflict: Plugin file(s) ${lib.concatStringsSep ", " (map (p: "'${p}.lua'") pluginConflicts)} exist in both configFiles and plugins option.
+          Please use only one method to configure these plugins:
+          - Either remove the corresponding entries from your plugins configuration
+          - Or remove the lua files from your configFiles directory''];
+    in
+      if errorMessages != [] then
+        builtins.throw (lib.concatStringsSep "\n\n" errorMessages)
+      else
+        null;
+
+  # Ensure no conflicts exist (this will throw if there are conflicts)
+  _ = if cfg.enable then conflictChecks else null;
+
 in {
   options.programs.lazyvim = {
     enable = mkEnableOption "LazyVim - A Neovim configuration framework";
@@ -629,8 +762,29 @@ in {
         errors, try using a matching nixpkgs channel or pinning versions.
       '';
     };
-    
-    
+
+    configFiles = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      example = literalExpression ''
+        ./lazyvim-config
+      '';
+      description = ''
+        Path to a directory containing LazyVim configuration files.
+        The directory structure should follow this convention:
+
+        - config/keymaps.lua - Custom keymaps
+        - config/options.lua - Vim options
+        - config/autocmds.lua - Auto commands
+        - plugins/*.lua - Plugin configurations
+
+        Files from this directory will be copied to the appropriate locations
+        in ~/.config/nvim/lua/. If you also specify individual config options
+        (config.keymaps, config.options, etc.) or plugins, conflicts will
+        cause the build to fail with a descriptive error message.
+      '';
+    };
+
     config = mkOption {
       type = types.submodule {
         options = {
@@ -777,6 +931,9 @@ in {
   };
   
   config = mkIf cfg.enable {
+    # Force evaluation of conflict checks (this will throw if conflicts exist)
+    _module.args._conflictCheck = conflictChecks;
+
     # Ensure neovim is enabled
     programs.neovim = {
       enable = true;
@@ -809,30 +966,51 @@ in {
         source = "${treesitterGrammars}/parser";
       };
       
-      # LazyVim config files
-      "nvim/lua/config/autocmds.lua" = mkIf (cfg.config.autocmds != "") {
-        text = ''
-          -- User autocmds configured via Nix
-          ${cfg.config.autocmds}
-        '';
-      };
-      
-      "nvim/lua/config/keymaps.lua" = mkIf (cfg.config.keymaps != "") {
-        text = ''
-          -- User keymaps configured via Nix
-          ${cfg.config.keymaps}
-        '';
-      };
-      
-      "nvim/lua/config/options.lua" = mkIf (cfg.config.options != "") {
-        text = ''
-          -- User options configured via Nix
-          ${cfg.config.options}
-        '';
-      };
-      
+      # LazyVim config files - use configFiles if available, otherwise use string options
+      "nvim/lua/config/autocmds.lua" = mkIf (
+        scannedFiles.configFiles ? autocmds || cfg.config.autocmds != ""
+      ) (
+        if scannedFiles.configFiles ? autocmds then
+          { source = scannedFiles.configFiles.autocmds.file; }
+        else
+          {
+            text = ''
+              -- User autocmds configured via Nix
+              ${cfg.config.autocmds}
+            '';
+          }
+      );
+
+      "nvim/lua/config/keymaps.lua" = mkIf (
+        scannedFiles.configFiles ? keymaps || cfg.config.keymaps != ""
+      ) (
+        if scannedFiles.configFiles ? keymaps then
+          { source = scannedFiles.configFiles.keymaps.file; }
+        else
+          {
+            text = ''
+              -- User keymaps configured via Nix
+              ${cfg.config.keymaps}
+            '';
+          }
+      );
+
+      "nvim/lua/config/options.lua" = mkIf (
+        scannedFiles.configFiles ? options || cfg.config.options != ""
+      ) (
+        if scannedFiles.configFiles ? options then
+          { source = scannedFiles.configFiles.options.file; }
+        else
+          {
+            text = ''
+              -- User options configured via Nix
+              ${cfg.config.options}
+            '';
+          }
+      );
+
     }
-    # Generate plugin configuration files
+    # Generate plugin configuration files from both sources
     // (lib.mapAttrs' (name: content:
       lib.nameValuePair "nvim/lua/plugins/${name}.lua" {
         text = ''
@@ -841,6 +1019,12 @@ in {
         '';
       }
     ) cfg.plugins)
+    # Add plugin files from configFiles
+    // (lib.mapAttrs' (name: fileInfo:
+      lib.nameValuePair fileInfo.targetPath {
+        source = fileInfo.file;
+      }
+    ) scannedFiles.pluginFiles)
     # Generate extras config override files
     // extrasConfigFiles;
   };

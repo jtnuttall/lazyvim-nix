@@ -67,6 +67,8 @@ programs.lazyvim = {
 
 ### Custom Configuration
 
+#### Option 1: Inline Configuration
+
 ```nix
 programs.lazyvim = {
   enable = true;
@@ -93,17 +95,43 @@ programs.lazyvim = {
 };
 ```
 
+#### Option 2: File-based Configuration
+
+For larger configurations, you can organize your LazyVim config files in a directory:
+
+```nix
+programs.lazyvim = {
+  enable = true;
+  configFiles = ./my-lazyvim-config;
+};
+```
+
+Directory structure:
+```
+my-lazyvim-config/
+├── config/
+│   ├── keymaps.lua
+│   ├── options.lua
+│   └── autocmds.lua
+└── plugins/
+    ├── colorscheme.lua
+    ├── lsp-config.lua
+    └── editor.lua
+```
+
+**Note:** You cannot mix `configFiles` with inline `config` or `plugins` options. Choose one approach to avoid conflicts.
+
 ## Key Features
 
 - 🚀 **Always up-to-date** - Automatically tracks LazyVim releases with latest plugin versions
 - ✅ **Zero-configuration setup** - Just enable and go
-- 🤖 **Reproducible builds** - All plugins managed through Nix
+- 🤖 **Reproducible builds** - Core and Extra LazyVim plugins locked and in dev mode.
 
 ## Documentation
 
 📖 **[Getting Started](https://github.com/pfassina/lazyvim-nix/wiki/Getting-Started)** - Complete setup guide
 
-⚙️ **[Configuration Reference](https://github.com/pfassina/lazyvim-nix/wiki/Configuration-Reference)** - All available options
+⚙️ **[Configuration Reference](docs/configuration-reference.md)** - Complete reference for all options including the new `configFiles` feature
 
 🎯 **[LazyVim Extras](https://github.com/pfassina/lazyvim-nix/wiki/LazyVim-Extras)** - Language and feature support
 
