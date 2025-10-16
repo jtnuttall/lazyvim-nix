@@ -400,9 +400,7 @@ let
         text = ''
           -- Extra configuration override for ${extra.category}/${extra.name} (configured via Nix)
           -- This file overrides the default configuration from the LazyVim extra
-          return {
-            ${extra.config}
-          }
+          ${extra.config}
         '';
       }
   ) extrasWithConfig);
@@ -849,8 +847,8 @@ in {
             type = types.str;
             default = "";
             description = ''
-              Additional Lua configuration to merge into this extra.
-              This will be used to override or extend the extra's default configuration.
+              Complete Lua plugin specification to override or extend this extra.
+              Should contain a complete lazy.nvim plugin spec with return statement.
             '';
           };
         };
@@ -861,8 +859,11 @@ in {
           coding.yanky = {
             enable = true;
             config = '''
-              opts = {
-                highlight = { timer = 300 },
+              return {
+                "gbprod/yanky.nvim",
+                opts = {
+                  highlight = { timer = 300 },
+                },
               }
             ''';
           };
@@ -870,9 +871,12 @@ in {
           lang.nix = {
             enable = true;
             config = '''
-              opts = {
-                servers = {
-                  nixd = {},
+              return {
+                "neovim/nvim-lspconfig",
+                opts = {
+                  servers = {
+                    nixd = {},
+                  },
                 },
               }
             ''';
@@ -886,7 +890,7 @@ in {
         for specific languages, features, or tools.
 
         Each extra can be enabled with `enable = true` and optionally configured with
-        custom Lua code in the `config` field.
+        complete lazy.nvim plugin specifications in the `config` field.
       '';
     };
 

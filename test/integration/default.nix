@@ -61,9 +61,12 @@ let
             nix = {
               enable = true;
               config = ''
-                opts = {
-                  servers = {
-                    nixd = {},
+                return {
+                  "neovim/nvim-lspconfig",
+                  opts = {
+                    servers = {
+                      nixd = {},
+                    },
                   },
                 }
               '';
