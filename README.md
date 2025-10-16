@@ -119,7 +119,7 @@ my-lazyvim-config/
     └── editor.lua
 ```
 
-**Note:** You cannot mix `configFiles` with inline `config` or `plugins` options. Choose one approach to avoid conflicts.
+**Note:** You can mix `configFiles` with inline `config` and `plugins` options, but you cannot configure the same file in both places. For example, if `configFiles` contains `config/keymaps.lua`, you cannot also set `config.keymaps`.
 
 ## Key Features
 
