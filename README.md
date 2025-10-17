@@ -48,22 +48,24 @@ programs.lazyvim = {
     lang.python.enable = true;
   };
 
-  # Required for syntax highlighting
-  treesitterParsers = with pkgs.tree-sitter-grammars; [
-    tree-sitter-nix
-    tree-sitter-python
-  ];
-
   # Language servers, formatters, linters (since Mason is disabled)
   extraPackages = with pkgs; [
     nixd       # Nix LSP
     pyright    # Python LSP
     alejandra  # Nix formatter
   ];
+
+  # Only needed for languages not covered by LazyVim
+  treesitterParsers = with pkgs.vimPlugins.nvim-treesitter.grammarPlugins; [
+    wgsl      # WebGPU Shading Language
+    templ     # Go templ files
+  ];
 };
 ```
 
-**Note:** LazyVim extras install Neovim plugins (LSP configs, syntax highlighting) but NOT the actual language tools (LSP servers, formatters, linters). You must provide these via `extraPackages`.
+**Treesitter grammars are installed automatically** based on enabled language extras. Core grammars (languages that LazyVim requires by default) are always included, while language-specific grammars are added when you enable the corresponding extra. Manual parsers are only needed for languages not covered by LazyVim extras.
+
+**Note:** LazyVim extras install Neovim plugins but NOT the actual language tools. You must provide LSP servers, formatters, and linters via `extraPackages`.
 
 ### Custom Configuration
 

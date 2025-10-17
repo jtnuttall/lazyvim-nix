@@ -1,0 +1,136 @@
+{
+  "core": [
+    "bash",
+    "c",
+    "diff",
+    "html",
+    "javascript",
+    "jsdoc",
+    "json",
+    "jsonc",
+    "lua",
+    "luadoc",
+    "luap",
+    "markdown",
+    "markdown_inline",
+    "printf",
+    "python",
+    "query",
+    "regex",
+    "toml",
+    "tsx",
+    "typescript",
+    "vim",
+    "vimdoc",
+    "xml",
+    "yaml"
+  ],
+  "extras": {
+    "lang.astro": [
+      "astro",
+      "css"
+    ],
+    "lang.clangd": [
+      "cpp"
+    ],
+    "lang.clojure": [
+      "clojure"
+    ],
+    "lang.cmake": [
+      "cmake"
+    ],
+    "lang.docker": [
+      "dockerfile"
+    ],
+    "lang.elm": [
+      "elm"
+    ],
+    "lang.erlang": [
+      "erlang"
+    ],
+    "lang.git": [
+      "git_config",
+      "gitcommit",
+      "git_rebase",
+      "gitignore",
+      "gitattributes"
+    ],
+    "lang.gleam": [
+      "gleam"
+    ],
+    "lang.go": [
+      "go",
+      "gomod",
+      "gowork",
+      "gosum"
+    ],
+    "lang.haskell": [
+      "haskell"
+    ],
+    "lang.helm": [
+      "helm"
+    ],
+    "lang.java": [
+      "java"
+    ],
+    "lang.json": [
+      "json5"
+    ],
+    "lang.kotlin": [
+      "kotlin"
+    ],
+    "lang.nix": [
+      "nix"
+    ],
+    "lang.nushell": [
+      "nu"
+    ],
+    "lang.omnisharp": [
+      "c_sharp"
+    ],
+    "lang.php": [
+      "php"
+    ],
+    "lang.prisma": [
+      "prisma"
+    ],
+    "lang.python": [
+      "ninja",
+      "rst"
+    ],
+    "lang.r": [
+      "r",
+      "rnoweb"
+    ],
+    "lang.rego": [
+      "rego"
+    ],
+    "lang.ruby": [
+      "ruby"
+    ],
+    "lang.rust": [
+      "rust",
+      "ron"
+    ],
+    "lang.scala": [
+      "scala"
+    ],
+    "lang.sql": [
+      "sql"
+    ],
+    "lang.svelte": [
+      "svelte"
+    ],
+    "lang.terraform": [
+      "terraform",
+      "hcl"
+    ],
+    "lang.vue": [
+      "vue",
+      "css"
+    ],
+    "lang.zig": [
+      "zig"
+    ]
+  }
+}

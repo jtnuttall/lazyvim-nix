@@ -12,6 +12,9 @@ let
   # Load extras metadata
   extrasMetadata = pkgs.lazyvimExtrasMetadata or (import ./extras.nix);
 
+  # Load treesitter parser mappings
+  treesitterMappings = pkgs.lazyvimTreesitterMappings or (builtins.fromJSON (builtins.readFile ./treesitter-mappings.json));
+
   # Helper function to collect enabled extras
   getEnabledExtras = extrasConfig:
     let
@@ -41,6 +44,31 @@ let
 
   # Get list of enabled extras
   enabledExtras = if cfg.enable then getEnabledExtras (cfg.extras or {}) else [];
+
+  # Derive automatic treesitter parsers
+  automaticTreesitterParsers = if cfg.enable then
+    let
+      # Get enabled extra names in "category.name" format for lookup
+      enabledExtraNames = lib.flatten (lib.mapAttrsToList (category: extras:
+        lib.mapAttrsToList (name: extraConfig:
+          lib.optional (extraConfig.enable or false) "${category}.${name}"
+        ) extras
+      ) (cfg.extras or {}));
+
+      # Core parsers are always included
+      coreParsers = treesitterMappings.core or [];
+
+      # Extra parsers based on enabled extras
+      extraParsers = lib.flatten (map (extraName:
+        treesitterMappings.extras.${extraName} or []
+      ) enabledExtraNames);
+
+      # Combine and deduplicate all parsers (keep as names, not packages)
+      allParsers = lib.unique (coreParsers ++ extraParsers ++ (map extractLang cfg.treesitterParsers));
+    in
+      allParsers
+  else
+    map extractLang cfg.treesitterParsers;
 
   # Function to scan extras plugins - following the same pattern as scanUserPlugins
   scanExtrasPlugins = enabledExtrasFiles:
@@ -543,28 +571,27 @@ let
   '';
 
   # Extract language names from treesitter parser packages for Lua config
-  treesitterLangNames = let
-    extractLang = pkg:
-      let
-        pname = pkg.pname or "";
-        # Remove "tree-sitter-" prefix to get language name
-        lang = lib.removePrefix "tree-sitter-" pname;
-      in
-        # Only include if prefix was present (validates it's a treesitter parser)
-        if lang != pname then lang else null;
-
-    langs = map extractLang cfg.treesitterParsers;
-  in
-    lib.filter (l: l != null) langs;
+  # automaticTreesitterParsers now contains parser names directly
+  treesitterLangNames = automaticTreesitterParsers;
 
   # Generate Lua array string for parser list
   treesitterLangList = lib.concatStringsSep ", " (map (l: ''"${l}"'') treesitterLangNames);
 
-  # Treesitter configuration - using packages directly
+  # Treesitter configuration - use nvim-treesitter's grammar plugins directly
   treesitterGrammars = let
+    # automaticTreesitterParsers now contains parser names, not packages
+    parserNames = automaticTreesitterParsers;
+
+    # Use nvim-treesitter's grammar plugins which are compatible
+    parserPackages = lib.filter (pkg: pkg != null) (map (parserName:
+      pkgs.vimPlugins.nvim-treesitter.grammarPlugins.${parserName} or (
+        builtins.trace "Warning: treesitter parser '${parserName}' not found in nvim-treesitter grammar plugins" null
+      )
+    ) parserNames);
+
     parsers = pkgs.symlinkJoin {
       name = "treesitter-parsers";
-      paths = (pkgs.vimPlugins.nvim-treesitter.withPlugins (_: cfg.treesitterParsers)).dependencies;
+      paths = parserPackages;
     };
   in parsers;
 
@@ -966,7 +993,7 @@ in {
       "nvim/init.lua".text = lazyConfig;
       
       # Link treesitter parsers only if parsers are configured
-      "nvim/parser" = mkIf (cfg.treesitterParsers != []) {
+      "nvim/parser" = mkIf (automaticTreesitterParsers != []) {
         source = "${treesitterGrammars}/parser";
       };
       

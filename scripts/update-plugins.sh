@@ -87,6 +87,20 @@ if ! jq . "$REPO_ROOT/plugins.json.tmp" > /dev/null 2>&1; then
     exit 1
 fi
 
+echo "==> Extracting treesitter parser mappings..."
+# Extract treesitter mappings from LazyVim
+cd "$REPO_ROOT"
+nix-shell -p lua --run "lua scripts/extract-treesitter.lua '$TEMP_DIR/LazyVim'" || {
+    echo "Error: Failed to extract treesitter mappings"
+    exit 1
+}
+
+# Validate the generated treesitter mappings JSON
+if ! jq . "$REPO_ROOT/treesitter-mappings.json" > /dev/null 2>&1; then
+    echo "Error: Generated treesitter-mappings.json is not valid JSON"
+    exit 1
+fi
+
 # Check if we got any plugins
 PLUGIN_COUNT=$(jq '.plugins | length' "$REPO_ROOT/plugins.json.tmp")
 if [ "$PLUGIN_COUNT" -eq 0 ]; then
@@ -126,16 +140,22 @@ fi
 # Move the temporary file to the final location
 mv "$REPO_ROOT/plugins.json.tmp" "$REPO_ROOT/plugins.json"
 
-echo "==> Successfully updated plugins.json"
+# Get treesitter stats
+CORE_PARSERS=$(jq '.core | length' "$REPO_ROOT/treesitter-mappings.json")
+EXTRA_PARSERS=$(jq '[.extras | values[]] | length' "$REPO_ROOT/treesitter-mappings.json")
+
+echo "==> Successfully updated plugins.json and treesitter-mappings.json"
 echo "    Version: $LAZYVIM_VERSION"
 echo "    Plugins: $PLUGIN_COUNT"
+echo "    Core parsers: $CORE_PARSERS"
+echo "    Extra parsers: $EXTRA_PARSERS"
 
-# Generate a summary of changes if plugins.json already existed
-if git diff --quiet plugins.json 2>/dev/null; then
+# Generate a summary of changes
+if git diff --quiet plugins.json treesitter-mappings.json 2>/dev/null; then
     echo "==> No changes detected"
 else
     echo "==> Changes detected:"
-    git diff --stat plugins.json 2>/dev/null || true
+    git diff --stat plugins.json treesitter-mappings.json 2>/dev/null || true
 fi
 
 # Remind about next steps if there are unmapped plugins
