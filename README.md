@@ -131,11 +131,11 @@ my-lazyvim-config/
 
 📖 **[Getting Started](https://github.com/pfassina/lazyvim-nix/wiki/Getting-Started)** - Complete setup guide
 
-⚙️ **[Configuration Reference](docs/configuration-reference.md)** - Complete reference for all options including the new `configFiles` feature
+⚙️ **[Configuration Reference](https://github.com/pfassina/lazyvim-nix/wiki/Configuration-Reference)** - Module options and configuration
 
 🎯 **[LazyVim Extras](https://github.com/pfassina/lazyvim-nix/wiki/LazyVim-Extras)** - Language and feature support
 
-🏗️ **[Architecture](https://github.com/pfassina/lazyvim-nix/wiki/Architecture-and-How-It-Works)** - How it works under the hood
+🔧 **[Plugin Sourcing Strategy](https://github.com/pfassina/lazyvim-nix/wiki/Plugin-Sourcing-Strategy)** - How plugins are resolved and managed
 
 🚨 **[Troubleshooting](https://github.com/pfassina/lazyvim-nix/wiki/Troubleshooting)** - Common issues and solutions
 
