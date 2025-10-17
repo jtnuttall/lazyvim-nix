@@ -63,9 +63,7 @@ programs.lazyvim = {
 };
 ```
 
-**Treesitter grammars are installed automatically** based on enabled language extras. Core grammars (languages that LazyVim requires by default) are always included, while language-specific grammars are added when you enable the corresponding extra. Manual parsers are only needed for languages not covered by LazyVim extras.
-
-**Note:** LazyVim extras install Neovim plugins but NOT the actual language tools. You must provide LSP servers, formatters, and linters via `extraPackages`.
+**Note:** Treesitter grammars are [installed automatically](https://github.com/pfassina/lazyvim-nix/wiki/Configuration-Reference#treesitterparsers) based on enabled language extras. 
 
 ### Custom Configuration
 
