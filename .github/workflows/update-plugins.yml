@@ -36,6 +36,7 @@ jobs:
         uses: cachix/cachix-action@v12
         with:
           name: nix-community
+          skipPush: true
           
       - name: Check for LazyVim updates
         id: check-updates
