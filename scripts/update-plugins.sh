@@ -90,7 +90,7 @@ fi
 echo "==> Extracting treesitter parser mappings..."
 # Extract treesitter mappings from LazyVim
 cd "$REPO_ROOT"
-nix-shell -p lua --run "lua scripts/extract-treesitter.lua '$TEMP_DIR/LazyVim'" || {
+lua scripts/extract-treesitter.lua "$TEMP_DIR/LazyVim" || {
     echo "Error: Failed to extract treesitter mappings"
     exit 1
 }
