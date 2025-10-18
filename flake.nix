@@ -27,6 +27,7 @@
             git
             ripgrep
             fd
+            nix-prefetch-git
           ];
         };
       })
