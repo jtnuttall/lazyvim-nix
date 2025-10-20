@@ -333,7 +333,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 			else
 				-- No existing data, so it's a new plugin
 				version_changed = true
-				print("      New plugin, setting fetched_at")
+				print("      New plugin")
 			end
 
 			plugin_info.version_info.commit = version_data.commit
@@ -342,17 +342,16 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 			-- Only update fetched_at if the version actually changed
 			if version_changed then
 				plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
-				print(string.format("      ✓ Got commit: %s (updated fetched_at)", version_data.commit:sub(1, 8)))
+				print(string.format("      ✓ Got commit: %s (updated)", version_data.commit:sub(1, 8)))
 			else
 				-- Preserve the existing fetched_at timestamp
 				if existing_plugin_data and existing_plugin_data.version_info and existing_plugin_data.version_info.fetched_at then
 					plugin_info.version_info.fetched_at = existing_plugin_data.version_info.fetched_at
-					print(string.format("      ✓ Got commit: %s (unchanged, preserved fetched_at)", version_data.commit:sub(1, 8)))
 				else
 					-- Fallback: set new fetched_at if we don't have an existing one
 					plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
-					print(string.format("      ✓ Got commit: %s (no existing fetched_at)", version_data.commit:sub(1, 8)))
 				end
+				print(string.format("      ✓ Got commit: %s (unchanged)", version_data.commit:sub(1, 8)))
 			end
 		else
 			print("      ⚠ Could not fetch version info")
@@ -366,10 +365,65 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 		os.execute("sleep 0.2")
 	end
 
-	-- Function to check if a plugin is mapped
+	-- Function to check if a plugin is mapped (manual or automatic)
 	local function is_plugin_mapped(plugin_name)
 		-- Check if it's in existing mappings or multi-module mappings
-		return existing_mappings[plugin_name] ~= nil or multi_module_mappings[plugin_name] ~= nil
+		if existing_mappings[plugin_name] ~= nil or multi_module_mappings[plugin_name] ~= nil then
+			return true
+		end
+
+		-- Test automatic resolution patterns (same logic as module.nix)
+		local owner, repo_name = plugin_name:match("^([^/]+)/(.+)$")
+		if not repo_name then
+			return false
+		end
+
+		local nixpkgs_name = nil
+
+		-- Pattern 1: owner/name.nvim -> name-nvim (most common)
+		if repo_name:match("%.nvim$") then
+			local base_name = repo_name:gsub("%.nvim$", "")
+			nixpkgs_name = base_name .. "-nvim"
+		-- Pattern 2: owner/name-nvim -> name-nvim
+		elseif repo_name:match("%-nvim$") then
+			nixpkgs_name = repo_name
+		-- Pattern 3: owner/nvim-name -> nvim-name
+		elseif repo_name:match("^nvim%-") then
+			nixpkgs_name = repo_name
+		-- Pattern 4: owner/name -> name (convert dashes to underscores)
+		else
+			nixpkgs_name = repo_name:gsub("%-", "_"):gsub("%.", "_")
+		end
+
+		-- Test if the resolved name exists in nixpkgs (use nixos-unstable)
+		if nixpkgs_name then
+			local cmd = string.format(
+				"nix eval --impure --expr 'let pkgs = import (fetchTarball \"https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz\") {}; in pkgs.vimPlugins.%s or null' 2>&1",
+				nixpkgs_name
+			)
+			print(string.format("DEBUG: Checking %s -> %s", plugin_name, nixpkgs_name))
+			print(string.format("DEBUG: Command: %s", cmd))
+
+			local handle = io.popen(cmd)
+			if handle then
+				local result = handle:read("*all")
+				local success = handle:close()
+				print(string.format("DEBUG: Result: %s", result:gsub("\n", "\\n")))
+				print(string.format("DEBUG: Success: %s", tostring(success)))
+
+				-- Check if the result is not null (package exists)
+				if success and result and not result:match("null") and result:match("«derivation") then
+					print(string.format("DEBUG: ✓ Found %s -> %s", plugin_name, nixpkgs_name))
+					return true
+				else
+					print(string.format("DEBUG: ✗ Not found %s -> %s", plugin_name, nixpkgs_name))
+				end
+			else
+				print(string.format("DEBUG: Failed to execute command for %s", plugin_name))
+			end
+		end
+
+		return false
 	end
 
 	-- Function to collect plugin specs recursively
