@@ -7,6 +7,46 @@ local suggest_mappings = require("suggest-mappings")
 -- Load user plugin scanner
 local user_scanner = require("scan-user-plugins")
 
+-- Function to load existing plugins.json
+local function load_existing_plugins(file_path)
+	local existing_plugins = {}
+	local file = io.open(file_path, "r")
+	if not file then
+		print(string.format("Note: No existing plugins.json found at %s, will create new one", file_path))
+		return existing_plugins
+	end
+
+	local content = file:read("*all")
+	file:close()
+
+	-- Use vim.json to parse the JSON properly
+	local ok, json_data = pcall(vim.json.decode, content)
+	if not ok then
+		print("Warning: Could not parse existing plugins.json")
+		return existing_plugins
+	end
+
+	-- Extract plugins from parsed JSON
+	if json_data and json_data.plugins then
+		for _, plugin in ipairs(json_data.plugins) do
+			if plugin.name then
+				existing_plugins[plugin.name] = {
+					name = plugin.name,
+					version_info = plugin.version_info or {}
+				}
+			end
+		end
+	end
+
+	local count = 0
+	for _ in pairs(existing_plugins) do
+		count = count + 1
+	end
+	print(string.format("Loaded %d existing plugins from %s", count, file_path))
+
+	return existing_plugins
+end
+
 -- Function to parse plugin-mappings.nix
 local function parse_plugin_mappings(mappings_file)
 	local mappings = {}
@@ -56,6 +96,10 @@ local function parse_plugin_mappings(mappings_file)
 end
 
 function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
+	-- Load existing plugins.json for comparison
+	local existing_plugins_file = output_file:gsub("%.tmp$", "")
+	local existing_plugins = load_existing_plugins(existing_plugins_file)
+
 	-- Set up paths
 	vim.opt.runtimepath:prepend(lazyvim_path)
 
@@ -197,7 +241,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	end
 
 	-- Enrich plugin with version information
-	local function enrich_plugin_version_info(plugin_info)
+	local function enrich_plugin_version_info(plugin_info, existing_plugin_data)
 		if not plugin_info.owner or not plugin_info.repo then
 			return
 		end
@@ -265,10 +309,51 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 		end
 
 		if version_data then
+			-- Check if the version has actually changed
+			local version_changed = false
+			if existing_plugin_data and existing_plugin_data.version_info then
+				local old_info = existing_plugin_data.version_info
+				-- Compare the actual version identifiers
+				if version_data.commit ~= old_info.commit then
+					version_changed = true
+					print(string.format("      Version changed: %s -> %s",
+						old_info.commit and old_info.commit:sub(1, 8) or "none",
+						version_data.commit:sub(1, 8)))
+				elseif plugin_info.version_info.tag ~= old_info.tag then
+					version_changed = true
+					print(string.format("      Tag changed: %s -> %s",
+						old_info.tag or "none",
+						plugin_info.version_info.tag or "none"))
+				elseif plugin_info.version_info.branch ~= old_info.branch then
+					version_changed = true
+					print(string.format("      Branch changed: %s -> %s",
+						old_info.branch or "none",
+						plugin_info.version_info.branch or "none"))
+				end
+			else
+				-- No existing data, so it's a new plugin
+				version_changed = true
+				print("      New plugin, setting fetched_at")
+			end
+
 			plugin_info.version_info.commit = version_data.commit
 			plugin_info.version_info.sha256 = version_data.sha256
-			plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
-			print(string.format("      ✓ Got commit: %s", version_data.commit:sub(1, 8)))
+
+			-- Only update fetched_at if the version actually changed
+			if version_changed then
+				plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
+				print(string.format("      ✓ Got commit: %s (updated fetched_at)", version_data.commit:sub(1, 8)))
+			else
+				-- Preserve the existing fetched_at timestamp
+				if existing_plugin_data and existing_plugin_data.version_info and existing_plugin_data.version_info.fetched_at then
+					plugin_info.version_info.fetched_at = existing_plugin_data.version_info.fetched_at
+					print(string.format("      ✓ Got commit: %s (unchanged, preserved fetched_at)", version_data.commit:sub(1, 8)))
+				else
+					-- Fallback: set new fetched_at if we don't have an existing one
+					plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
+					print(string.format("      ✓ Got commit: %s (no existing fetched_at)", version_data.commit:sub(1, 8)))
+				end
+			end
 		else
 			print("      ⚠ Could not fetch version info")
 		end
@@ -417,7 +502,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 					end
 
 					-- Fetch version information
-					enrich_plugin_version_info(plugin_info)
+					enrich_plugin_version_info(plugin_info, existing_plugins[normalized])
 
 					table.insert(plugins, plugin_info)
 				end
@@ -570,7 +655,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 						end
 
 						-- Fetch version information
-						enrich_plugin_version_info(plugin_info)
+						enrich_plugin_version_info(plugin_info, existing_plugins[normalized])
 
 						table.insert(plugins, plugin_info)
 					end
@@ -683,7 +768,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 				end
 
 				-- Fetch version information
-				enrich_plugin_version_info(user_plugin)
+				enrich_plugin_version_info(user_plugin, existing_plugins[user_plugin.name])
 
 				table.insert(plugins, user_plugin)
 			else
