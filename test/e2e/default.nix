@@ -14,7 +14,7 @@ let
     cat > $out/home.nix << 'EOF'
     { config, lib, pkgs, ... }:
     {
-      imports = [ ${../../module.nix} ];
+      imports = [ ${../../nix/module.nix} ];
 
       ${config}
 
@@ -147,7 +147,7 @@ in {
 
     # Extract the init.lua content
     init_lua=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $testConfig;
+      let module = import ${../nix/module.nix} $testConfig;
       in module.config.xdg.configFile.\"nvim/init.lua\".text
     " 2>/dev/null | sed 's/^"//; s/"$//' | sed 's/\\n/\n/g')
 
@@ -215,7 +215,7 @@ in {
     # Test that neovim configuration builds
     result=$(nix-instantiate --eval --expr "
       let
-        module = import ${../module.nix} $buildConfig;
+        module = import ${../nix/module.nix} $buildConfig;
         nvimConfig = module.config.programs.neovim;
       in {
         enabled = nvimConfig.enable;
@@ -280,7 +280,7 @@ in {
 
     # Test evaluation time
     if nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $largeConfig;
+      let module = import ${../nix/module.nix} $largeConfig;
       in module.config.programs.neovim.enable
     " >/dev/null 2>&1; then
       end_time=$(date +%s)
@@ -324,7 +324,7 @@ in {
     # Test that treesitter configuration is generated
     result=$(nix-instantiate --eval --expr "
       let
-        module = import ${../module.nix} $parserConfig;
+        module = import ${../nix/module.nix} $parserConfig;
         configFiles = module.config.xdg.configFile;
       in configFiles ? \"nvim/parser\"
     " 2>/dev/null || echo "false")
@@ -368,7 +368,7 @@ in {
     # Test that extras generate appropriate config files
     result=$(nix-instantiate --eval --expr "
       let
-        module = import ${../module.nix} $extrasConfig;
+        module = import ${../nix/module.nix} $extrasConfig;
         configFiles = module.config.xdg.configFile;
 
         # Look for extras config files
@@ -405,7 +405,7 @@ in {
 
     # Check that init.lua contains Mason disabling
     init_lua=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $testConfig;
+      let module = import ${../nix/module.nix} $testConfig;
       in module.config.xdg.configFile.\"nvim/init.lua\".text
     " 2>/dev/null | tr -d '"' | sed 's/\\n/\n/g')
 

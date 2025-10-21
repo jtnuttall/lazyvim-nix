@@ -1,7 +1,7 @@
 {
   "version": "v15.10.1",
   "commit": "a65d5d530d372b39a468dfbb2ce633f344770c5c",
-  "generated": "2025-10-20 23:03:02",
+  "generated": "2025-10-20 19:55:44",
   "extraction_report": {
     "total_plugins": 86,
     "mapped_plugins": 86,
@@ -125,9 +125,15 @@
       "loadOrder": 7,
       "dependencies": {
       },
-      "source_file": "extras.lang.elixir",
+      "source_file": "extras.lang.markdown",
       "is_core": false,
-      "ft": null,
+      "ft": [
+        "markdown",
+        "norg",
+        "rmd",
+        "org",
+        "codecompanion"
+      ],
       "version_info": {
         "commit": "ea3678daff66656a9e1c20914d204b7c841c5030",
         "tag": "v8.9.0",
@@ -294,7 +300,7 @@
       "loadOrder": 17,
       "dependencies": {
       },
-      "source_file": "extras.lang.yaml",
+      "source_file": "extras.lang.json",
       "is_core": false,
       "lazy": true,
       "version_info": {
@@ -789,7 +795,7 @@
       "loadOrder": 45,
       "dependencies": {
       },
-      "source_file": "extras.ui.indent-blankline",
+      "source_file": "extras.ui.mini-indentscope",
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
@@ -868,7 +874,7 @@
       "loadOrder": 50,
       "dependencies": {
       },
-      "source_file": "extras.lang.dotnet",
+      "source_file": "extras.lang.scala",
       "is_core": false,
       "version_info": {
         "commit": "6a5bba0ddea5d419a783e170c20988046376090d",
@@ -1232,9 +1238,9 @@
       "repo": "neotest",
       "loadOrder": 68,
       "dependencies": [
-        "sidlatau/neotest-dart"
+        "mrcjkb/neotest-haskell"
       ],
-      "source_file": "extras.lang.dart",
+      "source_file": "extras.lang.haskell",
       "is_core": false,
       "version_info": {
         "commit": "7166dc36af2760a76479e021e0521e23f62165f1",
@@ -1250,7 +1256,7 @@
       "loadOrder": 69,
       "dependencies": {
       },
-      "source_file": "extras.lang.terraform",
+      "source_file": "extras.lang.haskell",
       "is_core": false,
       "version_info": {
         "commit": "a0bbec21143c7bc5f8bb02e0005fa0b982edc026",
@@ -1329,7 +1335,7 @@
       "loadOrder": 73,
       "dependencies": {
       },
-      "source_file": "extras.lang.cmake",
+      "source_file": "extras.lang.markdown",
       "is_core": false,
       "version_info": {
         "commit": "a96172f673f720cd4f3572e1fcd08400ed3eb25d",

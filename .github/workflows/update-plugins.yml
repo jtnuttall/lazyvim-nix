@@ -12,7 +12,7 @@ on:
       - 'scripts/update-plugins.sh'
       - 'scripts/extract-plugins.lua'
       - 'scripts/suggest-mappings.lua'
-      - 'scripts/generate-extras-metadata.sh'
+      - 'scripts/generate-extras-metadata.lua'
       - 'scripts/extract-extras-plugins.lua'
       - '.github/workflows/update-plugins.yml'
 
@@ -41,10 +41,10 @@ jobs:
       - name: Check for LazyVim updates
         id: check-updates
         run: |
-          # Get current version from plugins.json
-          if [ -f plugins.json ]; then
-            CURRENT_VERSION=$(jq -r '.version' plugins.json)
-            CURRENT_COMMIT=$(jq -r '.commit' plugins.json)
+          # Get current version from data/plugins.json
+          if [ -f data/plugins.json ]; then
+            CURRENT_VERSION=$(jq -r '.version' data/plugins.json)
+            CURRENT_COMMIT=$(jq -r '.commit' data/plugins.json)
           else
             CURRENT_VERSION="none"
             CURRENT_COMMIT="none"
@@ -81,36 +81,36 @@ jobs:
           nix develop --command ./scripts/update-plugins.sh --verify
 
           # Update extras metadata
-          ./scripts/generate-extras-metadata.sh
+          ./scripts/generate-extras-metadata.lua
           
           # Check if there are unmapped plugins
-          UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins // 0' plugins.json)
+          UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins // 0' data/plugins.json)
           echo "unmapped_count=$UNMAPPED_COUNT" >> $GITHUB_OUTPUT
           
           # Extract plugin statistics for PR body
-          TOTAL_PLUGINS=$(jq '.extraction_report.total_plugins // 0' plugins.json)
-          MAPPED_PLUGINS=$(jq '.extraction_report.mapped_plugins // 0' plugins.json)
-          MULTI_MODULE_PLUGINS=$(jq '.extraction_report.multi_module_plugins // 0' plugins.json)
+          TOTAL_PLUGINS=$(jq '.extraction_report.total_plugins // 0' data/plugins.json)
+          MAPPED_PLUGINS=$(jq '.extraction_report.mapped_plugins // 0' data/plugins.json)
+          MULTI_MODULE_PLUGINS=$(jq '.extraction_report.multi_module_plugins // 0' data/plugins.json)
           
           echo "total_plugins=$TOTAL_PLUGINS" >> $GITHUB_OUTPUT
           echo "mapped_plugins=$MAPPED_PLUGINS" >> $GITHUB_OUTPUT
           echo "multi_module_plugins=$MULTI_MODULE_PLUGINS" >> $GITHUB_OUTPUT
           
           # If unmapped plugins exist, extract mapping suggestions
-          if [ "$UNMAPPED_COUNT" -gt 0 ] && [ -f mapping-analysis-report.md ]; then
+          if [ "$UNMAPPED_COUNT" -gt 0 ] && [ -f data/mapping-analysis-report.md ]; then
             # Extract verified mappings from the report
-            if grep -q "## ✅ Verified Mappings" mapping-analysis-report.md; then
+            if grep -q "## ✅ Verified Mappings" data/mapping-analysis-report.md; then
               echo "has_verified_mappings=true" >> $GITHUB_OUTPUT
               
               # Extract the nix code block with mappings
-              sed -n '/```nix/,/```/p' mapping-analysis-report.md | sed '1d;$d' > new-mappings.nix
+              sed -n '/```nix/,/```/p' data/mapping-analysis-report.md | sed '1d;$d' > new-mappings.nix
               
-              # Apply the mappings to plugin-mappings.nix
+              # Apply the mappings to nix/mappings/plugin-mappings.nix
               if [ -s new-mappings.nix ]; then
                 # Insert before the closing brace
-                sed -i '$ s/}//' plugin-mappings.nix
-                cat new-mappings.nix >> plugin-mappings.nix
-                echo "}" >> plugin-mappings.nix
+                sed -i '$ s/}//' nix/mappings/plugin-mappings.nix
+                cat new-mappings.nix >> nix/mappings/plugin-mappings.nix
+                echo "}" >> nix/mappings/plugin-mappings.nix
                 
                 # Re-run extraction with new mappings
                 nix develop --command ./scripts/update-plugins.sh
@@ -121,8 +121,8 @@ jobs:
           fi
           
           # Stage the mapping analysis report if it exists
-          if [ -f mapping-analysis-report.md ]; then
-            git add mapping-analysis-report.md
+          if [ -f data/mapping-analysis-report.md ]; then
+            git add data/mapping-analysis-report.md
           fi
           
       - name: Create Pull Request
@@ -136,11 +136,11 @@ jobs:
             This PR updates the LazyVim plugin specifications and extras metadata to the latest version.
 
             ## Changes
-            - Updated `plugins.json` with latest LazyVim plugin list
-            - Updated `extras.nix` with latest LazyVim extras metadata
+            - Updated `data/plugins.json` with latest LazyVim plugin list
+            - Updated `data/extras.json` with latest LazyVim extras metadata
             - Version: ${{ steps.check-updates.outputs.latest_version }}
-            ${{ steps.update-plugins.outputs.has_verified_mappings == 'true' && '- Added new verified plugin mappings to `plugin-mappings.nix`' || '' }}
-            ${{ steps.update-plugins.outputs.unmapped_count > 0 && steps.update-plugins.outputs.has_verified_mappings != 'true' && '- ⚠️ Found unmapped plugins that need manual review (see mapping-analysis-report.md)' || '' }}
+            ${{ steps.update-plugins.outputs.has_verified_mappings == 'true' && '- Added new verified plugin mappings to `nix/mappings/plugin-mappings.nix`' || '' }}
+            ${{ steps.update-plugins.outputs.unmapped_count > 0 && steps.update-plugins.outputs.has_verified_mappings != 'true' && '- ⚠️ Found unmapped plugins that need manual review (see data/mapping-analysis-report.md)' || '' }}
             
             ## Plugin Statistics
             - Total plugins: ${{ steps.update-plugins.outputs.total_plugins || 'N/A' }}
@@ -151,16 +151,17 @@ jobs:
             ## Checklist
             - [ ] Review plugin changes
             - [ ] Test with example configuration
-            ${{ steps.update-plugins.outputs.unmapped_count > 0 && '- [ ] Review mapping-analysis-report.md for unmapped plugins' || '- [x] All plugins are mapped' }}
+            ${{ steps.update-plugins.outputs.unmapped_count > 0 && '- [ ] Review data/mapping-analysis-report.md for unmapped plugins' || '- [x] All plugins are mapped' }}
             
             ---
             *This pull request was automatically generated by the update workflow.*
           branch: update-lazyvim-plugins
           delete-branch: true
           add-paths: |
-            plugins.json
-            plugin-mappings.nix
-            extras.nix
+            data/plugins.json
+            nix/mappings/plugin-mappings.nix
+            data/extras.json
+            data/mapping-analysis-report.md
           
   test-flake:
     runs-on: ubuntu-latest

@@ -201,18 +201,18 @@ echo "📁 File Structure Validation"
 echo "============================"
 
 run_individual_test "flake.nix exists" "[ -f '$PROJECT_ROOT/flake.nix' ]"
-run_individual_test "module.nix exists" "[ -f '$PROJECT_ROOT/module.nix' ]"
-run_individual_test "plugins.json exists" "[ -f '$PROJECT_ROOT/plugins.json' ]"
-run_individual_test "plugin-mappings.nix exists" "[ -f '$PROJECT_ROOT/plugin-mappings.nix' ]"
+run_individual_test "nix/module.nix exists" "[ -f '$PROJECT_ROOT/nix/module.nix'' ]"
+run_individual_test "data/plugins.json exists" "[ -f '$PROJECT_ROOT/data/plugins.json' ]"
+run_individual_test "nix/mappings/plugin-mappings.nix exists" "[ -f '$PROJECT_ROOT/nix/mappings/plugin-mappings.nix' ]"
 run_individual_test "update script exists" "[ -x '$PROJECT_ROOT/scripts/update-plugins.sh' ]"
 
 echo
 echo "🔍 JSON and Nix Validation"
 echo "=========================="
 
-run_individual_test "plugins.json is valid JSON" "jq empty '$PROJECT_ROOT/plugins.json'"
-run_individual_test "plugins.json has plugins" "[ \$(jq '.plugins | length' '$PROJECT_ROOT/plugins.json') -gt 0 ]"
-run_individual_test "plugin-mappings.nix evaluates" "nix-instantiate --eval '$PROJECT_ROOT/plugin-mappings.nix' >/dev/null"
+run_individual_test "data/plugins.json is valid JSON" "jq empty '$PROJECT_ROOT/data/plugins.json'"
+run_individual_test "data/plugins.json has plugins" "[ \$(jq '.plugins | length' '$PROJECT_ROOT/data/plugins.json') -gt 0 ]"
+run_individual_test "nix/mappings/plugin-mappings.nix evaluates" "nix-instantiate --eval '$PROJECT_ROOT/nix/mappings/plugin-mappings.nix' >/dev/null"
 run_individual_test "flake.nix is valid" "cd '$PROJECT_ROOT' && nix flake show --no-update-lock-file >/dev/null"
 
 # Summary

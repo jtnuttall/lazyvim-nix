@@ -3,9 +3,9 @@
 
 let
   # Load plugins.json at evaluation time
-  pluginsJsonExists = builtins.pathExists ../../plugins.json;
+  pluginsJsonExists = builtins.pathExists ../../data/plugins.json;
   pluginsData = if pluginsJsonExists then
-    builtins.fromJSON (builtins.readFile ../../plugins.json)
+    builtins.fromJSON (builtins.readFile ../../data/plugins.json)
   else
     { plugins = []; };
 
@@ -96,7 +96,7 @@ in {
     echo "Checking core plugins have valid commit hashes..."
 
     # Load plugins.json
-    plugins_file="${../../plugins.json}"
+    plugins_file="${../../data/plugins.json}"
     if [ ! -f "$plugins_file" ]; then
       echo "plugins.json not found"
       exit 1
@@ -135,7 +135,7 @@ in {
     echo "Running test: lazyvim-spec-extraction"
     echo "Checking LazyVim specification extraction..."
 
-    plugins_file="${../../plugins.json}"
+    plugins_file="${../../data/plugins.json}"
     if [ ! -f "$plugins_file" ]; then
       echo "plugins.json not found"
       exit 1
@@ -171,7 +171,7 @@ in {
     echo "Running comprehensive LazyVim specification compliance check..."
 
     # Check for critical treesitter plugins that must follow specific specs
-    plugins_file="${../../plugins.json}"
+    plugins_file="${../../data/plugins.json}"
 
     # Test treesitter compliance (must have branch=main,version=false)
     treesitter_plugin=$(${pkgs.jq}/bin/jq -r '.plugins[] | select(.name == "nvim-treesitter/nvim-treesitter")' "$plugins_file")

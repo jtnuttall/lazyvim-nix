@@ -39,11 +39,24 @@
     "lang.cmake": [
       "cmake"
     ],
+    "lang.dart": [
+      "dart"
+    ],
     "lang.docker": [
       "dockerfile"
     ],
+    "lang.dotnet": [
+      "c_sharp",
+      "fsharp"
+    ],
     "lang.elm": [
       "elm"
+    ],
+    "lang.ember": [
+      "css",
+      "glimmer",
+      "glimmer_javascript",
+      "glimmer_typescript"
     ],
     "lang.erlang": [
       "erlang"
@@ -76,6 +89,9 @@
     "lang.json": [
       "json5"
     ],
+    "lang.julia": [
+      "julia"
+    ],
     "lang.kotlin": [
       "kotlin"
     ],
@@ -84,9 +100,6 @@
     ],
     "lang.nushell": [
       "nu"
-    ],
-    "lang.omnisharp": [
-      "c_sharp"
     ],
     "lang.php": [
       "php"
@@ -115,6 +128,9 @@
     "lang.scala": [
       "scala"
     ],
+    "lang.solidity": [
+      "solidity"
+    ],
     "lang.sql": [
       "sql"
     ],
@@ -124,6 +140,12 @@
     "lang.terraform": [
       "terraform",
       "hcl"
+    ],
+    "lang.twig": [
+      "twig"
+    ],
+    "lang.typst": [
+      "typst"
     ],
     "lang.vue": [
       "vue",

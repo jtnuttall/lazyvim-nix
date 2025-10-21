@@ -205,7 +205,7 @@ in {
       }'
 
       result=$(nix-instantiate --eval --expr "
-        let module = import ${../module.nix} $testConfig;
+        let module = import ${../nix/module.nix} $testConfig;
         in module.config.programs.neovim.enable
       " 2>/dev/null || echo "false")
 
@@ -236,7 +236,7 @@ in {
 
     # This should fail (invalid enum value)
     if nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $invalidConfig;
+      let module = import ${../nix/module.nix} $invalidConfig;
       in module.config.programs.neovim.enable
     " 2>/dev/null; then
       echo "ERROR: Invalid plugin source should have failed!"
@@ -282,7 +282,7 @@ in {
 
     # Should handle large configs without issues
     result=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $largeConfig;
+      let module = import ${../nix/module.nix} $largeConfig;
       in module.config.programs.neovim.enable
     " 2>/dev/null || echo "false")
 
@@ -311,7 +311,7 @@ in {
     }'
 
     result=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $unicodeConfig;
+      let module = import ${../nix/module.nix} $unicodeConfig;
       in module.config.programs.neovim.enable
     " 2>/dev/null || echo "false")
 
@@ -337,7 +337,7 @@ in {
       }'
 
       nix-instantiate --eval --expr "
-        let module = import ${../module.nix} $testConfig;
+        let module = import ${../nix/module.nix} $testConfig;
         in module.config.programs.neovim.enable
       " > /dev/null &
     done

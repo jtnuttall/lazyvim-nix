@@ -5,8 +5,8 @@ let
   moduleLib = pkgs.lib;
 
   # Load current plugin data for regression testing
-  currentPluginData = builtins.fromJSON (builtins.readFile ../../plugins.json);
-  currentPluginMappings = import ../../plugin-mappings.nix;
+  currentPluginData = builtins.fromJSON (builtins.readFile ../../data/plugins.json);
+  currentPluginMappings = import ../../nix/mappings/plugin-mappings.nix;
 
 in {
   # Test that core LazyVim plugins are always present
@@ -22,7 +22,7 @@ in {
 
     echo "Checking core plugins in plugins.json..."
     for plugin in "''${core_plugins[@]}"; do
-      if ${pkgs.jq}/bin/jq -e '.plugins[] | select(.name == "'"$plugin"'")' ${../../plugins.json} > /dev/null; then
+      if ${pkgs.jq}/bin/jq -e '.plugins[] | select(.name == "'"$plugin"'")' ${../../data/plugins.json} > /dev/null; then
         echo "✓ Found: $plugin"
       else
         echo "✗ Missing core plugin: $plugin"
@@ -47,7 +47,7 @@ in {
       plugin="''${mapping%%:*}"
       expected="''${mapping##*:}"
 
-      actual=$(nix-instantiate --eval ${../../plugin-mappings.nix} -A "\"$plugin\"" 2>/dev/null | tr -d '"' || echo "MISSING")
+      actual=$(nix-instantiate --eval ${../../nix/mappings/plugin-mappings.nix} -A "\"$plugin\"" 2>/dev/null | tr -d '"' || echo "MISSING")
 
       if [ "$actual" = "$expected" ]; then
         echo "✓ $plugin -> $expected"
@@ -63,7 +63,7 @@ in {
   # Test that multi-module plugins are consistently handled
   test-multi-module-consistency = testLib.runTest "multi-module-consistency" ''
     # Test that all mini.nvim modules map to the same package
-    mini_modules=$(nix-instantiate --eval ${../../plugin-mappings.nix} --json | ${pkgs.jq}/bin/jq -r '
+    mini_modules=$(nix-instantiate --eval ${../../nix/mappings/plugin-mappings.nix} --json | ${pkgs.jq}/bin/jq -r '
       to_entries |
       map(select(.key | contains("mini."))) |
       map(select(.value | type == "object")) |
@@ -90,7 +90,7 @@ in {
     # Check required top-level fields
     required_fields=("version" "commit" "generated" "extraction_report" "plugins")
     for field in "''${required_fields[@]}"; do
-      if ${pkgs.jq}/bin/jq -e "has(\"$field\")" ${../../plugins.json} > /dev/null; then
+      if ${pkgs.jq}/bin/jq -e "has(\"$field\")" ${../../data/plugins.json} > /dev/null; then
         echo "✓ Has field: $field"
       else
         echo "✗ Missing required field: $field"
@@ -100,11 +100,11 @@ in {
 
     # Check that plugins have required fields
     plugin_fields=("name" "owner" "repo")
-    plugin_count=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../plugins.json})
+    plugin_count=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../data/plugins.json})
     echo "Checking $plugin_count plugins for required fields..."
 
     for field in "''${plugin_fields[@]}"; do
-      missing_count=$(${pkgs.jq}/bin/jq --arg field "$field" '.plugins | map(select(has($field) | not)) | length' ${../../plugins.json})
+      missing_count=$(${pkgs.jq}/bin/jq --arg field "$field" '.plugins | map(select(has($field) | not)) | length' ${../../data/plugins.json})
       if [ "$missing_count" = "0" ]; then
         echo "✓ All plugins have field: $field"
       else
@@ -118,7 +118,7 @@ in {
 
   # Test that plugin count doesn't decrease dramatically
   test-plugin-count-regression = testLib.runTest "plugin-count-regression" ''
-    current_count=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../plugins.json})
+    current_count=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../data/plugins.json})
     echo "Current plugin count: $current_count"
 
     # We expect at least 30 plugins in a typical LazyVim setup
@@ -184,7 +184,7 @@ in {
 
     # This should still evaluate (backwards compatibility)
     if nix-instantiate --eval --expr "
-      let module = import ${../../module.nix} $oldStyleConfig;
+      let module = import ${../../nix/module.nix} $oldStyleConfig;
       in module.config.programs.neovim.enable
     " 2>/dev/null >/dev/null; then
       echo "✓ Backwards compatibility maintained"
@@ -199,8 +199,8 @@ in {
     echo "Testing version information extraction..."
 
     # Check that plugins have version_info when available
-    plugins_with_version=$(${pkgs.jq}/bin/jq '.plugins | map(select(has("version_info"))) | length' ${../../plugins.json})
-    total_plugins=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../plugins.json})
+    plugins_with_version=$(${pkgs.jq}/bin/jq '.plugins | map(select(has("version_info"))) | length' ${../../data/plugins.json})
+    total_plugins=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../data/plugins.json})
 
     echo "Plugins with version info: $plugins_with_version/$total_plugins"
 
@@ -211,7 +211,7 @@ in {
       # Check version info structure
       version_fields=("commit" "tag" "sha256")
       for field in "''${version_fields[@]}"; do
-        field_count=$(${pkgs.jq}/bin/jq --arg field "$field" '.plugins | map(.version_info // {}) | map(select(has($field))) | length' ${../../plugins.json})
+        field_count=$(${pkgs.jq}/bin/jq --arg field "$field" '.plugins | map(.version_info // {}) | map(select(has($field))) | length' ${../../data/plugins.json})
         echo "  Plugins with $field: $field_count"
       done
     else
@@ -227,8 +227,8 @@ in {
     # Check extraction report structure
     required_report_fields=("total_plugins" "mapped_plugins" "unmapped_plugins")
     for field in "''${required_report_fields[@]}"; do
-      if ${pkgs.jq}/bin/jq -e ".extraction_report | has(\"$field\")" ${../../plugins.json} > /dev/null; then
-        value=$(${pkgs.jq}/bin/jq ".extraction_report.$field" ${../../plugins.json})
+      if ${pkgs.jq}/bin/jq -e ".extraction_report | has(\"$field\")" ${../../data/plugins.json} > /dev/null; then
+        value=$(${pkgs.jq}/bin/jq ".extraction_report.$field" ${../../data/plugins.json})
         echo "✓ $field: $value"
       else
         echo "✗ Missing extraction report field: $field"
@@ -237,8 +237,8 @@ in {
     done
 
     # Check that counts are consistent
-    total_plugins=$(${pkgs.jq}/bin/jq '.extraction_report.total_plugins' ${../../plugins.json})
-    actual_plugins=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../plugins.json})
+    total_plugins=$(${pkgs.jq}/bin/jq '.extraction_report.total_plugins' ${../../data/plugins.json})
+    actual_plugins=$(${pkgs.jq}/bin/jq '.plugins | length' ${../../data/plugins.json})
 
     if [ "$total_plugins" = "$actual_plugins" ]; then
       echo "✓ Plugin count consistency: $total_plugins = $actual_plugins"
@@ -252,7 +252,7 @@ in {
   test-no-unmapped-regressions = testLib.runTest "no-unmapped-regressions" ''
     echo "Testing for unmapped plugin regressions..."
 
-    unmapped_count=$(${pkgs.jq}/bin/jq '.extraction_report.unmapped_plugins' ${../../plugins.json})
+    unmapped_count=$(${pkgs.jq}/bin/jq '.extraction_report.unmapped_plugins' ${../../data/plugins.json})
     echo "Current unmapped plugins: $unmapped_count"
 
     # We expect 0 unmapped plugins in a well-maintained system
@@ -262,7 +262,7 @@ in {
       echo "! Warning: $unmapped_count unmapped plugins found"
 
       # Show which plugins are unmapped
-      ${pkgs.jq}/bin/jq -r '.extraction_report.mapping_suggestions | keys[]' ${../../plugins.json} 2>/dev/null | while read plugin; do
+      ${pkgs.jq}/bin/jq -r '.extraction_report.mapping_suggestions | keys[]' ${../../data/plugins.json} 2>/dev/null | while read plugin; do
         echo "  Unmapped: $plugin"
       done
     fi

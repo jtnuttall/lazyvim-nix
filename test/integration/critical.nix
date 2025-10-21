@@ -20,7 +20,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
       in builtins.isAttrs module
     ''
     "true";
@@ -46,7 +46,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
       in builtins.isAttrs module
     ''
     "true";
@@ -76,7 +76,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
       in builtins.isAttrs module
     ''
     "true";
@@ -99,7 +99,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
       in builtins.isAttrs module
     ''
     "true";
@@ -122,7 +122,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
       in builtins.isAttrs module
     ''
     "true";
@@ -149,7 +149,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
       in builtins.isAttrs module
     ''
     "true";
@@ -172,7 +172,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
       in builtins.isAttrs module
     ''
     "true";

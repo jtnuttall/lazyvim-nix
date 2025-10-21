@@ -18,7 +18,7 @@
           pkgs = import <nixpkgs> {};
         };
         # Just test that we can import the module
-        canImport = builtins.typeOf (import ${../../module.nix} testConfig) == "set";
+        canImport = builtins.typeOf (import ${../../nix/module.nix} testConfig) == "set";
       in canImport
     ''
     "true";
@@ -33,7 +33,7 @@
           lib = (import <nixpkgs> {}).lib;
           pkgs = import <nixpkgs> {};
         };
-        module = import ${../../module.nix} testConfig;
+        module = import ${../../nix/module.nix} testConfig;
         hasOptions = module ? options && module.options ? programs;
       in hasOptions
     ''

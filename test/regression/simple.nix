@@ -3,14 +3,14 @@
 
 let
   # Load the files at evaluation time
-  pluginsJsonExists = builtins.pathExists ../../plugins.json;
-  moduleNixExists = builtins.pathExists ../../module.nix;
+  pluginsJsonExists = builtins.pathExists ../../data/plugins.json;
+  moduleNixExists = builtins.pathExists ../../nix/module.nix;
   flakeNixExists = builtins.pathExists ../../flake.nix;
-  pluginMappingsExists = builtins.pathExists ../../plugin-mappings.nix;
+  pluginMappingsExists = builtins.pathExists ../../nix/mappings/plugin-mappings.nix;
 
   # Load and parse plugins.json
   pluginsData = if pluginsJsonExists then
-    builtins.fromJSON (builtins.readFile ../../plugins.json)
+    builtins.fromJSON (builtins.readFile ../../data/plugins.json)
   else
     { plugins = []; extraction_report = {}; };
 

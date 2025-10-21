@@ -75,14 +75,14 @@ fi
 nvim --headless -u NONE \
     -c "set runtimepath+=$TEMP_DIR/LazyVim" \
     -c "luafile $SCRIPT_DIR/extract-plugins.lua" \
-    -c "lua ExtractLazyVimPlugins('$TEMP_DIR/LazyVim', '$REPO_ROOT/plugins.json.tmp', '$LAZYVIM_VERSION', '$LAZYVIM_COMMIT')" \
+    -c "lua ExtractLazyVimPlugins('$TEMP_DIR/LazyVim', '$REPO_ROOT/data/plugins.json.tmp', '$LAZYVIM_VERSION', '$LAZYVIM_COMMIT')" \
     -c "quit" || {
         echo "Error: Failed to extract LazyVim plugins"
         exit 1
     }
 
 # Validate the generated JSON
-if ! jq . "$REPO_ROOT/plugins.json.tmp" > /dev/null 2>&1; then
+if ! jq . "$REPO_ROOT/data/plugins.json.tmp" > /dev/null 2>&1; then
     echo "Error: Generated plugins.json is not valid JSON"
     exit 1
 fi
@@ -96,13 +96,13 @@ lua scripts/extract-treesitter.lua "$TEMP_DIR/LazyVim" || {
 }
 
 # Validate the generated treesitter mappings JSON
-if ! jq . "$REPO_ROOT/treesitter-mappings.json" > /dev/null 2>&1; then
+if ! jq . "$REPO_ROOT/nix/mappings/treesitter-mappings.json" > /dev/null 2>&1; then
     echo "Error: Generated treesitter-mappings.json is not valid JSON"
     exit 1
 fi
 
 # Check if we got any plugins
-PLUGIN_COUNT=$(jq '.plugins | length' "$REPO_ROOT/plugins.json.tmp")
+PLUGIN_COUNT=$(jq '.plugins | length' "$REPO_ROOT/data/plugins.json.tmp")
 if [ "$PLUGIN_COUNT" -eq 0 ]; then
     echo "Error: No plugins found in generated JSON"
     exit 1
@@ -111,9 +111,9 @@ fi
 echo "==> Found $PLUGIN_COUNT plugins"
 
 # Check extraction report for unmapped plugins
-UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins' "$REPO_ROOT/plugins.json.tmp" 2>/dev/null || echo "0")
-MAPPED_COUNT=$(jq '.extraction_report.mapped_plugins' "$REPO_ROOT/plugins.json.tmp" 2>/dev/null || echo "0")
-MULTI_MODULE_COUNT=$(jq '.extraction_report.multi_module_plugins' "$REPO_ROOT/plugins.json.tmp" 2>/dev/null || echo "0")
+UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
+MAPPED_COUNT=$(jq '.extraction_report.mapped_plugins' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
+MULTI_MODULE_COUNT=$(jq '.extraction_report.multi_module_plugins' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
 
 echo "==> Extraction Report:"
 echo "    Mapped plugins: $MAPPED_COUNT"
@@ -124,12 +124,12 @@ echo "    Multi-module plugins: $MULTI_MODULE_COUNT"
 if [ "$UNMAPPED_COUNT" -gt 0 ]; then
     echo ""
     echo "⚠️  WARNING: $UNMAPPED_COUNT plugins are unmapped"
-    echo "    Check mapping-analysis-report.md for suggested mappings"
+    echo "    Check data/mapping-analysis-report.md for suggested mappings"
     echo "    Consider updating plugin-mappings.nix before committing"
     echo ""
     
     # Show suggested mappings count if available
-    SUGGESTIONS_COUNT=$(jq '.extraction_report.mapping_suggestions | length' "$REPO_ROOT/plugins.json.tmp" 2>/dev/null || echo "0")
+    SUGGESTIONS_COUNT=$(jq '.extraction_report.mapping_suggestions | length' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
     if [ "$SUGGESTIONS_COUNT" -gt 0 ]; then
         echo "    Generated $SUGGESTIONS_COUNT mapping suggestions"
         echo "    Review and add approved mappings to plugin-mappings.nix"
@@ -138,11 +138,11 @@ if [ "$UNMAPPED_COUNT" -gt 0 ]; then
 fi
 
 # Move the temporary file to the final location
-mv "$REPO_ROOT/plugins.json.tmp" "$REPO_ROOT/plugins.json"
+mv "$REPO_ROOT/data/plugins.json.tmp" "$REPO_ROOT/data/plugins.json"
 
 # Get treesitter stats
-CORE_PARSERS=$(jq '.core | length' "$REPO_ROOT/treesitter-mappings.json")
-EXTRA_PARSERS=$(jq '[.extras | values[]] | length' "$REPO_ROOT/treesitter-mappings.json")
+CORE_PARSERS=$(jq '.core | length' "$REPO_ROOT/nix/mappings/treesitter-mappings.json")
+EXTRA_PARSERS=$(jq '[.extras | values[]] | length' "$REPO_ROOT/nix/mappings/treesitter-mappings.json")
 
 echo "==> Successfully updated plugins.json and treesitter-mappings.json"
 echo "    Version: $LAZYVIM_VERSION"
@@ -151,11 +151,11 @@ echo "    Core parsers: $CORE_PARSERS"
 echo "    Extra parsers: $EXTRA_PARSERS"
 
 # Generate a summary of changes
-if git diff --quiet plugins.json treesitter-mappings.json 2>/dev/null; then
+if git diff --quiet data/plugins.json nix/mappings/treesitter-mappings.json 2>/dev/null; then
     echo "==> No changes detected"
 else
     echo "==> Changes detected:"
-    git diff --stat plugins.json treesitter-mappings.json 2>/dev/null || true
+    git diff --stat data/plugins.json nix/mappings/treesitter-mappings.json 2>/dev/null || true
 fi
 
 # Remind about next steps if there are unmapped plugins
@@ -165,7 +165,7 @@ if [ "$UNMAPPED_COUNT" -gt 0 ]; then
     echo "1. Review mapping-analysis-report.md"
     echo "2. Update plugin-mappings.nix with approved mappings"
     echo "3. Re-run this script to regenerate plugins.json"
-    echo "4. Commit both plugins.json and plugin-mappings.nix together"
+    echo "4. Commit both data/plugins.json and nix/mappings/plugin-mappings.nix together"
 fi
 
 # Note: Version information is now fetched during extraction

@@ -6,14 +6,14 @@ let
   cfg = config.programs.lazyvim;
 
   # Load plugin data and mappings
-  pluginData = pkgs.lazyvimPluginData or (builtins.fromJSON (builtins.readFile ./plugins.json));
-  pluginMappings = pkgs.lazyvimPluginMappings or (import ./plugin-mappings.nix);
+  pluginData = pkgs.lazyvimPluginData or (builtins.fromJSON (builtins.readFile ../data/plugins.json));
+  pluginMappings = pkgs.lazyvimPluginMappings or (import ./mappings/plugin-mappings.nix);
 
   # Load extras metadata
-  extrasMetadata = pkgs.lazyvimExtrasMetadata or (import ./extras.nix);
+  extrasMetadata = pkgs.lazyvimExtrasMetadata or (builtins.fromJSON (builtins.readFile ../data/extras.json));
 
   # Load treesitter parser mappings
-  treesitterMappings = pkgs.lazyvimTreesitterMappings or (builtins.fromJSON (builtins.readFile ./treesitter-mappings.json));
+  treesitterMappings = pkgs.lazyvimTreesitterMappings or (builtins.fromJSON (builtins.readFile ./mappings/treesitter-mappings.json));
 
   # Helper function to collect enabled extras
   getEnabledExtras = extrasConfig:
@@ -238,7 +238,7 @@ let
         buildInputs = [ pkgs.lua pkgs.neovim ];
       } ''
         # Copy scanner script to build directory
-        cp ${./scripts/scan-user-plugins.lua} scan-user-plugins.lua
+        cp ${../scripts/scan-user-plugins.lua} scan-user-plugins.lua
 
         # Create a simple Lua runner script
         cat > run-scanner.lua << 'EOF'

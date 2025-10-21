@@ -126,14 +126,14 @@ in {
   # Test minimal configuration evaluation
   test-minimal-config-eval = testLib.runTest "minimal-config-eval" ''
     # Test that minimal config evaluates without errors
-    nix-instantiate --eval --expr 'let module = import ${../module.nix} ${builtins.toJSON minimalConfig}; in module.config.programs.neovim.enable' > /dev/null
+    nix-instantiate --eval --expr 'let module = import ${../nix/module.nix} ${builtins.toJSON minimalConfig}; in module.config.programs.neovim.enable' > /dev/null
     echo "Minimal config evaluation successful"
   '';
 
   # Test full configuration evaluation
   test-full-config-eval = testLib.runTest "full-config-eval" ''
     # Test that full config with all options evaluates
-    nix-instantiate --eval --expr 'let module = import ${../module.nix} ${builtins.toJSON fullConfig}; in module.config.programs.neovim.enable' > /dev/null
+    nix-instantiate --eval --expr 'let module = import ${../nix/module.nix} ${builtins.toJSON fullConfig}; in module.config.programs.neovim.enable' > /dev/null
     echo "Full config evaluation successful"
   '';
 
@@ -142,7 +142,7 @@ in {
     # Test that extraPackages are properly included in neovim.extraPackages
     result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON fullConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON fullConfig};
         packages = module.config.programs.neovim.extraPackages;
         hasLuaLS = builtins.any (pkg: pkg.pname or "" == "lua-language-server") packages;
         hasRipgrep = builtins.any (pkg: pkg.pname or "" == "ripgrep") packages;
@@ -156,7 +156,7 @@ in {
     # Test that XDG config files are properly generated
     result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON fullConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON fullConfig};
         configFiles = module.config.xdg.configFile;
         hasInitLua = configFiles ? "nvim/init.lua";
         hasOptionsLua = configFiles ? "nvim/lua/config/options.lua";
@@ -172,7 +172,7 @@ in {
     # Test that treesitter parsers are properly linked
     result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON fullConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON fullConfig};
         configFiles = module.config.xdg.configFile;
         hasParserDir = configFiles ? "nvim/parser";
       in hasParserDir
@@ -185,7 +185,7 @@ in {
     # Test that extras are properly processed and config files generated
     result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON extrasOnlyConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON extrasOnlyConfig};
         configFiles = module.config.xdg.configFile;
 
         # Look for extras config files (pattern: nvim/lua/plugins/extras-*)
@@ -204,7 +204,7 @@ in {
     # Test that init.lua has the expected LazyVim structure
     result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON fullConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON fullConfig};
         initLua = module.config.xdg.configFile."nvim/init.lua".text;
 
         # Check for key components
@@ -238,7 +238,7 @@ in {
       }'
 
       result=$(nix-instantiate --eval --expr "
-        let module = import ${../module.nix} $testConfig;
+        let module = import ${../nix/module.nix} $testConfig;
         in module.config.programs.neovim.enable
       ")
 
@@ -253,7 +253,7 @@ in {
     # Test that lazy.nvim is properly included in neovim plugins
     result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON minimalConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON minimalConfig};
         plugins = module.config.programs.neovim.plugins;
         hasLazyNvim = builtins.any (plugin:
           (plugin.pname or "") == "lazy-nvim" ||
@@ -269,7 +269,7 @@ in {
     # Test neovim program configuration
     result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON fullConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON fullConfig};
         nvimConfig = module.config.programs.neovim;
 
         isEnabled = nvimConfig.enable;
@@ -286,7 +286,7 @@ in {
     # Test that generated config files have expected content
     module_result=$(nix-instantiate --eval --expr '
       let
-        module = import ${../module.nix} ${builtins.toJSON fullConfig};
+        module = import ${../nix/module.nix} ${builtins.toJSON fullConfig};
         optionsContent = module.config.xdg.configFile."nvim/lua/config/options.lua".text;
         keymapsContent = module.config.xdg.configFile."nvim/lua/config/keymaps.lua".text;
 
@@ -312,7 +312,7 @@ in {
     }'
 
     result=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $minimalTestConfig;
+      let module = import ${../nix/module.nix} $minimalTestConfig;
       in module.config.programs.neovim.enable &&
          module.config.xdg.configFile ? \"nvim/init.lua\"
     ")
@@ -363,7 +363,7 @@ in {
 
     result=$(nix-instantiate --eval --expr "
       let
-        module = import ${../module.nix} $testConfig;
+        module = import ${../nix/module.nix} $testConfig;
         configFiles = module.config.xdg.configFile;
         hasKeymaps = configFiles ? \"nvim/lua/config/keymaps.lua\";
         hasOptions = configFiles ? \"nvim/lua/config/options.lua\";
@@ -402,7 +402,7 @@ in {
 
     # This should fail with a conflict error
     result=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $testConfig;
+      let module = import ${../nix/module.nix} $testConfig;
       in module.config.programs.neovim.enable
     " 2>&1 || echo "conflict-detected")
 
@@ -437,7 +437,7 @@ in {
 
     # This should fail with a conflict error
     result=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $testConfig;
+      let module = import ${../nix/module.nix} $testConfig;
       in module.config.programs.neovim.enable
     " 2>&1 || echo "conflict-detected")
 
@@ -477,7 +477,7 @@ in {
 
     result=$(nix-instantiate --eval --expr "
       let
-        module = import ${../module.nix} $testConfig;
+        module = import ${../nix/module.nix} $testConfig;
         configFiles = module.config.xdg.configFile;
         hasKeymaps = configFiles ? \"nvim/lua/config/keymaps.lua\";
         hasPlugin = configFiles ? \"nvim/lua/plugins/flat-plugin.lua\";
@@ -507,7 +507,7 @@ in {
     }'
 
     result=$(nix-instantiate --eval --expr "
-      let module = import ${../module.nix} $testConfig;
+      let module = import ${../nix/module.nix} $testConfig;
       in module.config.programs.neovim.enable
     " 2>&1 || echo "error-detected")
 

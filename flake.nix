@@ -33,14 +33,14 @@
       })
     //
     {
-      homeManagerModules.default = ./module.nix;
-      homeManagerModules.lazyvim = ./module.nix;
+      homeManagerModules.default = ./nix/module.nix;
+      homeManagerModules.lazyvim = ./nix/module.nix;
 
       overlays.default = final: prev: {
-        lazyvimPluginData = builtins.fromJSON (builtins.readFile ./plugins.json);
-        lazyvimPluginMappings = import ./plugin-mappings.nix;
-        lazyvimExtrasMetadata = import ./extras.nix;
-        lazyvimOverrides = import ./overrides/default.nix { pkgs = final; };
+        lazyvimPluginData = builtins.fromJSON (builtins.readFile ./data/plugins.json);
+        lazyvimPluginMappings = import ./nix/mappings/plugin-mappings.nix;
+        lazyvimExtrasMetadata = builtins.fromJSON (builtins.readFile ./data/extras.json);
+        lazyvimOverrides = import ./nix/overrides/default.nix { pkgs = final; };
       };
     };
 }

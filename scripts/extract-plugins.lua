@@ -54,7 +54,7 @@ local function parse_plugin_mappings(mappings_file)
 
 	local file = io.open(mappings_file, "r")
 	if not file then
-		print("Warning: Could not open plugin-mappings.nix, proceeding without existing mappings")
+		print("Warning: Could not open nix/mappings/plugin-mappings.nix, proceeding without existing mappings")
 		return mappings, multi_module_mappings
 	end
 
@@ -112,7 +112,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	}
 
 	-- Parse existing plugin mappings
-	local mappings_file = "plugin-mappings.nix"
+	local mappings_file = "nix/mappings/plugin-mappings.nix"
 	local existing_mappings, multi_module_mappings = parse_plugin_mappings(mappings_file)
 
 	-- Load LazyVim's plugin specifications directly
@@ -855,11 +855,11 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 
 		-- Write mapping analysis report
 		local report_content = suggest_mappings.format_report(analysis)
-		local report_file = io.open("mapping-analysis-report.md", "w")
+		local report_file = io.open("data/mapping-analysis-report.md", "w")
 		if report_file then
 			report_file:write(report_content)
 			report_file:close()
-			print("Generated mapping analysis report: mapping-analysis-report.md")
+			print("Generated mapping analysis report: data/mapping-analysis-report.md")
 		end
 	end
 
@@ -973,7 +973,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 
 		if extraction_report.unmapped_plugins > 0 then
 			print(string.format("Mapping suggestions generated: %d", #extraction_report.mapping_suggestions))
-			print("Review mapping-analysis-report.md for details on unmapped plugins")
+			print("Review data/mapping-analysis-report.md for details on unmapped plugins")
 		end
 
 		print("Successfully extracted " .. #plugins .. " plugins")

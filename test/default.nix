@@ -3,7 +3,7 @@
 
 let
   # Import the module under test
-  moduleUnderTest = import ../module.nix;
+  moduleUnderTest = import ../nix/module.nix;
 
   # Test utilities
   testLib = rec {
@@ -116,18 +116,18 @@ in {
     echo "===================="
 
     # Test that the module can be imported (simplified for smoke test)
-    echo "✓ Module file exists at ${../module.nix}"
+    echo "✓ Module file exists at ${../nix/module.nix}"
 
     # Test that core files exist and are valid
     [ -f "${../flake.nix}" ] && echo "✓ flake.nix exists"
-    [ -f "${../plugins.json}" ] && echo "✓ plugins.json exists"
-    [ -f "${../plugin-mappings.nix}" ] && echo "✓ plugin-mappings.nix exists"
+    [ -f "${../data/plugins.json}" ] && echo "✓ data/plugins.json exists"
+    [ -f "${../nix/mappings/plugin-mappings.nix}" ] && echo "✓ nix/mappings/plugin-mappings.nix exists"
 
     # Test JSON validity
-    ${pkgs.jq}/bin/jq . ${../plugins.json} > /dev/null && echo "✓ plugins.json is valid JSON"
+    ${pkgs.jq}/bin/jq . ${../data/plugins.json} > /dev/null && echo "✓ data/plugins.json is valid JSON"
 
     # Test mappings file exists (simplified for smoke test)
-    [ -f "${../plugin-mappings.nix}" ] && echo "✓ plugin-mappings.nix exists"
+    [ -f "${../nix/mappings/plugin-mappings.nix}" ] && echo "✓ nix/mappings/plugin-mappings.nix exists"
 
     echo
     echo "🎉 Smoke test passed!"
