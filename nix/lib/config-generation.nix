@@ -63,78 +63,25 @@
           -- Configure treesitter to work with Nix-managed parsers
           {
             "nvim-treesitter/nvim-treesitter",
+            event = { "BufReadPost", "BufNewFile", "BufWritePre", "VeryLazy" },
+            cmd = { "TSUpdate", "TSInstall", "TSLog", "TSUninstall" },
             -- Parser compilation is skipped when using Nix
             build = false,
-            opts = function(_, opts)
-              opts.auto_install = false
-              opts.ensure_installed = {}
-              return opts
-            end,
-            config = function(_, opts)
-
-              local TS = require("nvim-treesitter")
-              local LazyVimUtil = require("lazyvim.util")
-
-              -- Mock TS.get_installed to bypass the installation checks
-              -- See nvim-treesitter/lua/nvim-treesitter/config.lua#L42-L58
-              local _ts_install = TS.get_installed
-              TS.get_installed = function()
-                return {}
-              end
-
-              -- Mock LazyVimUtil.treesitter.get_installed() to populate M._installed
-              -- from the buildtime parser list. This ensures M._installed is
-              -- populated correctly for autocmd functionality
-              -- See LazyVim/lua/lazyvim/util/treesitter.lua#L7-L17
-              local _lazyvim_install = LazyVimUtil.treesitter.get_installed
-
-              -- Nix-managed parser list (extracted from treesitterParsers option)
-              local nix_parsers = { ${treesitterLangList} }
-
-              LazyVimUtil.treesitter.get_installed = function(update)
-                if update then
-                  LazyVimUtil.treesitter._installed = {}
-                  LazyVimUtil.treesitter._queries = {}
-                  for _, lang in ipairs(nix_parsers) do
-                    LazyVimUtil.treesitter._installed[lang] = true
-                  end
-                end
-                return LazyVimUtil.treesitter._installed or {}
-              end
-
-              -- Find and call LazyVim's default config
-              -- This will:
-              -- 1. Pass the version check (TS.get_installed returns empty)
-              -- 2. Setup treesitter with our opts
-              -- 3. Skip parser installation (ensure_installed is empty)
-              -- 4. Populate M._installed with Nix parsers (our LazyVim mock)
-              -- 5. Create autocmds for highlighting, indents, folds
-              local treesitter_plugins = require("lazyvim.plugins.treesitter")
-              local config_fn = nil
-
-              -- Search for first nvim-treesitter plugin spec by identifier
-              for _, spec in ipairs(treesitter_plugins) do
-                if spec[1] == "nvim-treesitter/nvim-treesitter" and
-                   type(spec.config) == "function" then
-                  config_fn = spec.config
-                  break
-                end
-              end
-
-              if not config_fn then
-                error("Failed to find nvim-treesitter config in lazyvim.plugins.treesitter")
-              else
-                config_fn(_, opts)
-              end
-
-              -- Restore pre-mock references
-              LazyVimUtil.treesitter.get_installed = _lazyvim_install
-              if _ts_install then
-                TS.get_installed = _ts_install
-              else
-                TS.get_installed = nil
-              end
-            end,
+            opts = {
+              auto_install = false,
+              ensure_installed = {},
+              highlight = { enable = true },
+              indent = { enable = true },
+              incremental_selection = {
+                enable = true,
+                keymaps = {
+                  init_selection = "<C-space>",
+                  node_incremental = "<C-space>",
+                  scope_incremental = false,
+                  node_decremental = "<bs>",
+                },
+              },
+            },
             dev = true,
             pin = true,
           },
