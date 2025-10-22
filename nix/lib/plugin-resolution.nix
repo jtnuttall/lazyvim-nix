@@ -1,5 +1,5 @@
 # Plugin resolution and building utilities for LazyVim Nix module
-{ lib, pkgs, pluginMappings }:
+{ lib, pkgs, pluginMappings, ignoreBuildNotifications ? false }:
 
 let
   self = {
@@ -178,7 +178,8 @@ let
 
       # Enhanced debug trace
       debugTrace =
-        if builtins.elem pluginSpec.name ["LazyVim/LazyVim" "folke/lazy.nvim"] then
+        if ignoreBuildNotifications then (x: x)
+        else if builtins.elem pluginSpec.name ["LazyVim/LazyVim" "folke/lazy.nvim"] then
           builtins.trace "${pluginSpec.name}: Using ${
             if useNixpkgs then "nixpkgs (${if nixpkgsVersion != null then nixpkgsVersion else "unknown"})"
             else if sourcePlugin != null then "source (${if targetVersion != null then targetVersion else "latest"})"
@@ -189,7 +190,8 @@ let
     in
       debugTrace (
         if finalPlugin == null then
-          builtins.trace "Warning: Could not resolve plugin ${pluginSpec.name}" null
+          if ignoreBuildNotifications then null
+          else builtins.trace "Warning: Could not resolve plugin ${pluginSpec.name}" null
         else
           finalPlugin
       );

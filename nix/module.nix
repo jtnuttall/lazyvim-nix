@@ -11,6 +11,7 @@ let
   pluginLib = import ./lib/plugin-resolution.nix {
     inherit lib pkgs;
     pluginMappings = dataLib.pluginMappings;
+    ignoreBuildNotifications = cfg.ignoreBuildNotifications;
   };
   devPathLib = import ./lib/dev-path.nix {
     inherit lib pkgs;
@@ -20,10 +21,12 @@ let
     inherit lib pkgs;
     treesitterMappings = dataLib.treesitterMappings;
     extractLang = dataLib.extractLang;
+    ignoreBuildNotifications = cfg.ignoreBuildNotifications;
   };
   dependenciesLib = import ./lib/dependencies.nix {
     inherit lib pkgs;
     dependencies = dataLib.dependencies;
+    ignoreBuildNotifications = cfg.ignoreBuildNotifications;
   };
   configLib = import ./lib/config-generation.nix { inherit lib; };
   fileLib = import ./lib/file-scanning.nix { inherit lib pkgs config; };

@@ -1,5 +1,5 @@
 # System dependencies management for LazyVim Nix module
-{ lib, pkgs, dependencies }:
+{ lib, pkgs, dependencies, ignoreBuildNotifications ? false }:
 
 {
   # Calculate system dependencies based on enabled features
@@ -26,11 +26,13 @@
           in
             let resolved = resolveNested pkgs pathParts; in
             if resolved != null then resolved
+            else if ignoreBuildNotifications then null
             else builtins.trace "Warning: Package '${pkgName}' not found in nixpkgs" null;
 
         # Helper function to warn about unmapped tools
         warnUnmappedTool = toolName: extraName:
-          builtins.trace ''
+          if ignoreBuildNotifications then null
+          else builtins.trace ''
             Warning: Tool '${toolName}' in extra '${extraName}' has no nixpkgs mapping.
 
             This tool will be skipped during installation. To resolve this:
@@ -80,6 +82,7 @@
                     if tool ? runtime_dependencies then map (dep:
                       if dep ? nixpkg then
                         resolvePackage dep.nixpkg
+                      else if ignoreBuildNotifications then null
                       else
                         builtins.trace "Info: Runtime dependency '${dep.name}' for tool '${tool.name}' in '${extraName}' has no nixpkg mapping (may be a package manager like pip/npm)" null
                     ) tool.runtime_dependencies else []

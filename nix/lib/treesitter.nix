@@ -1,5 +1,5 @@
 # Treesitter management utilities for LazyVim Nix module
-{ lib, pkgs, treesitterMappings, extractLang }:
+{ lib, pkgs, treesitterMappings, extractLang, ignoreBuildNotifications ? false }:
 
 {
   # Derive automatic treesitter parsers
@@ -41,7 +41,8 @@
       # Use nvim-treesitter's grammar plugins which are compatible
       parserPackages = lib.filter (pkg: pkg != null) (map (parserName:
         pkgs.vimPlugins.nvim-treesitter.grammarPlugins.${parserName} or (
-          builtins.trace "Warning: treesitter parser '${parserName}' not found in nvim-treesitter grammar plugins" null
+          if ignoreBuildNotifications then null
+          else builtins.trace "Warning: treesitter parser '${parserName}' not found in nvim-treesitter grammar plugins" null
         )
       ) parserNames);
 

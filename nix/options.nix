@@ -243,6 +243,23 @@ with lib;
     '';
   };
 
+  ignoreBuildNotifications = mkOption {
+    type = types.bool;
+    default = false;
+    description = ''
+      Whether to suppress build notifications and trace messages.
+
+      When enabled, this will hide:
+      - Tool installation warnings (e.g., "This tool will be skipped during installation")
+      - Plugin source trace messages (e.g., "LazyVim/LazyVim: Using source (v15.10.1)")
+      - Package resolution warnings
+      - Other build-time informational messages
+
+      This is useful for users who want cleaner build output and are aware
+      of any missing dependencies in their configuration.
+    '';
+  };
+
   plugins = mkOption {
     type = types.attrsOf types.str;
     default = {};
