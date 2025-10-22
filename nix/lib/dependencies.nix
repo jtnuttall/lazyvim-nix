@@ -15,8 +15,18 @@
 
         # Helper function to resolve a package name to nixpkgs package
         resolvePackage = pkgName:
-          if pkgs ? ${pkgName} then pkgs.${pkgName}
-          else builtins.trace "Warning: Package '${pkgName}' not found in nixpkgs" null;
+          let
+            # Split package path and resolve nested attributes
+            pathParts = lib.splitString "." pkgName;
+            resolveNested = pkg: parts:
+              if parts == [] then pkg
+              else if pkg ? ${lib.head parts} then
+                resolveNested pkg.${lib.head parts} (lib.tail parts)
+              else null;
+          in
+            let resolved = resolveNested pkgs pathParts; in
+            if resolved != null then resolved
+            else builtins.trace "Warning: Package '${pkgName}' not found in nixpkgs" null;
 
         # Helper function to warn about unmapped tools
         warnUnmappedTool = toolName: extraName:
