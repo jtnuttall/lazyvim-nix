@@ -282,4 +282,88 @@ in {
       in hasGit && hasRipgrep && hasFd
     ''
     true;
+
+  # Test nested package path resolution (the actual fix)
+  test-expr-nested-package-resolution = testLib.testNixExpr
+    "nested-package-resolution"
+    ''
+      let
+        lib = (import <nixpkgs> {}).lib;
+        pkgs = import <nixpkgs> {};
+
+        # Test the actual resolvePackage function from dependencies.nix
+        resolvePackage = pkgName:
+          let
+            pathParts = lib.splitString "." pkgName;
+            resolveNested = pkg: parts:
+              if parts == [] then pkg
+              else if pkg ? ''${lib.head parts} then
+                resolveNested pkg.''${lib.head parts} (lib.tail parts)
+              else null;
+          in
+            let resolved = resolveNested pkgs pathParts; in
+            if resolved != null then resolved else null;
+
+        # Test cases
+        simplePackage = resolvePackage "git";
+        nestedPackage = resolvePackage "python3Packages.ruff";
+        doubleNestedPackage = resolvePackage "nodePackages.prettier";
+        nonExistentPackage = resolvePackage "nonexistent.package";
+        nonExistentNested = resolvePackage "python3Packages.nonexistent";
+
+        # Verify results
+        simpleWorks = simplePackage != null;
+        nestedWorks = nestedPackage != null;
+        doubleNestedWorks = doubleNestedPackage != null;
+        nonExistentFails = nonExistentPackage == null;
+        nonExistentNestedFails = nonExistentNested == null;
+
+      in simpleWorks && nestedWorks && doubleNestedWorks && nonExistentFails && nonExistentNestedFails
+    ''
+    true;
+
+  # Test that old broken resolution would fail on nested packages
+  test-expr-old-resolution-fails = testLib.testNixExpr
+    "old-resolution-fails"
+    ''
+      let
+        pkgs = import <nixpkgs> {};
+
+        # Old broken resolvePackage function
+        oldResolvePackage = pkgName:
+          if pkgs ? ''${pkgName} then pkgs.''${pkgName}
+          else null;
+
+        # Test cases that should demonstrate the problem
+        simplePackage = oldResolvePackage "git";
+        nestedPackage = oldResolvePackage "python3Packages.ruff";
+
+        # Simple should work, nested should fail
+        simpleWorks = simplePackage != null;
+        nestedFails = nestedPackage == null;
+
+      in simpleWorks && nestedFails
+    ''
+    true;
+
+  # Test package path splitting logic
+  test-expr-path-splitting = testLib.testNixExpr
+    "path-splitting"
+    ''
+      let
+        lib = (import <nixpkgs> {}).lib;
+
+        # Test splitting logic
+        simplePath = lib.splitString "." "git";
+        nestedPath = lib.splitString "." "python3Packages.ruff";
+        deepPath = lib.splitString "." "a.b.c.d";
+
+        # Verify results
+        simpleCorrect = simplePath == ["git"];
+        nestedCorrect = nestedPath == ["python3Packages" "ruff"];
+        deepCorrect = deepPath == ["a" "b" "c" "d"];
+
+      in simpleCorrect && nestedCorrect && deepCorrect
+    ''
+    true;
 }

@@ -261,7 +261,57 @@ in {
     fi
   '';
 
-  # Test 7: Multiple extras with different dependency settings
+  # Test 7: Explicit nested package resolution verification
+  test-nested-package-resolution = testLib.runTest "nested-package-resolution" ''
+    result=$(nix-instantiate --eval --expr '
+      let
+        config = ${builtins.toJSON {
+          enable = true;
+          installCoreDependencies = false; # Isolate test
+          extras = {
+            lang = {
+              python = {
+                enable = true;
+                installDependencies = true;
+                installRuntimeDependencies = false;
+              };
+            };
+          };
+        }};
+        module = (${builtins.readFile ../../nix/module.nix}) {
+          config = {
+            programs.lazyvim = config;
+            home.homeDirectory = "/tmp/test";
+            home.username = "test";
+            home.stateVersion = "23.11";
+          };
+          lib = (import <nixpkgs> {}).lib;
+          pkgs = import <nixpkgs> {};
+        };
+        packages = module.config.programs.neovim.extraPackages or [];
+        packageCount = builtins.length packages;
+
+        # More robust ruff detection
+        hasRuff = builtins.any (pkg:
+          let name = pkg.name or pkg.pname or ""; in
+          lib.hasInfix "ruff" name
+        ) packages;
+
+        # Test should pass if we have at least one package and ruff is present
+        # This test specifically verifies that python3Packages.ruff resolves correctly
+      in packageCount > 0 && hasRuff
+    ')
+
+    if [ "$result" = "true" ]; then
+      echo "✓ Nested package resolution works correctly (python3Packages.ruff found)"
+    else
+      echo "✗ Nested package resolution failed - ruff package not found"
+      echo "This indicates the resolvePackage function cannot handle nested paths like python3Packages.ruff"
+      exit 1
+    fi
+  '';
+
+  # Test 8: Multiple extras with different dependency settings
   test-multiple-extras = testLib.runTest "multiple-extras" ''
     result=$(nix-instantiate --eval --expr '
       let
