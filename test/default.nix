@@ -47,7 +47,9 @@ let
         normalizeResult = val:
           if builtins.isBool val then (if val then "true" else "false")
           else toString val;
-        expected = toString expectedResult;
+        expected = if builtins.isBool expectedResult then
+          (if expectedResult then "true" else "false")
+        else toString expectedResult;
         actual = if result.success then normalizeResult result.value else "evaluation failed";
       in
         if result.success && actual == expected then

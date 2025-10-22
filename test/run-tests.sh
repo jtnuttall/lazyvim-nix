@@ -50,13 +50,13 @@ run_test_suite() {
 
     if nix-build "$SCRIPT_DIR" --no-out-link -A "$nix_attr" >/dev/null 2>&1; then
         success "$suite_name tests PASSED"
-        ((passed_tests++))
+        passed_tests=$((passed_tests + 1))
     else
         error "$suite_name tests FAILED"
         echo "  Run manually for details: nix-build $SCRIPT_DIR -A $nix_attr"
-        ((failed_tests++))
+        failed_tests=$((failed_tests + 1))
     fi
-    ((total_tests++))
+    total_tests=$((total_tests + 1))
 }
 
 run_individual_test() {
@@ -67,12 +67,12 @@ run_individual_test() {
 
     if eval "$test_command" >/dev/null 2>&1; then
         success "PASS"
-        ((passed_tests++))
+        passed_tests=$((passed_tests + 1))
     else
         error "FAIL"
-        ((failed_tests++))
+        failed_tests=$((failed_tests + 1))
     fi
-    ((total_tests++))
+    total_tests=$((total_tests + 1))
 }
 
 # Parse command line arguments
@@ -161,13 +161,13 @@ if $RUN_SMOKE; then
 
     if nix-build "$SCRIPT_DIR" --no-out-link -A smokeTest >/dev/null 2>&1; then
         success "Smoke test PASSED"
-        ((passed_tests++))
+        passed_tests=$((passed_tests + 1))
     else
         error "Smoke test FAILED - basic functionality broken!"
         echo "Stopping test execution due to smoke test failure."
         exit 1
     fi
-    ((total_tests++))
+    total_tests=$((total_tests + 1))
 fi
 
 # Unit tests
@@ -201,7 +201,7 @@ echo "📁 File Structure Validation"
 echo "============================"
 
 run_individual_test "flake.nix exists" "[ -f '$PROJECT_ROOT/flake.nix' ]"
-run_individual_test "nix/module.nix exists" "[ -f '$PROJECT_ROOT/nix/module.nix'' ]"
+run_individual_test "nix/module.nix exists" "[ -f '$PROJECT_ROOT/nix/module.nix' ]"
 run_individual_test "data/plugins.json exists" "[ -f '$PROJECT_ROOT/data/plugins.json' ]"
 run_individual_test "data/mappings.json exists" "[ -f '$PROJECT_ROOT/data/mappings.json' ]"
 run_individual_test "update script exists" "[ -x '$PROJECT_ROOT/scripts/update-plugins.sh' ]"
