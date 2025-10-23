@@ -1,4 +1,10 @@
 {
+  "catppuccin/nvim": "vimPlugins.catppuccin-nvim",
+  "echasnovski/mini.icons": {
+    "package": "mini-nvim",
+    "module": "mini.icons"
+  },
+  "mfussenegger/nvim-ansible": "vimPlugins.ansible-vim",
   "nvim-mini/mini.ai": {
     "package": "mini-nvim",
     "module": "mini.ai"
@@ -39,8 +45,6 @@
     "package": "mini-nvim",
     "module": "mini.surround"
   },
-  "echasnovski/mini.icons": {
-    "package": "mini-nvim",
-    "module": "mini.icons"
-  }
+  "RRethy/vim-illuminate": "vimPlugins.vim-illuminate",
+  "tpope/vim-repeat": "vimPlugins.vim-repeat"
 }

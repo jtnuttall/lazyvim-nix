@@ -3,16 +3,9 @@
 
 {
   # Calculate system dependencies based on enabled features
-  systemPackages = cfg:
+  systemPackages = cfg: enabledExtraNames:
     if cfg.enable then
       let
-        # Get enabled extra names in "category.name" format for lookup
-        enabledExtraNames = lib.flatten (lib.mapAttrsToList (category: extras:
-          lib.mapAttrsToList (name: extraConfig:
-            lib.optional (extraConfig.enable or false) "${category}.${name}"
-          ) extras
-        ) (cfg.extras or {}));
-
         # Helper function to resolve a package name to nixpkgs package
         resolvePackage = pkgName:
           let

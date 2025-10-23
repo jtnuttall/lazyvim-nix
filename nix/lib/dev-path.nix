@@ -1,15 +1,10 @@
 # Dev path creation utilities for LazyVim Nix module
 { lib, pkgs, pluginMappings }:
 
-{
+rec {
   # Helper function to create dev path with proper symlinks for all plugins
   createDevPath = allPluginSpecs: allResolvedPlugins:
     let
-      # Extract repository name from plugin spec (e.g., "owner/repo.nvim" -> "repo.nvim")
-      getRepoName = specName:
-        let parts = lib.splitString "/" specName;
-        in if lib.length parts == 2 then lib.elemAt parts 1 else specName;
-
       # Separate multi-module plugins from regular plugins
       pluginWithType = lib.zipListsWith (spec: plugin:
         if plugin != null then

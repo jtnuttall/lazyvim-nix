@@ -7,7 +7,7 @@
     let
       # Use Nix to call the Lua scanner script
       scanResult = pkgs.runCommand "scan-user-plugins" {
-        buildInputs = [ pkgs.lua pkgs.neovim ];
+        buildInputs = [ pkgs.lua pkgs.neovim pkgs.luaPackages.luv ];
       } ''
         # Copy scanner script to build directory
         cp ${../../scripts/scan-user-plugins.lua} scan-user-plugins.lua

@@ -61,11 +61,14 @@ let
   # Get list of enabled extras
   enabledExtras = if cfg.enable then getEnabledExtras (cfg.extras or {}) else [];
 
+  # Enabled extra identifiers (category.name) for downstream tooling
+  enabledExtraNames = map (extra: "${extra.category}.${extra.name}") enabledExtras;
+
   # Derive automatic treesitter parsers
-  automaticTreesitterParsers = treesitterLib.automaticTreesitterParsers cfg enabledExtras;
+  automaticTreesitterParsers = treesitterLib.automaticTreesitterParsers cfg enabledExtraNames;
 
   # Calculate system dependencies
-  systemPackages = dependenciesLib.systemPackages cfg;
+  systemPackages = dependenciesLib.systemPackages cfg enabledExtraNames;
 
   # Scan for user plugins from the default LazyVim config directory
   userPlugins = if cfg.enable then
@@ -105,14 +108,11 @@ let
   # Generate extras import statements
   extrasImportSpecs = configLib.extrasImportSpecs enabledExtras;
 
-  # Generate Lua array string for parser list
-  treesitterLangList = treesitterLib.treesitterLangList automaticTreesitterParsers;
-
   # Treesitter configuration
   treesitterGrammars = treesitterLib.treesitterGrammars automaticTreesitterParsers;
 
   # Generate lazy.nvim configuration
-  lazyConfig = configLib.lazyConfig devPath extrasImportSpecs availableDevSpecs treesitterLangList;
+  lazyConfig = configLib.lazyConfig devPath extrasImportSpecs availableDevSpecs;
 
   # Generate extras config override files
   extrasConfigFiles = configLib.extrasConfigFiles enabledExtras;

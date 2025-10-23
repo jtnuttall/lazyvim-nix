@@ -3,16 +3,9 @@
 
 {
   # Derive automatic treesitter parsers
-  automaticTreesitterParsers = cfg: enabledExtras:
+  automaticTreesitterParsers = cfg: enabledExtraNames:
     if cfg.enable then
       let
-        # Get enabled extra names in "category.name" format for lookup
-        enabledExtraNames = lib.flatten (lib.mapAttrsToList (category: extras:
-          lib.mapAttrsToList (name: extraConfig:
-            lib.optional (extraConfig.enable or false) "${category}.${name}"
-          ) extras
-        ) (cfg.extras or {}));
-
         # Core parsers are always included
         coreParsers = treesitterMappings.core or [];
 
@@ -27,10 +20,6 @@
         allParsers
     else
       map extractLang cfg.treesitterParsers;
-
-  # Generate Lua array string for parser list
-  treesitterLangList = automaticTreesitterParsers:
-    lib.concatStringsSep ", " (map (l: ''"${l}"'') automaticTreesitterParsers);
 
   # Treesitter configuration - use nvim-treesitter's grammar plugins directly
   treesitterGrammars = automaticTreesitterParsers:
