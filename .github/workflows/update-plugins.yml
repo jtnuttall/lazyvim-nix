@@ -81,7 +81,7 @@ jobs:
           nix develop --command ./scripts/update-plugins.sh --verify
 
           # Update extras metadata
-          ./scripts/generate-extras-metadata.lua
+          nix develop --command ./scripts/generate-extras-metadata.lua
 
           # Update dependency mappings
           nix develop --command ./scripts/extract-dependencies.lua /tmp/lazyvim-temp /tmp/mason-registry data/dependencies.json
