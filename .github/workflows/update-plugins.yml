@@ -124,7 +124,7 @@ jobs:
           
           # Stage the mapping analysis report if it exists
           if [ -f data/mapping-analysis-report.md ]; then
-            git add data/mapping-analysis-report.md
+            git add -f data/mapping-analysis-report.md
           fi
           
       - name: Create Pull Request
