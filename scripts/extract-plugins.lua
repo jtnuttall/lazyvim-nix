@@ -104,7 +104,8 @@ local function parse_plugin_mappings(mappings_file)
 	return mappings, multi_module_mappings
 end
 
-function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
+function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit, opts)
+	opts = opts or {}
 	-- Load existing plugins.json for comparison
 	local existing_plugins_file = output_file:gsub("%.tmp$", "")
 	local existing_plugins = load_existing_plugins(existing_plugins_file)
@@ -123,11 +124,12 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	-- Parse existing plugin mappings
 	local mappings_file = "data/mappings.json"
 	local existing_mappings, multi_module_mappings = parse_plugin_mappings(mappings_file)
+	local shared_extras_entries = opts.extras_entries
 
 	-- Load LazyVim's plugin specifications directly
 	local plugins = {}
 	local seen = {}
-	local unmapped_plugins = {}
+	local repo_index = {}
 	local extraction_report = {
 		total_plugins = 0,
 		mapped_plugins = 0,
@@ -135,6 +137,17 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 		multi_module_plugins = 0,
 		mapping_suggestions = {},
 	}
+
+	local prefetch_queue = {}
+	local PREFETCH_CONCURRENCY = tonumber(os.getenv("LAZYVIM_PREFETCH_CONCURRENCY") or "6")
+	if not PREFETCH_CONCURRENCY or PREFETCH_CONCURRENCY < 1 then
+		PREFETCH_CONCURRENCY = 6
+	end
+
+	local REMOTE_CONCURRENCY = tonumber(os.getenv("LAZYVIM_REMOTE_CONCURRENCY") or "6")
+	if not REMOTE_CONCURRENCY or REMOTE_CONCURRENCY < 1 then
+		REMOTE_CONCURRENCY = 6
+	end
 
 	-- Known mappings from short names to full names
 	local short_to_full = {
@@ -184,255 +197,684 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 		return normalized
 	end
 
-	-- Helper function to execute shell commands and capture output
-	local function execute_command(cmd)
-		local handle = io.popen(cmd .. " 2>/dev/null")
-		if not handle then
-			return nil
+	local function format_ref(ref)
+		if not ref or ref == "" then
+			return "HEAD"
 		end
-		local result = handle:read("*all")
-		local success = handle:close()
-		if success and result then
-			return result:match("^%s*(.-)%s*$") -- trim whitespace
+		if #ref >= 12 and ref:match("^[0-9a-f]+$") then
+			return ref:sub(1, 8)
 		end
-		return nil
+		return ref
 	end
 
-	-- Get latest tag using git ls-remote (avoids GitHub API rate limits)
-	local function get_latest_tag(owner, repo)
-		if not owner or not repo then
-			return nil
+	local function enqueue_prefetch(plugin_info, target, existing_info)
+		local url = string.format("https://github.com/%s/%s", plugin_info.owner, plugin_info.repo)
+		local args = { "--quiet", "--url", url }
+		if target.prefetch_rev then
+			table.insert(args, "--rev")
+			table.insert(args, target.prefetch_rev)
 		end
 
-		local cmd = string.format(
-			"git ls-remote --tags https://github.com/%s/%s 2>/dev/null | " ..
-			"sed 's/.*refs\\/tags\\///' | " ..
-			"sed 's/\\^{}$//' | " ..  -- Strip ^{} from annotated tags
-			"grep -E '^v?[0-9]+\\.[0-9]+' | " ..
-			"sort -rV | " ..
-			"head -1",
-			owner, repo
-		)
+		print(string.format("      Queuing nix-prefetch-git (%s)", format_ref(target.prefetch_rev)))
 
-		return execute_command(cmd)
+		table.insert(prefetch_queue, {
+			plugin = plugin_info,
+			args = args,
+			target = target,
+			existing = existing_info,
+		})
 	end
 
-	-- Fetch plugin version info using nix-prefetch-git
-	local function fetch_plugin_version(owner, repo, ref)
-		if not owner or not repo then
-			return nil
-		end
-
-		local url = string.format("https://github.com/%s/%s", owner, repo)
-		local cmd
-
-		if ref then
-			cmd = string.format("nix-prefetch-git --quiet --url '%s' --rev '%s'", url, ref)
-		else
-			cmd = string.format("nix-prefetch-git --quiet --url '%s'", url)
-		end
-
-		local result = execute_command(cmd)
-		if result then
-			-- Parse JSON output from nix-prefetch-git
-			local rev = result:match('"rev":%s*"([^"]+)"')
-			local sha256 = result:match('"sha256":%s*"([^"]+)"')
-
-			if rev and sha256 then
-				return {
-					commit = rev,
-					sha256 = sha256
-				}
-			end
-		end
-
-		return nil
-	end
-
-	-- Enrich plugin with version information
-	local function enrich_plugin_version_info(plugin_info, existing_plugin_data)
-		if not plugin_info.owner or not plugin_info.repo then
+	local function process_prefetch_queue()
+		if #prefetch_queue == 0 then
 			return
 		end
 
-		print(string.format("    Fetching version info for %s...", plugin_info.name))
+		print(string.format("=== Prefetching %d plugins (concurrency %d) ===", #prefetch_queue, PREFETCH_CONCURRENCY))
 
-		-- Preserve LazyVim version info that was captured during extraction
-		local lazyvim_version = plugin_info.version_info.lazyvim_version
-		local lazyvim_version_type = plugin_info.version_info.lazyvim_version_type
+		local loop = vim.loop
+		local results = {}
+		local active = 0
+		local next_index = 1
+		local completed = false
 
-		-- Determine source strategy based on LazyVim specifications
-		local version_data
-		if lazyvim_version_type == "branch" then
-			-- LazyVim specified a branch - use it exactly
-			print(string.format("      Using branch '%s' (LazyVim specification)", lazyvim_version))
-			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, "refs/heads/" .. lazyvim_version)
-			if version_data then
-				plugin_info.version_info.tag = nil
-				plugin_info.version_info.latest_tag = nil
-				plugin_info.version_info.branch = lazyvim_version
-			end
-		elseif lazyvim_version == false or (lazyvim_version_type == "version" and lazyvim_version == false) then
-			-- LazyVim specified version = false - use latest commit, no tags
-			print("      Using latest commit (LazyVim: version = false)")
-			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, nil)
-			if version_data then
-				plugin_info.version_info.tag = nil
-				plugin_info.version_info.latest_tag = nil
-			end
-		elseif lazyvim_version_type == "commit" then
-			-- LazyVim specified a specific commit
-			print(string.format("      Using commit '%s' (LazyVim specification)", lazyvim_version))
-			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, lazyvim_version)
-			if version_data then
-				plugin_info.version_info.tag = nil
-				plugin_info.version_info.latest_tag = nil
-			end
-		elseif lazyvim_version_type == "tag" then
-			-- LazyVim specified a specific tag
-			print(string.format("      Using tag '%s' (LazyVim specification)", lazyvim_version))
-			version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, lazyvim_version)
-			if version_data then
-				plugin_info.version_info.tag = lazyvim_version
-				plugin_info.version_info.latest_tag = lazyvim_version
-			end
-		else
-			-- Try to get latest tag first
-			local latest_tag = get_latest_tag(plugin_info.owner, plugin_info.repo)
-
-			if latest_tag and latest_tag ~= "" then
-				print(string.format("      Found tag: %s", latest_tag))
-				version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, latest_tag)
-				if version_data then
-					plugin_info.version_info.tag = latest_tag
-					plugin_info.version_info.latest_tag = latest_tag
+		local function start_next()
+			if next_index > #prefetch_queue then
+				if active == 0 then
+					completed = true
 				end
-			else
-				print("      No tags found, fetching latest commit...")
-				version_data = fetch_plugin_version(plugin_info.owner, plugin_info.repo, nil)
-				if version_data then
-					plugin_info.version_info.tag = nil
-					plugin_info.version_info.latest_tag = nil
+				return
+			end
+
+			local task = prefetch_queue[next_index]
+			next_index = next_index + 1
+			active = active + 1
+
+			local stdout_pipe = loop.new_pipe(false)
+			local stderr_pipe = loop.new_pipe(false)
+			local output_chunks = {}
+			local error_chunks = {}
+			local handle
+
+			local function finalize(code)
+				stdout_pipe:close()
+				stderr_pipe:close()
+				if handle and not handle:is_closing() then
+					handle:close()
+				end
+
+				active = active - 1
+				table.insert(results, {
+					task = task,
+					code = code,
+					stdout = table.concat(output_chunks),
+					stderr = table.concat(error_chunks),
+				})
+
+				start_next()
+				if next_index > #prefetch_queue and active == 0 then
+					completed = true
 				end
 			end
+
+			handle = loop.spawn("nix-prefetch-git", {
+				args = task.args,
+				stdio = { nil, stdout_pipe, stderr_pipe },
+			}, finalize)
+
+			if not handle then
+				table.insert(results, {
+					task = task,
+					code = -1,
+					stdout = "",
+					stderr = "failed to spawn nix-prefetch-git",
+				})
+				active = active - 1
+				start_next()
+				if next_index > #prefetch_queue and active == 0 then
+					completed = true
+				end
+				return
+			end
+
+			loop.read_start(stdout_pipe, function(err, data)
+				if err then
+					table.insert(error_chunks, err)
+				elseif data then
+					table.insert(output_chunks, data)
+				end
+			end)
+
+			loop.read_start(stderr_pipe, function(err, data)
+				if err then
+					table.insert(error_chunks, err)
+				elseif data then
+					table.insert(error_chunks, data)
+				end
+			end)
 		end
 
-		if version_data then
-			-- Check if the version has actually changed
-			local version_changed = false
-			if existing_plugin_data and existing_plugin_data.version_info then
-				local old_info = existing_plugin_data.version_info
-				-- Compare the actual version identifiers
-				if version_data.commit ~= old_info.commit then
-					version_changed = true
-					print(string.format("      Version changed: %s -> %s",
-						old_info.commit and old_info.commit:sub(1, 8) or "none",
-						version_data.commit:sub(1, 8)))
-				elseif plugin_info.version_info.tag ~= old_info.tag then
-					version_changed = true
-					print(string.format("      Tag changed: %s -> %s",
-						old_info.tag or "none",
-						plugin_info.version_info.tag or "none"))
-				elseif plugin_info.version_info.branch ~= old_info.branch then
-					version_changed = true
-					print(string.format("      Branch changed: %s -> %s",
-						old_info.branch or "none",
-						plugin_info.version_info.branch or "none"))
-				end
-			else
-				-- No existing data, so it's a new plugin
-				version_changed = true
-				print("      New plugin")
+		for _ = 1, math.min(PREFETCH_CONCURRENCY, #prefetch_queue) do
+			start_next()
+		end
+
+		vim.wait(1e8, function()
+			return completed
+		end, 50)
+
+		for _, result in ipairs(results) do
+			local task = result.task
+			local plugin = task.plugin
+			local target = task.target
+			local existing = task.existing
+			local version_info = plugin.version_info
+
+			if result.code ~= 0 then
+				error(string.format("nix-prefetch-git failed for %s: %s", plugin.name, result.stderr))
 			end
 
-			plugin_info.version_info.commit = version_data.commit
-			plugin_info.version_info.sha256 = version_data.sha256
+			local ok, data = pcall(vim.json.decode, result.stdout)
+			if not ok or not data or not data.rev or not data.sha256 then
+				error(string.format("Invalid nix-prefetch-git output for %s", plugin.name))
+			end
 
-			-- Only update fetched_at if the version actually changed
+			local commit = data.rev
+			local sha256 = data.sha256
+			local version_changed = not (existing and existing.commit == commit)
+
+			version_info.commit = commit
+			version_info.sha256 = sha256
+
+			if version_changed or not (existing and existing.fetched_at) then
+				version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
+			else
+				version_info.fetched_at = existing.fetched_at
+			end
+
+			if target.tag then
+				version_info.tag = target.tag
+				version_info.latest_tag = target.latest_tag or target.tag
+				version_info.branch = nil
+			elseif target.branch then
+				version_info.branch = target.branch
+				version_info.tag = nil
+				version_info.latest_tag = target.latest_tag
+			else
+				version_info.tag = nil
+				version_info.branch = nil
+				version_info.latest_tag = target.latest_tag
+			end
+
 			if version_changed then
-				plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
-				print(string.format("      ✓ Got commit: %s (updated)", version_data.commit:sub(1, 8)))
+				print(string.format("      ✓ %s updated to %s", plugin.name, format_ref(commit)))
 			else
-				-- Preserve the existing fetched_at timestamp
-				if existing_plugin_data and existing_plugin_data.version_info and existing_plugin_data.version_info.fetched_at then
-					plugin_info.version_info.fetched_at = existing_plugin_data.version_info.fetched_at
-				else
-					-- Fallback: set new fetched_at if we don't have an existing one
-					plugin_info.version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
-				end
-				print(string.format("      ✓ Got commit: %s (unchanged)", version_data.commit:sub(1, 8)))
+				print(string.format("      ✓ %s verified at %s (unchanged)", plugin.name, format_ref(commit)))
 			end
-		else
-			print("      ⚠ Could not fetch version info")
 		end
-
-		-- Always restore LazyVim version specification information
-		plugin_info.version_info.lazyvim_version = lazyvim_version
-		plugin_info.version_info.lazyvim_version_type = lazyvim_version_type
-
-		-- Add small delay to be respectful to git servers
-		os.execute("sleep 0.2")
 	end
 
-	-- Function to check if a plugin is mapped (manual or automatic)
-	local function is_plugin_mapped(plugin_name)
-		-- Check if it's in existing mappings or multi-module mappings
-		if existing_mappings[plugin_name] ~= nil or multi_module_mappings[plugin_name] ~= nil then
-			return true
-		end
+	local function parse_ls_remote(output)
+		local data = {
+			head = nil,
+			heads = {},
+			tags = {},
+		}
 
-		-- Test automatic resolution patterns (same logic as module.nix)
-		local owner, repo_name = plugin_name:match("^([^/]+)/(.+)$")
-		if not repo_name then
-			return false
-		end
-
-		local nixpkgs_name = nil
-
-		-- Pattern 1: owner/name.nvim -> name-nvim (most common)
-		if repo_name:match("%.nvim$") then
-			local base_name = repo_name:gsub("%.nvim$", "")
-			nixpkgs_name = base_name .. "-nvim"
-		-- Pattern 2: owner/name-nvim -> name-nvim
-		elseif repo_name:match("%-nvim$") then
-			nixpkgs_name = repo_name
-		-- Pattern 3: owner/nvim-name -> nvim-name
-		elseif repo_name:match("^nvim%-") then
-			nixpkgs_name = repo_name
-		-- Pattern 4: owner/name -> name (convert dashes to underscores)
-		else
-			nixpkgs_name = repo_name:gsub("%-", "_"):gsub("%.", "_")
-		end
-
-		-- Test if the resolved name exists in nixpkgs (use nixos-unstable)
-		if nixpkgs_name then
-			local cmd = string.format(
-				"nix eval --impure --expr 'let pkgs = import (fetchTarball \"https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz\") {}; in pkgs.vimPlugins.%s or null' 2>&1",
-				nixpkgs_name
-			)
-			print(string.format("DEBUG: Checking %s -> %s", plugin_name, nixpkgs_name))
-			print(string.format("DEBUG: Command: %s", cmd))
-
-			local handle = io.popen(cmd)
-			if handle then
-				local result = handle:read("*all")
-				local success = handle:close()
-				print(string.format("DEBUG: Result: %s", result:gsub("\n", "\\n")))
-				print(string.format("DEBUG: Success: %s", tostring(success)))
-
-				-- Check if the result is not null (package exists)
-				if success and result and not result:match("null") and result:match("«derivation") then
-					print(string.format("DEBUG: ✓ Found %s -> %s", plugin_name, nixpkgs_name))
-					return true
-				else
-					print(string.format("DEBUG: ✗ Not found %s -> %s", plugin_name, nixpkgs_name))
+		for line in output:gmatch("[^\n]+") do
+			local commit, ref = line:match("^(%x+)%s+(.+)$")
+			if commit and ref then
+				if ref == "HEAD" then
+					data.head = commit
+				elseif ref:match("^refs/heads/") then
+					local name = ref:match("^refs/heads/(.+)$")
+					data.heads[name] = commit
+				elseif ref:match("^refs/tags/") then
+					local tag_name = ref:match("^refs/tags/(.+)$")
+					local stripped = tag_name:gsub("%^{}$", "")
+					if ref:sub(-3) == "^{}" then
+						data.tags[stripped] = commit
+					elseif not data.tags[stripped] then
+						data.tags[stripped] = commit
+					end
 				end
-			else
-				print(string.format("DEBUG: Failed to execute command for %s", plugin_name))
 			end
 		end
 
-		return false
+		if not data.head then
+			data.head = data.heads["main"] or data.heads["master"]
+		end
+
+		return data
+	end
+
+	local function fetch_remote_refs(index)
+		local repos = {}
+		for key, meta in pairs(index) do
+			table.insert(repos, { key = key, url = meta.url })
+		end
+
+		if #repos == 0 then
+			return {}
+		end
+
+		print(string.format("=== Resolving remote metadata for %d repositories (concurrency %d) ===", #repos, REMOTE_CONCURRENCY))
+
+		local loop = vim.loop
+		local active = 0
+		local next_index = 1
+		local completed = false
+		local results = {}
+		local errors = {}
+
+		local function start_next()
+			if next_index > #repos then
+				if active == 0 then
+					completed = true
+				end
+				return
+			end
+
+			local task = repos[next_index]
+			next_index = next_index + 1
+			active = active + 1
+
+			local stdout_pipe = loop.new_pipe(false)
+			local stderr_pipe = loop.new_pipe(false)
+			local stdout_chunks = {}
+			local stderr_chunks = {}
+			local handle
+
+			local function finalize(code)
+				stdout_pipe:close()
+				stderr_pipe:close()
+				if handle and not handle:is_closing() then
+					handle:close()
+				end
+
+				active = active - 1
+				if code == 0 then
+					results[task.key] = parse_ls_remote(table.concat(stdout_chunks))
+				else
+					table.insert(errors, {
+						key = task.key,
+						stderr = table.concat(stderr_chunks),
+					})
+				end
+
+				start_next()
+				if next_index > #repos and active == 0 then
+					completed = true
+				end
+			end
+
+			handle = loop.spawn("git", {
+				args = { "ls-remote", task.url, "HEAD", "refs/heads/*", "refs/tags/*" },
+				stdio = { nil, stdout_pipe, stderr_pipe },
+			}, finalize)
+
+			if not handle then
+				table.insert(errors, { key = task.key, stderr = "failed to spawn git" })
+				active = active - 1
+				start_next()
+				if next_index > #repos and active == 0 then
+					completed = true
+				end
+				return
+			end
+
+			loop.read_start(stdout_pipe, function(err, data)
+				if err then
+					table.insert(stderr_chunks, err)
+				elseif data then
+					table.insert(stdout_chunks, data)
+				end
+			end)
+
+			loop.read_start(stderr_pipe, function(err, data)
+				if err then
+					table.insert(stderr_chunks, err)
+				elseif data then
+					table.insert(stderr_chunks, data)
+				end
+			end)
+		end
+
+		for _ = 1, math.min(REMOTE_CONCURRENCY, #repos) do
+			start_next()
+		end
+
+		vim.wait(1e8, function()
+			return completed
+		end, 50)
+
+		if #errors > 0 then
+			local lines = {}
+			for _, err in ipairs(errors) do
+				table.insert(lines, string.format("%s: %s", err.key, err.stderr))
+			end
+			error("Failed to fetch remote refs:\n" .. table.concat(lines, "\n"))
+		end
+
+		return results
+	end
+
+	local function select_latest_tag(tags)
+		local best_tag
+		local best_version
+		for tag in pairs(tags) do
+			local cleaned = tag:gsub("^v", "")
+			local ok, parsed = pcall(vim.version.parse, cleaned)
+			if ok and parsed then
+				if not best_version or vim.version.cmp(parsed, best_version) > 0 then
+					best_version = parsed
+					best_tag = tag
+				end
+			end
+		end
+		if best_tag then
+			return best_tag, tags[best_tag]
+		end
+		return nil, nil
+	end
+
+	local function determine_target(plugin_info, remote_info)
+		local version_info = plugin_info.version_info
+		local target = {
+			lazyvim_version = version_info.lazyvim_version,
+			lazyvim_version_type = version_info.lazyvim_version_type,
+			mode = nil,
+			branch = nil,
+			tag = nil,
+			latest_tag = nil,
+			commit = nil,
+			prefetch_rev = nil,
+		}
+
+		if version_info.lazyvim_version_type == "branch" and version_info.lazyvim_version then
+			target.mode = "branch"
+			target.branch = version_info.lazyvim_version
+			target.commit = remote_info.heads[target.branch] or remote_info.head
+		elseif version_info.lazyvim_version_type == "commit" and version_info.lazyvim_version then
+			target.mode = "commit"
+			target.commit = version_info.lazyvim_version
+		elseif version_info.lazyvim_version_type == "tag" and version_info.lazyvim_version then
+			target.mode = "tag"
+			target.tag = version_info.lazyvim_version
+			target.latest_tag = version_info.lazyvim_version
+			target.commit = remote_info.tags[version_info.lazyvim_version]
+		elseif version_info.lazyvim_version == false or (version_info.lazyvim_version_type == "version" and version_info.lazyvim_version == false) then
+			target.mode = "head"
+			target.commit = remote_info.head
+		else
+			target.mode = "auto"
+			local latest_tag, latest_commit = select_latest_tag(remote_info.tags)
+			if latest_tag and latest_commit then
+				target.tag = latest_tag
+				target.latest_tag = latest_tag
+				target.commit = latest_commit
+			else
+				target.mode = "head"
+				target.commit = remote_info.head
+			end
+		end
+
+		if not target.commit then
+			target.commit = remote_info.head
+		end
+
+		if target.commit then
+			target.prefetch_rev = target.commit
+		elseif target.branch then
+			target.prefetch_rev = target.branch
+		elseif target.tag then
+			target.prefetch_rev = target.tag
+		end
+
+		return target
+	end
+
+	local function resolve_plugin_versions(plugins_list, existing_lookup, remote_map)
+		for _, plugin in ipairs(plugins_list) do
+			if plugin.owner and plugin.repo then
+				local repo_key = plugin.owner .. "/" .. plugin.repo
+				local remote_info = remote_map[repo_key]
+				if not remote_info then
+					error("Missing remote metadata for " .. repo_key)
+				end
+
+				local existing = existing_lookup[plugin.name]
+				local existing_info = existing and existing.version_info or nil
+				local version_info = plugin.version_info or {}
+				plugin.version_info = version_info
+
+				print(string.format("    Resolving version info for %s...", plugin.name))
+
+				local target = determine_target(plugin, remote_info)
+
+				version_info.lazyvim_version = target.lazyvim_version
+				version_info.lazyvim_version_type = target.lazyvim_version_type
+				version_info.branch = target.branch
+				version_info.tag = target.tag
+				version_info.latest_tag = target.latest_tag
+				if target.commit then
+					version_info.commit = target.commit
+				end
+
+				local existing_commit = existing_info and existing_info.commit or nil
+				local existing_sha = existing_info and existing_info.sha256 or nil
+
+				if target.commit and existing_commit == target.commit and existing_sha then
+					version_info.sha256 = existing_sha
+					version_info.fetched_at = existing_info and existing_info.fetched_at or os.date("!%Y-%m-%dT%H:%M:%SZ")
+					print(string.format("      ↺ Reusing cached prefetch (%s)", format_ref(target.commit)))
+				else
+					enqueue_prefetch(plugin, target, existing_info)
+				end
+			end
+		end
+
+		process_prefetch_queue()
+	end
+
+	local function process_prefetch_queue()
+		if #prefetch_queue == 0 then
+			return
+		end
+
+		print(string.format("=== Prefetching %d plugins (concurrency %d) ===", #prefetch_queue, PREFETCH_CONCURRENCY))
+
+		local loop = vim.loop
+		local results = {}
+		local active = 0
+		local next_index = 1
+		local completed = false
+
+		local function start_next()
+			if next_index > #prefetch_queue then
+				if active == 0 then
+					completed = true
+				end
+				return
+			end
+
+			local task = prefetch_queue[next_index]
+			next_index = next_index + 1
+			active = active + 1
+
+			local stdout_pipe = loop.new_pipe(false)
+			local stderr_pipe = loop.new_pipe(false)
+			local output_chunks = {}
+			local error_chunks = {}
+			local handle
+
+			local function finalize(code)
+				stdout_pipe:close()
+				stderr_pipe:close()
+				if handle and not handle:is_closing() then
+					handle:close()
+				end
+
+				active = active - 1
+				table.insert(results, {
+					task = task,
+					code = code,
+					stdout = table.concat(output_chunks),
+					stderr = table.concat(error_chunks),
+				})
+
+				start_next()
+				if next_index > #prefetch_queue and active == 0 then
+					completed = true
+				end
+			end
+
+			handle = loop.spawn("nix-prefetch-git", {
+				args = task.args,
+				stdio = { nil, stdout_pipe, stderr_pipe },
+			}, finalize)
+
+			if not handle then
+				table.insert(results, {
+					task = task,
+					code = -1,
+					stdout = "",
+					stderr = "failed to spawn nix-prefetch-git",
+				})
+				active = active - 1
+				start_next()
+				if next_index > #prefetch_queue and active == 0 then
+					completed = true
+				end
+				return
+			end
+
+			loop.read_start(stdout_pipe, function(err, data)
+				if err then
+					table.insert(error_chunks, err)
+				elseif data then
+					table.insert(output_chunks, data)
+				end
+			end)
+
+			loop.read_start(stderr_pipe, function(err, data)
+				if err then
+					table.insert(error_chunks, err)
+				elseif data then
+					table.insert(error_chunks, data)
+				end
+			end)
+		end
+
+		for _ = 1, math.min(PREFETCH_CONCURRENCY, #prefetch_queue) do
+			start_next()
+		end
+
+		vim.wait(1e8, function()
+			return completed
+		end, 50)
+
+		for _, result in ipairs(results) do
+			local task = result.task
+			local plugin = task.plugin
+			local target = task.target
+			local existing = task.existing
+			local version_info = plugin.version_info
+
+			if result.code ~= 0 then
+				error(string.format("nix-prefetch-git failed for %s: %s", plugin.name, result.stderr))
+			end
+
+			local ok, data = pcall(vim.json.decode, result.stdout)
+			if not ok or not data or not data.rev or not data.sha256 then
+				error(string.format("Invalid nix-prefetch-git output for %s", plugin.name))
+			end
+
+			local commit = data.rev
+			local sha256 = data.sha256
+			local version_changed = not (existing and existing.commit == commit)
+
+			version_info.commit = commit
+			version_info.sha256 = sha256
+
+			if version_changed or not (existing and existing.fetched_at) then
+				version_info.fetched_at = os.date("!%Y-%m-%dT%H:%M:%SZ")
+			else
+				version_info.fetched_at = existing.fetched_at
+			end
+
+			if target.tag then
+				version_info.tag = target.tag
+				version_info.latest_tag = target.latest_tag or target.tag
+				version_info.branch = nil
+			elseif target.branch then
+				version_info.branch = target.branch
+				version_info.tag = nil
+				version_info.latest_tag = target.latest_tag
+			else
+				version_info.tag = nil
+				version_info.branch = nil
+				version_info.latest_tag = target.latest_tag
+			end
+
+			if version_changed then
+				print(string.format("      ✓ %s updated to %s", plugin.name, format_ref(commit)))
+			else
+				print(string.format("      ✓ %s verified at %s (unchanged)", plugin.name, format_ref(commit)))
+			end
+		end
+	end
+
+	local function guess_nixpkg_name(plugin_name)
+		local owner, repo_name = plugin_name:match("^([^/]+)/(.+)$")
+		if not owner or not repo_name then
+			return nil
+		end
+
+		if repo_name:match("%.nvim$") then
+			local base_name = repo_name:gsub("%.nvim$", "")
+			return base_name .. "-nvim"
+		elseif repo_name:match("%-nvim$") then
+			return repo_name
+		elseif repo_name:match("^nvim%-") then
+			return repo_name
+		else
+			return repo_name:gsub("%-", "_"):gsub("%.", "_")
+		end
+	end
+
+	local function evaluate_nix_attr_presence(candidates)
+		if #candidates == 0 then
+			return {}
+		end
+
+		local quoted = {}
+		for _, name in ipairs(candidates) do
+			table.insert(quoted, string.format('"%s"', name))
+		end
+
+		local expr = string.format(
+			"let pkgs = import <nixpkgs> {}; names = [ %s ]; in builtins.listToAttrs (map (name: { name = name; value = builtins.hasAttr name pkgs.vimPlugins; }) names)",
+			table.concat(quoted, " ")
+		)
+
+		local result = vim.fn.system({ "nix", "eval", "--json", "--impure", "--expr", expr })
+		if vim.v.shell_error ~= 0 then
+			error("Failed to evaluate nix attribute presence: " .. result)
+		end
+
+		local ok, decoded = pcall(vim.json.decode, result)
+		if not ok then
+			error("Could not decode nix eval output")
+		end
+
+		return decoded
+	end
+
+	local function finalize_mappings(plugins_list)
+		local unmapped = {}
+		local mapped_count = 0
+		local multi_count = 0
+		local candidate_set = {}
+		local candidate_list = {}
+
+		for _, plugin in ipairs(plugins_list) do
+			if plugin.multiModule then
+				multi_count = multi_count + 1
+			end
+
+			if existing_mappings[plugin.name] ~= nil or multi_module_mappings[plugin.name] ~= nil then
+				mapped_count = mapped_count + 1
+				plugin.mapped_status = "explicit"
+			else
+				local candidate = guess_nixpkg_name(plugin.name)
+				plugin.nixpkgs_candidate = candidate
+				if candidate and not candidate_set[candidate] then
+					candidate_set[candidate] = true
+					table.insert(candidate_list, candidate)
+				end
+			end
+		end
+
+		local attr_results = evaluate_nix_attr_presence(candidate_list)
+
+		for _, plugin in ipairs(plugins_list) do
+			if plugin.mapped_status ~= "explicit" then
+				local candidate = plugin.nixpkgs_candidate
+				if candidate and attr_results[candidate] then
+					mapped_count = mapped_count + 1
+					plugin.mapped_status = "auto"
+				else
+					plugin.mapped_status = "unmapped"
+					table.insert(unmapped, plugin.name)
+				end
+			end
+		end
+
+		extraction_report.mapped_plugins = mapped_count
+		extraction_report.unmapped_plugins = #unmapped
+		extraction_report.multi_module_plugins = multi_count
+
+		return unmapped
 	end
 
 	-- Function to collect plugin specs recursively
@@ -478,16 +920,14 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 							.. "/"
 							.. multi_module_mappings[normalized].package:gsub("%-nvim$", ".nvim"),
 					}
-					extraction_report.multi_module_plugins = extraction_report.multi_module_plugins + 1
 				end
 
-				-- Track mapping status
-				if is_plugin_mapped(normalized) then
-					extraction_report.mapped_plugins = extraction_report.mapped_plugins + 1
-				else
-					extraction_report.unmapped_plugins = extraction_report.unmapped_plugins + 1
-					table.insert(unmapped_plugins, normalized)
-				end
+				local repo_key = (owner or "") .. "/" .. (repo or "")
+				repo_index[repo_key] = {
+					owner = owner,
+					repo = repo,
+					url = string.format("https://github.com/%s/%s", owner, repo),
+				}
 
 				table.insert(plugins, plugin_info)
 			end
@@ -551,31 +991,26 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 					}
 
 					-- Add multi-module info if applicable
-					if multi_module_mappings[normalized] then
-						plugin_info.multiModule = {
-							basePackage = multi_module_mappings[normalized].package,
-							module = multi_module_mappings[normalized].module,
-							repository = normalized:match("^(.+)/")
-								.. "/"
-								.. multi_module_mappings[normalized].package:gsub("%-nvim$", ".nvim"),
-						}
-						extraction_report.multi_module_plugins = extraction_report.multi_module_plugins + 1
-					end
-
-					-- Track mapping status
-					if is_plugin_mapped(normalized) then
-						extraction_report.mapped_plugins = extraction_report.mapped_plugins + 1
-					else
-						extraction_report.unmapped_plugins = extraction_report.unmapped_plugins + 1
-						table.insert(unmapped_plugins, normalized)
-					end
-
-					-- Fetch version information
-					enrich_plugin_version_info(plugin_info, existing_plugins[normalized])
-
-					table.insert(plugins, plugin_info)
+				if multi_module_mappings[normalized] then
+					plugin_info.multiModule = {
+						basePackage = multi_module_mappings[normalized].package,
+						module = multi_module_mappings[normalized].module,
+						repository = normalized:match("^(.+)/")
+							.. "/"
+							.. multi_module_mappings[normalized].package:gsub("%-nvim$", ".nvim"),
+					}
 				end
+
+				local repo_key = plugin_info.owner .. "/" .. plugin_info.repo
+				repo_index[repo_key] = {
+					owner = plugin_info.owner,
+					repo = plugin_info.repo,
+					url = string.format("https://github.com/%s/%s", plugin_info.owner, plugin_info.repo),
+				}
+
+				table.insert(plugins, plugin_info)
 			end
+		end
 
 			-- Recursively process nested specs
 			for _, v in ipairs(spec) do
@@ -596,34 +1031,78 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	end
 
 	-- Function to extract plugins from a single LazyVim extra file
-	local function extract_plugins_from_extra(extra_path, relative_path)
-		-- Read the extra file
-		local file = io.open(extra_path, "r")
-		if not file then
-			return {}
+	local function extract_plugins_from_extra(extra_path, relative_path, preloaded_content)
+		local content = preloaded_content
+		if not content then
+			local file = io.open(extra_path, "r")
+			if not file then
+				return {}
+			end
+			content = file:read("*all")
+			file:close()
 		end
-		local content = file:read("*all")
-		file:close()
 
 		-- Create a safe environment for loading the extra
+		local function noop(...) return nil end
+		local function const_zero(...) return 0 end
+		local function const_false(...) return false end
+		local function const_empty_string(...) return "" end
+
+		local function stub_callable(return_value)
+			return function()
+				return return_value
+			end
+		end
+
+		local function stub_function()
+			return function()
+				return nil
+			end
+		end
+
 		local env = {
-			-- Common Lua functions that extras might use
 			pairs = pairs,
 			ipairs = ipairs,
-			tonumber = tonumber,
+			onumber = tonumber,
 			tostring = tostring,
 			type = type,
 			table = table,
 			string = string,
 			math = math,
-			-- Mock LazyVim functions that some extras might reference
 			LazyVim = {
-				has = function() return false end,
-				on_very_lazy = function() end,
+				has = const_false,
+				has_extra = const_false,
+				on_very_lazy = noop,
+				memoize = function(_, fn) return fn end,
+				cmp = setmetatable({}, { __index = function() return {} end }),
+				pick = setmetatable({}, { __index = stub_function }),
+				util = setmetatable({}, { __index = stub_function }),
 			},
 			vim = {
-				fn = {},
-				cmd = function() end,
+				fn = setmetatable({
+					has = const_zero,
+					executable = const_zero,
+					is_win = const_zero,
+					isdirectory = const_zero,
+					filereadable = const_zero,
+					line = const_zero,
+					col = const_zero,
+					stdpath = const_empty_string,
+					expand = const_empty_string,
+					trim = const_empty_string,
+					tolower = const_empty_string,
+					glob = const_empty_string,
+					json_decode = function(_, _) return {} end,
+					input = const_empty_string,
+				}, {
+					__index = function()
+						return const_zero
+					end,
+				}),
+				cmd = noop,
+				g = {},
+				api = setmetatable({}, { __index = function() return noop end }),
+				loop = setmetatable({}, { __index = function() return noop end }),
 			},
 		}
 
@@ -718,19 +1197,14 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 									.. "/"
 									.. multi_module_mappings[normalized].package:gsub("%-nvim$", ".nvim"),
 							}
-							extraction_report.multi_module_plugins = extraction_report.multi_module_plugins + 1
 						end
 
-						-- Track mapping status
-						if is_plugin_mapped(normalized) then
-							extraction_report.mapped_plugins = extraction_report.mapped_plugins + 1
-						else
-							extraction_report.unmapped_plugins = extraction_report.unmapped_plugins + 1
-							table.insert(unmapped_plugins, normalized)
-						end
-
-						-- Fetch version information
-						enrich_plugin_version_info(plugin_info, existing_plugins[normalized])
+						local repo_key = plugin_info.owner .. "/" .. plugin_info.repo
+						repo_index[repo_key] = {
+							owner = plugin_info.owner,
+							repo = plugin_info.repo,
+							url = string.format("https://github.com/%s/%s", plugin_info.owner, plugin_info.repo),
+						}
 
 						table.insert(plugins, plugin_info)
 					end
@@ -743,34 +1217,42 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	end
 
 	-- Function to scan LazyVim extras directory recursively
-	local function scan_lazyvim_extras(lazyvim_path)
+	local function scan_lazyvim_extras(lazyvim_path, entries_override)
 		local extras_path = lazyvim_path .. "/lua/lazyvim/plugins/extras"
 		local extras_plugins = {}
 
-		-- Helper function to scan directory recursively
-		local function scan_directory(dir_path, relative_base)
-			local handle = io.popen("find '" .. dir_path .. "' -name '*.lua' -type f 2>/dev/null")
-			if not handle then
-				print("Warning: Could not scan extras directory: " .. dir_path)
-				return
+		local function add_from_entry(entry)
+			local relative_path = entry.relative
+			print("  Processing extra: " .. relative_path)
+			local plugins = extract_plugins_from_extra(entry.path, relative_path, entry.content)
+			for _, plugin in ipairs(plugins) do
+				table.insert(extras_plugins, plugin)
 			end
-
-			for line in handle:lines() do
-				-- Get relative path from extras directory
-				local relative_path = line:sub(#extras_path + 2) -- +2 to remove leading slash
-				if relative_path and relative_path ~= "" then
-					print("  Processing extra: " .. relative_path)
-					local plugins = extract_plugins_from_extra(line, relative_path)
-					for _, plugin in ipairs(plugins) do
-						table.insert(extras_plugins, plugin)
-					end
-				end
-			end
-			handle:close()
 		end
 
 		print("=== Scanning LazyVim extras ===")
-		scan_directory(extras_path, "")
+
+		if entries_override then
+			for _, entry in ipairs(entries_override) do
+				if entry.path:sub(1, #extras_path) == extras_path then
+					add_from_entry(entry)
+				end
+			end
+		else
+			local handle = io.popen("find '" .. extras_path .. "' -name '*.lua' -type f 2>/dev/null")
+			if not handle then
+				print("Warning: Could not scan extras directory: " .. extras_path)
+			else
+				for line in handle:lines() do
+					local relative_path = line:sub(#extras_path + 2)
+					if relative_path and relative_path ~= "" then
+						add_from_entry({ path = line, relative = relative_path, content = nil })
+					end
+				end
+				handle:close()
+			end
+		end
+
 		print(string.format("Found %d plugins from extras", #extras_plugins))
 
 		return extras_plugins
@@ -814,7 +1296,7 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	end
 
 	-- Scan LazyVim extras and add them to plugins list
-	local extras_plugins = scan_lazyvim_extras(lazyvim_path)
+	local extras_plugins = scan_lazyvim_extras(lazyvim_path, shared_extras_entries)
 	for _, plugin in ipairs(extras_plugins) do
 		table.insert(plugins, plugin)
 	end
@@ -836,15 +1318,12 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 				user_plugin.user_plugin = true
 				user_plugin.source_file = "user_config"
 
-				if is_plugin_mapped(user_plugin.name) then
-					extraction_report.mapped_plugins = extraction_report.mapped_plugins + 1
-				else
-					extraction_report.unmapped_plugins = extraction_report.unmapped_plugins + 1
-					table.insert(unmapped_plugins, user_plugin.name)
-				end
-
-				-- Fetch version information
-				enrich_plugin_version_info(user_plugin, existing_plugins[user_plugin.name])
+				local repo_key = user_plugin.owner .. "/" .. user_plugin.repo
+				repo_index[repo_key] = {
+					owner = user_plugin.owner,
+					repo = user_plugin.repo,
+					url = string.format("https://github.com/%s/%s", user_plugin.owner, user_plugin.repo),
+				}
 
 				table.insert(plugins, user_plugin)
 			else
@@ -854,6 +1333,11 @@ function ExtractLazyVimPlugins(lazyvim_path, output_file, version, commit)
 	else
 		print("No user plugins found")
 	end
+
+	local remote_map = fetch_remote_refs(repo_index)
+	resolve_plugin_versions(plugins, existing_plugins, remote_map)
+
+	local unmapped_plugins = finalize_mappings(plugins)
 
 	-- Sort and assign load order
 	table.sort(plugins, function(a, b)

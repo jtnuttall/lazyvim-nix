@@ -3,6 +3,9 @@
 -- LazyVim Dependencies Extractor
 -- Creates a dependencies file with tools, runtimes, and nixpkgs mappings
 
+local extras_scan = require("lib.extras_scan")
+local verify_enabled = os.getenv("VERIFY_NIXPKGS_PACKAGES") == "1"
+
 local function read_file(path)
     local file = io.open(path, "r")
     if not file then
@@ -115,8 +118,7 @@ local function extract_core_dependencies(lazyvim_path)
 end
 
 -- Extract executable checks from a Lua file
-local function extract_executables_from_file(file_path, relative_path)
-    local content = read_file(file_path)
+local function extract_executables_from_content(content, relative_path)
     if not content then
         return {}
     end
@@ -195,71 +197,62 @@ local function extract_configured_tools(file_content)
 end
 
 -- Scan LazyVim extras directory for dependencies
-local function extract_extra_dependencies(lazyvim_path)
-    local extras_path = lazyvim_path .. "/lua/lazyvim/plugins/extras"
+local function extract_extra_dependencies(lazyvim_path, extras_entries, cache_ops)
     local extras_deps = {}
+    extras_entries = extras_entries or extras_scan.collect(lazyvim_path)
 
-    -- Helper function to scan directory recursively
-    local function scan_directory(dir_path, base_path)
-        local handle = io.popen("find '" .. dir_path .. "' -name '*.lua' -type f 2>/dev/null")
-        if not handle then
-            print("Warning: Could not scan extras directory: " .. dir_path)
-            return
+    print("=== Scanning LazyVim extras for dependencies ===")
+
+    for _, entry in ipairs(extras_entries) do
+        local relative_path = entry.relative
+        local extra_name = entry.module
+        local file_content = entry.content
+
+        local cached = nil
+        if cache_ops and entry.hash and cache_ops.get_tools then
+            cached = cache_ops.get_tools(entry.hash)
         end
 
-        for file_path in handle:lines() do
-            -- Get relative path from extras directory
-            local relative_path = file_path:sub(#base_path + 2) -- +2 to remove leading slash
-            if relative_path and relative_path ~= "" then
-                -- Convert file path to extra module name
-                local extra_name = relative_path:gsub("%.lua$", ""):gsub("/", ".")
+        if cached then
+            extras_deps[extra_name] = cached
+            print(string.format("  Using cached tools for %s", relative_path))
+        else
+            local executables = extract_executables_from_content(file_content, relative_path)
+            local configured_tools = extract_configured_tools(file_content)
 
-                -- Extract executable checks from the file
-                local executables = extract_executables_from_file(file_path, relative_path)
+            if #executables > 0 or #configured_tools > 0 then
+                local all_tools = {}
+                for _, tool in ipairs(executables) do
+                    table.insert(all_tools, tool)
+                end
+                for _, tool in ipairs(configured_tools) do
+                    table.insert(all_tools, tool)
+                end
 
-                -- Extract all information from the file
-                local file_content = read_file(file_path)
-                if file_content then
-                    -- Extract configured tools (LSPs, formatters, etc.)
-                    local configured_tools = extract_configured_tools(file_content)
+                local unique_tools = {}
+                local seen = {}
+                for _, tool in ipairs(all_tools) do
+                    if not seen[tool] then
+                        seen[tool] = true
+                        table.insert(unique_tools, tool)
+                    end
+                end
 
-                    -- Store extracted data if we found tools
-                    if #executables > 0 or #configured_tools > 0 then
-                        local all_tools = {}
-                        for _, tool in ipairs(executables) do
-                            table.insert(all_tools, tool)
-                        end
-                        for _, tool in ipairs(configured_tools) do
-                            table.insert(all_tools, tool)
-                        end
+                if #unique_tools > 0 then
+                    extras_deps[extra_name] = unique_tools
+                    local preview = table.concat(unique_tools, ", ")
+                    print(string.format("  Found %d tools in %s: %s",
+                        #unique_tools,
+                        relative_path,
+                        preview:sub(1, 60) .. (preview:len() > 60 and "..." or "")))
 
-                        -- Remove duplicates
-                        local unique_tools = {}
-                        local seen = {}
-                        for _, tool in ipairs(all_tools) do
-                            if not seen[tool] then
-                                seen[tool] = true
-                                table.insert(unique_tools, tool)
-                            end
-                        end
-
-                        if #unique_tools > 0 then
-                            extras_deps[extra_name] = unique_tools
-
-                            print(string.format("  Found %d tools in %s: %s",
-                                              #unique_tools, relative_path,
-                                              table.concat(unique_tools, ", "):sub(1, 60) ..
-                                              (#table.concat(unique_tools, ", ") > 60 and "..." or "")))
-                        end
+                    if cache_ops and entry.hash and cache_ops.store_tools then
+                        cache_ops.store_tools(entry.hash, unique_tools)
                     end
                 end
             end
         end
-        handle:close()
     end
-
-    print("=== Scanning LazyVim extras for dependencies ===")
-    scan_directory(extras_path, extras_path)
 
     local total_extras = 0
     for _ in pairs(extras_deps) do
@@ -513,9 +506,14 @@ local function resolve_and_verify_package(dep_name, verification_report)
     local suggested_nixpkg = resolve_package_name(dep_name)
 
     if not suggested_nixpkg then
-        -- No mapping strategy found
-        table.insert(verification_report.no_mapping, dep_name)
+        if verification_report then
+            table.insert(verification_report.no_mapping, dep_name)
+        end
         return nil
+    end
+
+    if not verify_enabled then
+        return suggested_nixpkg
     end
 
     -- Verify the suggested mapping exists in nixpkgs
@@ -531,7 +529,7 @@ local function resolve_and_verify_package(dep_name, verification_report)
 end
 
 -- Main extraction function
-local function extract_dependencies(lazyvim_path, mason_path, output_file)
+local function extract_dependencies(lazyvim_path, mason_path, output_file, extras_entries, cache_ops)
     print("=== LazyVim Dependencies Extraction ===")
     print("LazyVim path: " .. lazyvim_path)
     print("Mason path: " .. (mason_path or "not provided"))
@@ -543,7 +541,7 @@ local function extract_dependencies(lazyvim_path, mason_path, output_file)
 
     -- Extract extra dependencies
     print("\n=== Extracting extra dependencies ===")
-    local extra_deps = extract_extra_dependencies(lazyvim_path)
+    local extra_deps = extract_extra_dependencies(lazyvim_path, extras_entries, cache_ops)
 
     -- Get all unique tools
     local all_tools = get_all_tools(core_deps, extra_deps)
@@ -560,14 +558,20 @@ local function extract_dependencies(lazyvim_path, mason_path, output_file)
     end
 
     -- Build dependencies structure with verified nixpkgs mappings
-    print("\n=== Building dependencies structure with nixpkgs verification ===")
+    if verify_enabled then
+        print("\n=== Building dependencies structure with nixpkgs verification ===")
+    else
+        print("\n=== Building dependencies structure (verification skipped) ===")
+    end
 
-    -- Initialize verification report
-    local verification_report = {
-        verified = {},
-        failed_verification = {},
-        no_mapping = {}
-    }
+    local verification_report = nil
+    if verify_enabled then
+        verification_report = {
+            verified = {},
+            failed_verification = {},
+            no_mapping = {}
+        }
+    end
 
     local dependencies = {
         _comment = "LazyVim system dependencies with verified nixpkgs mappings - tools and their runtime_dependencies",
@@ -687,68 +691,69 @@ local function extract_dependencies(lazyvim_path, mason_path, output_file)
     file:close()
 
     -- Deduplicate verification report entries
-    local function deduplicate_list(list, key_field)
-        local seen = {}
-        local deduped = {}
-        for _, item in ipairs(list) do
-            local key = item[key_field]
-            if not seen[key] then
-                seen[key] = true
-                table.insert(deduped, item)
+    if verification_report then
+        local function deduplicate_list(list, key_field)
+            local seen = {}
+            local deduped = {}
+            for _, item in ipairs(list) do
+                local key = item[key_field]
+                if not seen[key] then
+                    seen[key] = true
+                    table.insert(deduped, item)
+                end
             end
+            return deduped
         end
-        return deduped
-    end
 
-    local function deduplicate_strings(list)
-        local seen = {}
-        local deduped = {}
-        for _, item in ipairs(list) do
-            if not seen[item] then
-                seen[item] = true
-                table.insert(deduped, item)
+        local function deduplicate_strings(list)
+            local seen = {}
+            local deduped = {}
+            for _, item in ipairs(list) do
+                if not seen[item] then
+                    seen[item] = true
+                    table.insert(deduped, item)
+                end
             end
+            return deduped
         end
-        return deduped
+
+        local verified_deduped = deduplicate_list(verification_report.verified, "tool")
+        local failed_deduped = deduplicate_list(verification_report.failed_verification, "tool")
+        local no_mapping_deduped = deduplicate_strings(verification_report.no_mapping)
+
+        local report_file = output_file:gsub("%.json$", "-verification-report.json")
+        local report = {
+            _comment = "Nixpkgs package verification report for LazyVim dependencies",
+            generated = os.date("%Y-%m-%d %H:%M:%S"),
+            summary = {
+                total_tools = #all_tools,
+                verified_mappings = #verified_deduped,
+                failed_verifications = #failed_deduped,
+                no_mapping_strategy = #no_mapping_deduped,
+                success_rate = string.format("%.1f%%", (#verified_deduped / #all_tools) * 100)
+            },
+            verified = verified_deduped,
+            failed_verification = failed_deduped,
+            no_mapping = no_mapping_deduped
+        }
+
+        local report_file_handle = io.open(report_file, "w")
+        if report_file_handle then
+            report_file_handle:write(to_json(report))
+            report_file_handle:close()
+        end
+
+        print("\n=== Verification Summary ===")
+        print(string.format("Total tools analyzed: %d", #all_tools))
+        print(string.format("✓ Verified mappings: %d", #verified_deduped))
+        print(string.format("✗ Failed verifications: %d", #failed_deduped))
+        print(string.format("? No mapping strategy: %d", #no_mapping_deduped))
+        print(string.format("Success rate: %.1f%%", (#verified_deduped / #all_tools) * 100))
+        print(string.format("Dependencies written to: %s", output_file))
+        print(string.format("Verification report: %s", report_file))
+    else
+        print("Dependencies written to: " .. output_file)
     end
-
-    -- Deduplicate verification results
-    local verified_deduped = deduplicate_list(verification_report.verified, "tool")
-    local failed_deduped = deduplicate_list(verification_report.failed_verification, "tool")
-    local no_mapping_deduped = deduplicate_strings(verification_report.no_mapping)
-
-    -- Generate verification report
-    local report_file = output_file:gsub("%.json$", "-verification-report.json")
-    local report = {
-        _comment = "Nixpkgs package verification report for LazyVim dependencies",
-        generated = os.date("%Y-%m-%d %H:%M:%S"),
-        summary = {
-            total_tools = #all_tools,
-            verified_mappings = #verified_deduped,
-            failed_verifications = #failed_deduped,
-            no_mapping_strategy = #no_mapping_deduped,
-            success_rate = string.format("%.1f%%", (#verified_deduped / #all_tools) * 100)
-        },
-        verified = verified_deduped,
-        failed_verification = failed_deduped,
-        no_mapping = no_mapping_deduped
-    }
-
-    local report_file_handle = io.open(report_file, "w")
-    if report_file_handle then
-        report_file_handle:write(to_json(report))
-        report_file_handle:close()
-    end
-
-    -- Print summary
-    print("\n=== Verification Summary ===")
-    print(string.format("Total tools analyzed: %d", #all_tools))
-    print(string.format("✓ Verified mappings: %d", #verified_deduped))
-    print(string.format("✗ Failed verifications: %d", #failed_deduped))
-    print(string.format("? No mapping strategy: %d", #no_mapping_deduped))
-    print(string.format("Success rate: %.1f%%", (#verified_deduped / #all_tools) * 100))
-    print(string.format("Dependencies written to: %s", output_file))
-    print(string.format("Verification report: %s", report_file))
 end
 
 -- Command line interface
@@ -791,6 +796,7 @@ end
 
 -- Export for testing
 return {
+    extract_dependencies = extract_dependencies,
     extract_core_dependencies = extract_core_dependencies,
     extract_extra_dependencies = extract_extra_dependencies,
     should_exclude_tool = should_exclude_tool,

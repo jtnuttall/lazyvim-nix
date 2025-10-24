@@ -115,7 +115,7 @@ jobs:
                 mv data/mappings.json.tmp data/mappings.json
                 
                 # Re-run extraction with new mappings
-                nix develop --command ./scripts/update-plugins.sh
+                nix develop --command ./scripts/update-plugins.sh --verify
               fi
             else
               echo "has_verified_mappings=false" >> $GITHUB_OUTPUT

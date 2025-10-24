@@ -3,6 +3,8 @@
 -- Script to extract treesitter parser requirements from LazyVim
 -- Generates treesitter-mappings.json for use in module.nix
 
+local extras_scan = require("lib.extras_scan")
+
 -- JSON encoder with pretty printing support
 local function encode_json(obj, indent, current_indent)
   indent = indent or 0
@@ -14,7 +16,7 @@ local function encode_json(obj, indent, current_indent)
     -- Check if it's an array (consecutive integer keys starting from 1)
     local is_array = true
     local count = 0
-    for k, v in pairs(obj) do
+    for k, _ in pairs(obj) do
       count = count + 1
       if type(k) ~= "number" or k ~= count then
         is_array = false
@@ -23,7 +25,6 @@ local function encode_json(obj, indent, current_indent)
     end
 
     if is_array then
-      -- Encode as JSON array
       if count == 0 then
         return "[]"
       end
@@ -33,9 +34,7 @@ local function encode_json(obj, indent, current_indent)
       end
       return "[\n" .. table.concat(items, ",\n") .. "\n" .. spaces .. "]"
     else
-      -- Encode as JSON object
       local items = {}
-      -- Sort keys for consistent output
       local keys = {}
       for k in pairs(obj) do
         table.insert(keys, k)
@@ -64,15 +63,6 @@ local function encode_json(obj, indent, current_indent)
   end
 end
 
--- Get the LazyVim repo path from command line or use temp location
-local lazyvim_repo = arg[1] or "/tmp/claude/lazyvim-repo"
-
-if not lazyvim_repo then
-  print("Usage: extract-treesitter.lua [lazyvim-repo-path]")
-  os.exit(1)
-end
-
--- Helper function to read file content
 local function read_file(filepath)
   local file = io.open(filepath, "r")
   if not file then
@@ -87,7 +77,6 @@ end
 local function extract_parsers_from_content(content)
   local parsers = {}
 
-  -- Find the nvim-treesitter plugin configuration block
   local treesitter_pattern = '"nvim%-treesitter/nvim%-treesitter"[^}]-}'
   local treesitter_block = content:match(treesitter_pattern)
 
@@ -95,23 +84,18 @@ local function extract_parsers_from_content(content)
     return parsers
   end
 
-  -- Pattern to find ensure_installed in the treesitter block specifically
-  -- This handles both simple and function-based opts patterns
   local patterns = {
-    -- Simple pattern: opts = { ensure_installed = { "parser1", "parser2" } }
     'opts%s*=%s*{[^}]*ensure_installed%s*=%s*{%s*([^}]-)%s*}',
-    -- Function pattern: opts = function() ... ensure_installed = { ... } ... end
     'opts%s*=%s*function%(%).-ensure_installed%s*=%s*{%s*([^}]-)%s*}'
   }
 
   for _, pattern in ipairs(patterns) do
     local match = treesitter_block:match(pattern)
     if match then
-      -- Extract individual parser names from quotes
       for parser in match:gmatch('"([^"]+)"') do
         table.insert(parsers, parser)
       end
-      break -- Found parsers, no need to try other patterns
+      break
     end
   end
 
@@ -119,7 +103,7 @@ local function extract_parsers_from_content(content)
 end
 
 -- Extract core treesitter parsers from main treesitter configuration
-local function extract_core_parsers()
+local function extract_core_parsers(lazyvim_repo)
   local treesitter_file = lazyvim_repo .. "/lua/lazyvim/plugins/treesitter.lua"
   local content = read_file(treesitter_file)
 
@@ -128,13 +112,10 @@ local function extract_core_parsers()
   end
 
   local parsers = {}
-
-  -- For the core treesitter file, use a simpler approach since it's in opts directly
   local pattern = 'ensure_installed%s*=%s*{%s*([^}]-)%s*}'
   local match = content:match(pattern)
 
   if match then
-    -- Extract individual parser names from quotes
     for parser in match:gmatch('"([^"]+)"') do
       table.insert(parsers, parser)
     end
@@ -147,88 +128,67 @@ local function extract_core_parsers()
   return parsers
 end
 
--- Extract parsers from a specific language extra file
-local function extract_extra_parsers(extra_file)
-  local content = read_file(extra_file)
-  if not content then
-    return {}
-  end
-
-  -- Only process if the file contains nvim-treesitter configuration
-  if not content:match('"nvim%-treesitter/nvim%-treesitter"') then
-    return {}
-  end
-
-  return extract_parsers_from_content(content)
-end
-
--- Extract parsers from all language extras
-local function extract_all_extras()
-  local extras_dir = lazyvim_repo .. "/lua/lazyvim/plugins/extras/lang"
+local function extract_extra_parsers_from_entries(entries, cache_ops)
   local extras = {}
 
-  -- Get list of language extra files
-  local handle = io.popen("ls " .. extras_dir .. "/*.lua 2>/dev/null")
-  if not handle then
-    error("Could not list extras directory: " .. extras_dir)
-  end
+  for _, entry in ipairs(entries) do
+    if entry.module:match("^lang%.") then
+      local content = entry.content
+      local cached = nil
+      if cache_ops and entry.hash and cache_ops.get_parsers then
+        cached = cache_ops.get_parsers(entry.hash)
+      end
 
-  for file in handle:lines() do
-    local name = file:match("([^/]+)%.lua$")
-    if name then
-      local parsers = extract_extra_parsers(file)
-      if #parsers > 0 then
-        -- Use "lang.{name}" format to match module structure
-        extras["lang." .. name] = parsers
+      if cached then
+        extras[entry.module] = cached
+      elseif content and content:match('"nvim%-treesitter/nvim%-treesitter"') then
+        local parsers = extract_parsers_from_content(content)
+        if #parsers > 0 then
+          extras[entry.module] = parsers
+          if cache_ops and entry.hash and cache_ops.store_parsers then
+            cache_ops.store_parsers(entry.hash, parsers)
+          end
+        end
       end
     end
   end
 
-  handle:close()
   return extras
 end
 
--- Main extraction logic
-local function main()
+local function generate_mappings(lazyvim_repo, extras_entries, output_file, cache_ops)
+  output_file = output_file or "data/treesitter.json"
+  extras_entries = extras_entries or extras_scan.collect(lazyvim_repo)
+
   print("Extracting treesitter parsers from LazyVim...")
   print("LazyVim repo: " .. lazyvim_repo)
   print("")
 
-  -- Extract core parsers
   print("Extracting core parsers...")
-  local core_parsers = extract_core_parsers()
+  local core_parsers = extract_core_parsers(lazyvim_repo)
   print("Found " .. #core_parsers .. " core parsers")
 
-  -- Extract extra parsers
   print("Extracting extra parsers...")
-  local extra_parsers = extract_all_extras()
+  local extra_parsers = extract_extra_parsers_from_entries(extras_entries, cache_ops)
   local extra_count = 0
+  local extra_category_count = 0
   for _, parsers in pairs(extra_parsers) do
     extra_count = extra_count + #parsers
-  end
-  -- Count extra categories
-  local extra_category_count = 0
-  for _ in pairs(extra_parsers) do
     extra_category_count = extra_category_count + 1
   end
 
-  print("Found " .. extra_count .. " extra parsers across " ..
-        extra_category_count .. " language extras")
+  print("Found " .. extra_count .. " extra parsers across " .. extra_category_count .. " language extras")
 
-  -- Create the mappings structure
   local mappings = {
     core = core_parsers,
     extras = extra_parsers
   }
 
-  -- Output as JSON
   local json_output = encode_json(mappings)
   print("")
   print("Generated treesitter mappings:")
   print(json_output)
 
-  -- Write to file
-  local output_file = "data/treesitter.json"
   local file = io.open(output_file, "w")
   if file then
     file:write(json_output)
@@ -238,7 +198,29 @@ local function main()
   else
     error("Could not write to " .. output_file)
   end
+
+  return mappings
 end
 
--- Run the extraction
-main()
+local function main()
+  local lazyvim_repo = arg[1]
+  local output_file = arg[2] or "data/treesitter.json"
+
+  if not lazyvim_repo then
+    print("Usage: extract-treesitter.lua <lazyvim_repo_path> [output_file]")
+    os.exit(1)
+  end
+
+  generate_mappings(lazyvim_repo, nil, output_file)
+end
+
+if arg and arg[0] and arg[0]:match("extract%-treesitter") then
+  main()
+end
+
+return {
+  generate_mappings = generate_mappings,
+  extract_core_parsers = extract_core_parsers,
+  extract_parsers_from_content = extract_parsers_from_content,
+  extract_extra_parsers_from_entries = extract_extra_parsers_from_entries,
+}

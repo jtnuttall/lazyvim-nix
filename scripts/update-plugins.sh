@@ -12,6 +12,17 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMP_DIR=$(mktemp -d)
 LAZYVIM_REPO="https://github.com/LazyVim/LazyVim.git"
 
+CACHE_DIR="$REPO_ROOT/tmp/update-cache"
+LAZYVIM_CACHE="$CACHE_DIR/LazyVim"
+MASON_CACHE="$CACHE_DIR/mason-registry"
+EXTRAS_CACHE_ROOT="$CACHE_DIR/extras"
+RELEASE_CACHE_ROOT="$CACHE_DIR/releases"
+CACHE_SCHEMA_VERSION="2"
+
+mkdir -p "$CACHE_DIR"
+mkdir -p "$RELEASE_CACHE_ROOT"
+USED_RELEASE_CACHE=0
+
 # Parse command line arguments
 VERIFY_PACKAGES=""
 for arg in "$@"; do
@@ -35,101 +46,153 @@ cleanup() {
 }
 trap cleanup EXIT
 
+echo "==> Preparing LazyVim cache..."
+if [ ! -d "$LAZYVIM_CACHE/.git" ]; then
+    git clone --filter=blob:none "$LAZYVIM_REPO" "$LAZYVIM_CACHE"
+fi
+
+git -C "$LAZYVIM_CACHE" fetch --tags --force --prune --depth 1 origin >/dev/null 2>&1 || {
+    echo "Error: Failed to update LazyVim cache"
+    exit 1
+}
+
 echo "==> Getting latest LazyVim release..."
-# Use git ls-remote to avoid GitHub API rate limits
-LATEST_TAG=$(git ls-remote --tags https://github.com/LazyVim/LazyVim 2>/dev/null | \
-    sed 's/.*refs\/tags\///' | \
-    grep -E '^v[0-9]+\.[0-9]+' | \
-    sort -rV | \
-    head -1)
+LATEST_TAG=$(git -C "$LAZYVIM_CACHE" tag -l 'v[0-9]*' | sort -rV | head -1)
 
 if [ -z "$LATEST_TAG" ]; then
-    echo "Error: Could not fetch latest LazyVim release"
+    echo "Error: Could not determine latest LazyVim release"
     exit 1
 fi
 
-echo "==> Cloning LazyVim $LATEST_TAG..."
-git clone --depth 1 --branch "$LATEST_TAG" "$LAZYVIM_REPO" "$TEMP_DIR/LazyVim"
+git -C "$LAZYVIM_CACHE" fetch --depth 1 origin "$LATEST_TAG" >/dev/null 2>&1 || {
+    echo "Error: Failed to fetch LazyVim tag $LATEST_TAG"
+    exit 1
+}
 
-echo "==> Getting LazyVim version..."
-cd "$TEMP_DIR/LazyVim"
+LAZYVIM_COMMIT=$(git -C "$LAZYVIM_CACHE" rev-parse "$LATEST_TAG^{commit}" 2>/dev/null)
+
+if [ -z "$LAZYVIM_COMMIT" ]; then
+    echo "Error: Could not resolve commit for $LATEST_TAG"
+    exit 1
+fi
+
+if [ -n "$VERIFY_PACKAGES" ]; then
+    VERIFY_SUFFIX="verify"
+else
+    VERIFY_SUFFIX="noverify"
+fi
+
+RELEASE_CACHE_KEY="${LAZYVIM_COMMIT}-${CACHE_SCHEMA_VERSION}-${VERIFY_SUFFIX}"
+RELEASE_CACHE_DIR="$RELEASE_CACHE_ROOT/$RELEASE_CACHE_KEY"
+
+echo "==> Materializing LazyVim $LATEST_TAG ($LAZYVIM_COMMIT) ..."
+mkdir -p "$TEMP_DIR/LazyVim"
+git -C "$LAZYVIM_CACHE" archive "$LAZYVIM_COMMIT" | tar -x -C "$TEMP_DIR/LazyVim" || {
+    echo "Error: Failed to extract LazyVim working tree"
+    exit 1
+}
+
 LAZYVIM_VERSION="$LATEST_TAG"
-LAZYVIM_COMMIT=$(git rev-parse HEAD)
 
 echo "    Version: $LAZYVIM_VERSION"
 echo "    Commit: $LAZYVIM_COMMIT"
 
-echo "==> Extracting plugin specifications..."
-echo "    (including user-defined plugins from ~/.config/nvim/lua/plugins/)"
-cd "$REPO_ROOT"
-
-# Add suggest-mappings.lua and scan-user-plugins.lua to the Lua path
-export LUA_PATH="$SCRIPT_DIR/?.lua;${LUA_PATH:-}"
-
-# Set verification environment variable if requested
-if [ -n "$VERIFY_PACKAGES" ]; then
-    export VERIFY_NIXPKGS_PACKAGES="1"
+if [ -z "${LAZYVIM_FORCE_REGEN:-}" ] \
+    && [ -f "$RELEASE_CACHE_DIR/plugins.json" ] \
+    && [ -f "$RELEASE_CACHE_DIR/dependencies.json" ] \
+    && [ -f "$RELEASE_CACHE_DIR/treesitter.json" ]; then
+    if [ -n "$VERIFY_PACKAGES" ] && [ ! -f "$RELEASE_CACHE_DIR/dependencies-verification-report.json" ]; then
+        echo "==> Release cache missing verification report; regenerating"
+    else
+        echo "==> Using cached metadata for LazyVim commit $LAZYVIM_COMMIT"
+        cp "$RELEASE_CACHE_DIR/plugins.json" "$REPO_ROOT/data/plugins.json"
+        cp "$RELEASE_CACHE_DIR/dependencies.json" "$REPO_ROOT/data/dependencies.json"
+        cp "$RELEASE_CACHE_DIR/treesitter.json" "$REPO_ROOT/data/treesitter.json"
+        if [ -n "$VERIFY_PACKAGES" ]; then
+            cp "$RELEASE_CACHE_DIR/dependencies-verification-report.json" "$REPO_ROOT/data/dependencies-verification-report.json"
+        else
+            rm -f "$REPO_ROOT/data/dependencies-verification-report.json"
+        fi
+        USED_RELEASE_CACHE=1
+    fi
 fi
 
-# Run the enhanced plugin extractor with two-pass processing
-nvim --headless -u NONE \
-    -c "set runtimepath+=$TEMP_DIR/LazyVim" \
-    -c "luafile $SCRIPT_DIR/extract-plugins.lua" \
-    -c "lua ExtractLazyVimPlugins('$TEMP_DIR/LazyVim', '$REPO_ROOT/data/plugins.json.tmp', '$LAZYVIM_VERSION', '$LAZYVIM_COMMIT')" \
-    -c "quit" || {
-        echo "Error: Failed to extract LazyVim plugins"
+if [ "$USED_RELEASE_CACHE" -eq 0 ]; then
+    echo "==> Extracting plugin specifications..."
+    echo "    (including user-defined plugins from ~/.config/nvim/lua/plugins/)"
+    cd "$REPO_ROOT"
+
+    export LUA_PATH="$SCRIPT_DIR/?.lua;${LUA_PATH:-}"
+
+    if [ -n "$VERIFY_PACKAGES" ]; then
+        export VERIFY_NIXPKGS_PACKAGES="1"
+    fi
+
+    echo "==> Extracting system dependencies with runtime mappings..."
+    echo "==> Preparing Mason registry cache..."
+    if [ ! -d "$MASON_CACHE/.git" ]; then
+        git clone --filter=blob:none https://github.com/mason-org/mason-registry.git "$MASON_CACHE" >/dev/null 2>&1 || {
+            echo "Warning: Failed to set up Mason registry cache"
+            MASON_CACHE=""
+        }
+    fi
+
+    if [ -n "$MASON_CACHE" ]; then
+        git -C "$MASON_CACHE" fetch --force --prune --depth 1 origin main >/dev/null 2>&1 && \
+        git -C "$MASON_CACHE" reset --hard FETCH_HEAD >/dev/null 2>&1 || {
+            echo "Warning: Failed to update Mason registry cache"
+            MASON_CACHE=""
+        }
+    fi
+
+    echo "==> Running metadata extraction pipeline..."
+    nvim --headless -u NONE -l "$SCRIPT_DIR/run-update.lua" \
+        "$TEMP_DIR/LazyVim" \
+        "$REPO_ROOT/data/plugins.json" \
+        "$REPO_ROOT/data/dependencies.json" \
+        "$REPO_ROOT/data/treesitter.json" \
+        "${MASON_CACHE:-}" \
+        "$LAZYVIM_VERSION" \
+        "$LAZYVIM_COMMIT" \
+        "$EXTRAS_CACHE_ROOT" || {
+            echo "Error: Failed to extract metadata"
+            exit 1
+        }
+
+    if ! jq . "$REPO_ROOT/data/plugins.json" > /dev/null 2>&1; then
+        echo "Error: Generated plugins.json is not valid JSON"
         exit 1
-    }
+    fi
 
-# Validate the generated JSON
-if ! jq . "$REPO_ROOT/data/plugins.json.tmp" > /dev/null 2>&1; then
-    echo "Error: Generated plugins.json is not valid JSON"
-    exit 1
+    if ! jq . "$REPO_ROOT/data/dependencies.json" > /dev/null 2>&1; then
+        echo "Error: Generated dependencies.json is not valid JSON"
+        exit 1
+    fi
+
+    if ! jq . "$REPO_ROOT/data/treesitter.json" > /dev/null 2>&1; then
+        echo "Error: Generated treesitter.json is not valid JSON"
+        exit 1
+    fi
 fi
 
-echo "==> Extracting system dependencies with runtime mappings..."
-# Clone Mason registry for runtime dependency extraction
-MASON_TEMP_DIR=$(mktemp -d)
-echo "Cloning Mason registry..."
-git clone --depth 1 https://github.com/mason-org/mason-registry.git "$MASON_TEMP_DIR" &>/dev/null || {
-    echo "Warning: Failed to clone Mason registry, continuing without runtime dependencies"
-    MASON_TEMP_DIR=""
-}
-
-# Extract consolidated dependencies from LazyVim with optional Mason integration
-cd "$REPO_ROOT"
-lua scripts/extract-dependencies.lua "$TEMP_DIR/LazyVim" "$MASON_TEMP_DIR" "data/dependencies.json" || {
-    echo "Error: Failed to extract system dependencies"
-    exit 1
-}
-
-# Clean up Mason registry if it was cloned
-if [ -n "$MASON_TEMP_DIR" ] && [ -d "$MASON_TEMP_DIR" ]; then
-    rm -rf "$MASON_TEMP_DIR"
+if [ -z "$VERIFY_PACKAGES" ]; then
+    rm -f "$REPO_ROOT/data/dependencies-verification-report.json"
 fi
 
-# Validate the generated dependencies JSON
-if ! jq . "$REPO_ROOT/data/dependencies.json" > /dev/null 2>&1; then
-    echo "Error: Generated dependencies.json is not valid JSON"
-    exit 1
-fi
-
-echo "==> Extracting treesitter parser mappings..."
-# Extract treesitter mappings from LazyVim
-cd "$REPO_ROOT"
-lua scripts/extract-treesitter.lua "$TEMP_DIR/LazyVim" || {
-    echo "Error: Failed to extract treesitter mappings"
-    exit 1
-}
-
-# Validate the generated treesitter mappings JSON
-if ! jq . "$REPO_ROOT/data/treesitter.json" > /dev/null 2>&1; then
-    echo "Error: Generated treesitter-mappings.json is not valid JSON"
-    exit 1
+if [ "$USED_RELEASE_CACHE" -eq 0 ]; then
+    mkdir -p "$RELEASE_CACHE_DIR"
+    cp "$REPO_ROOT/data/plugins.json" "$RELEASE_CACHE_DIR/plugins.json"
+    cp "$REPO_ROOT/data/dependencies.json" "$RELEASE_CACHE_DIR/dependencies.json"
+    cp "$REPO_ROOT/data/treesitter.json" "$RELEASE_CACHE_DIR/treesitter.json"
+    if [ -n "$VERIFY_PACKAGES" ] && [ -f "$REPO_ROOT/data/dependencies-verification-report.json" ]; then
+        cp "$REPO_ROOT/data/dependencies-verification-report.json" "$RELEASE_CACHE_DIR/dependencies-verification-report.json"
+    else
+        rm -f "$RELEASE_CACHE_DIR/dependencies-verification-report.json"
+    fi
 fi
 
 # Check if we got any plugins
-PLUGIN_COUNT=$(jq '.plugins | length' "$REPO_ROOT/data/plugins.json.tmp")
+PLUGIN_COUNT=$(jq '.plugins | length' "$REPO_ROOT/data/plugins.json")
 if [ "$PLUGIN_COUNT" -eq 0 ]; then
     echo "Error: No plugins found in generated JSON"
     exit 1
@@ -138,9 +201,9 @@ fi
 echo "==> Found $PLUGIN_COUNT plugins"
 
 # Check extraction report for unmapped plugins
-UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
-MAPPED_COUNT=$(jq '.extraction_report.mapped_plugins' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
-MULTI_MODULE_COUNT=$(jq '.extraction_report.multi_module_plugins' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
+UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins' "$REPO_ROOT/data/plugins.json" 2>/dev/null || echo "0")
+MAPPED_COUNT=$(jq '.extraction_report.mapped_plugins' "$REPO_ROOT/data/plugins.json" 2>/dev/null || echo "0")
+MULTI_MODULE_COUNT=$(jq '.extraction_report.multi_module_plugins' "$REPO_ROOT/data/plugins.json" 2>/dev/null || echo "0")
 
 echo "==> Extraction Report:"
 echo "    Mapped plugins: $MAPPED_COUNT"
@@ -156,16 +219,13 @@ if [ "$UNMAPPED_COUNT" -gt 0 ]; then
     echo ""
     
     # Show suggested mappings count if available
-    SUGGESTIONS_COUNT=$(jq '.extraction_report.mapping_suggestions | length' "$REPO_ROOT/data/plugins.json.tmp" 2>/dev/null || echo "0")
+    SUGGESTIONS_COUNT=$(jq '.extraction_report.mapping_suggestions | length' "$REPO_ROOT/data/plugins.json" 2>/dev/null || echo "0")
     if [ "$SUGGESTIONS_COUNT" -gt 0 ]; then
         echo "    Generated $SUGGESTIONS_COUNT mapping suggestions"
         echo "    Review and add approved mappings to plugin-mappings.nix"
         echo ""
     fi
 fi
-
-# Move the temporary file to the final location
-mv "$REPO_ROOT/data/plugins.json.tmp" "$REPO_ROOT/data/plugins.json"
 
 # Get dependency stats
 CORE_DEPS=$(jq '.core | length' "$REPO_ROOT/data/dependencies.json")
