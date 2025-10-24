@@ -83,9 +83,6 @@ jobs:
           # Update extras metadata
           nix develop --command ./scripts/generate-extras-metadata.lua
 
-          # Update dependency mappings
-          nix develop --command ./scripts/extract-dependencies.lua /tmp/lazyvim-temp /tmp/mason-registry data/dependencies.json
-          
           # Check if there are unmapped plugins
           UNMAPPED_COUNT=$(jq '.extraction_report.unmapped_plugins // 0' data/plugins.json)
           echo "unmapped_count=$UNMAPPED_COUNT" >> $GITHUB_OUTPUT
