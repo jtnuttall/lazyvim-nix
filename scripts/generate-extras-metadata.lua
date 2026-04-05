@@ -55,6 +55,7 @@ local function main()
         extras_data[category][key_name] = {
           name = extra_name,
           category = category,
+          is_nested = false,
           import = string.format("lazyvim.plugins.extras.%s.%s", category, extra_name)
         }
         total_count = total_count + 1

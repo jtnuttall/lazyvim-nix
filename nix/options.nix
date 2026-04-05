@@ -195,8 +195,7 @@ with lib;
               childOpts = mapAttrs' (qualifiedName: _:
                 let
                   shortName = removePrefix "${name}." qualifiedName;
-                  nixName   = replaceStrings ["-" "."] ["_" "_"] shortName;
-                in nameValuePair nixName (mkOption {
+                in nameValuePair shortName (mkOption {
                   type    = types.submodule { options = extraBaseOptions; };
                   default = {};
                   description = "Nested extra: ${qualifiedName}";
