@@ -1,0 +1,271 @@
+{
+  "_comment": "Nixpkgs package verification report for LazyVim dependencies",
+  "failed_verification": [
+    {
+      "suggested": "python3Packages.cmakelang",
+      "tool": "cmakelang"
+    },
+    {
+      "suggested": "python3Packages.cmakelint",
+      "tool": "cmakelint"
+    },
+    {
+      "suggested": "rubyPackages.erb_formatter",
+      "tool": "erb-formatter"
+    }
+  ],
+  "generated": "2026-04-05 18:36:18",
+  "no_mapping": [
+    "reuse_win",
+    "inc_rename",
+    "expr",
+    "has",
+    "pip",
+    "npm",
+    "phpcs",
+    "php-cs-fixer",
+    "prisma",
+    "haskell-debug-adapter",
+    "pplatex",
+    "thriftls",
+    "java-debug-adapter",
+    "java-test",
+    "gem",
+    "erb-lint",
+    "twigcs",
+    "twig-cs-fixer",
+    "composer",
+    "fsautocomplete",
+    "csharpier",
+    "netcoredbg",
+    "fantomas",
+    "js-debug-adapter",
+    "zls",
+    "jump1",
+    "ignore_current_line",
+    "fixKind",
+    "elm-format",
+    "tailwindcss"
+  ],
+  "summary": {
+    "failed_verifications": 3,
+    "no_mapping_strategy": 30,
+    "success_rate": "71.6%",
+    "total_tools": 74,
+    "verified_mappings": 53
+  },
+  "verified": [
+    {
+      "nixpkg": "git",
+      "tool": "git"
+    },
+    {
+      "nixpkg": "ripgrep",
+      "tool": "rg"
+    },
+    {
+      "nixpkg": "fd",
+      "tool": "fd"
+    },
+    {
+      "nixpkg": "fd",
+      "tool": "fdfind"
+    },
+    {
+      "nixpkg": "lazygit",
+      "tool": "lazygit"
+    },
+    {
+      "nixpkg": "fzf",
+      "tool": "fzf"
+    },
+    {
+      "nixpkg": "curl",
+      "tool": "curl"
+    },
+    {
+      "nixpkg": "python3Packages.black",
+      "tool": "black"
+    },
+    {
+      "nixpkg": "python3",
+      "tool": "python3"
+    },
+    {
+      "nixpkg": "terraform",
+      "tool": "terraform"
+    },
+    {
+      "nixpkg": "tflint",
+      "tool": "tflint"
+    },
+    {
+      "nixpkg": "prettier",
+      "tool": "prettier"
+    },
+    {
+      "nixpkg": "nodejs",
+      "tool": "nodejs"
+    },
+    {
+      "nixpkg": "gleam",
+      "tool": "gleam"
+    },
+    {
+      "nixpkg": "eslint",
+      "tool": "eslint"
+    },
+    {
+      "nixpkg": "gopls",
+      "tool": "gopls"
+    },
+    {
+      "nixpkg": "go",
+      "tool": "go"
+    },
+    {
+      "nixpkg": "gofumpt",
+      "tool": "gofumpt"
+    },
+    {
+      "nixpkg": "go",
+      "tool": "goimports"
+    },
+    {
+      "nixpkg": "gomodifytags",
+      "tool": "gomodifytags"
+    },
+    {
+      "nixpkg": "impl",
+      "tool": "impl"
+    },
+    {
+      "nixpkg": "golangci-lint",
+      "tool": "golangci-lint"
+    },
+    {
+      "nixpkg": "delve",
+      "tool": "delve"
+    },
+    {
+      "nixpkg": "ansible-lint",
+      "tool": "ansible-lint"
+    },
+    {
+      "nixpkg": "haskell-language-server",
+      "tool": "haskell-language-server"
+    },
+    {
+      "nixpkg": "python3Packages.ruff",
+      "tool": "ruff"
+    },
+    {
+      "nixpkg": "kubernetes-helm",
+      "tool": "helm"
+    },
+    {
+      "nixpkg": "clang-tools",
+      "tool": "clangd"
+    },
+    {
+      "nixpkg": "vscode-extensions.vadimcn.vscode-lldb",
+      "tool": "codelldb"
+    },
+    {
+      "nixpkg": "regols",
+      "tool": "regols"
+    },
+    {
+      "nixpkg": "taplo",
+      "tool": "taplo"
+    },
+    {
+      "nixpkg": "vscode-langservers-extracted",
+      "tool": "jsonls"
+    },
+    {
+      "nixpkg": "ruby",
+      "tool": "ruby"
+    },
+    {
+      "nixpkg": "php",
+      "tool": "php"
+    },
+    {
+      "nixpkg": "hadolint",
+      "tool": "hadolint"
+    },
+    {
+      "nixpkg": "rust-analyzer",
+      "tool": "rust-analyzer"
+    },
+    {
+      "nixpkg": "bacon",
+      "tool": "bacon"
+    },
+    {
+      "nixpkg": "cargo",
+      "tool": "cargo"
+    },
+    {
+      "nixpkg": "rustc",
+      "tool": "rustc"
+    },
+    {
+      "nixpkg": "biome",
+      "tool": "biome"
+    },
+    {
+      "nixpkg": "dotnet-sdk",
+      "tool": "dotnet-sdk"
+    },
+    {
+      "nixpkg": "ktlint",
+      "tool": "ktlint"
+    },
+    {
+      "nixpkg": "gitui",
+      "tool": "gitui"
+    },
+    {
+      "nixpkg": "shellcheck",
+      "tool": "shellcheck"
+    },
+    {
+      "nixpkg": "delta",
+      "tool": "delta"
+    },
+    {
+      "nixpkg": "oxlint",
+      "tool": "oxlint"
+    },
+    {
+      "nixpkg": "oxfmt",
+      "tool": "oxfmt"
+    },
+    {
+      "nixpkg": "typescript-go",
+      "tool": "tsgo"
+    },
+    {
+      "nixpkg": "markdownlint-cli2",
+      "tool": "markdownlint-cli2"
+    },
+    {
+      "nixpkg": "markdown-toc",
+      "tool": "markdown-toc"
+    },
+    {
+      "nixpkg": "sqlfluff",
+      "tool": "sqlfluff"
+    },
+    {
+      "nixpkg": "vtsls",
+      "tool": "vtsls"
+    },
+    {
+      "nixpkg": "tinymist",
+      "tool": "tinymist"
+    }
+  ]
+}
