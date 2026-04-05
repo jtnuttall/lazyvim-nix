@@ -183,6 +183,8 @@ with lib;
 
       mkCategoryOptions = categoryExtras:
         let
+          nixifyName = replaceStrings ["_"] ["-"];
+
           parents = filterAttrs (_: v: !(v.is_nested or false)) categoryExtras;
           nested  = filterAttrs (_: v:   v.is_nested or false)  categoryExtras;
 
@@ -195,7 +197,7 @@ with lib;
               childOpts = mapAttrs' (qualifiedName: _:
                 let
                   shortName = removePrefix "${name}." qualifiedName;
-                in nameValuePair shortName (mkOption {
+                in nameValuePair (nixifyName shortName) (mkOption {
                   type    = types.submodule { options = extraBaseOptions; };
                   default = {};
                   description = "Nested extra: ${qualifiedName}";
@@ -206,8 +208,6 @@ with lib;
               default = {};
               description = "LazyVim extra: ${name}";
             };
-
-          nixifyName = replaceStrings ["_"] ["-"];
         in
           mapAttrs' (jsonKey: meta:
             nameValuePair (nixifyName jsonKey) (mkExtraSubmodule jsonKey meta)
