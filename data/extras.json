@@ -420,15 +420,35 @@
       "import": "lazyvim.plugins.extras.lang.toml",
       "name": "toml"
     },
+    "twig": {
+      "category": "lang",
+      "import": "lazyvim.plugins.extras.lang.twig",
+      "name": "twig"
+    },
     "typescript": {
       "category": "lang",
       "import": "lazyvim.plugins.extras.lang.typescript",
       "name": "typescript"
     },
-    "twig": {
+    "typescript.biome": {
       "category": "lang",
-      "import": "lazyvim.plugins.extras.lang.twig",
-      "name": "twig"
+      "import": "lazyvim.plugins.extras.lang.typescript.biome",
+      "name": "typescript.biome"
+    },
+    "typescript.oxc": {
+      "category": "lang",
+      "import": "lazyvim.plugins.extras.lang.typescript.oxc",
+      "name": "typescript.oxc"
+    },
+    "typescript.tsgo": {
+      "category": "lang",
+      "import": "lazyvim.plugins.extras.lang.typescript.tsgo",
+      "name": "typescript.tsgo"
+    },
+    "typescript.vtsls": {
+      "category": "lang",
+      "import": "lazyvim.plugins.extras.lang.typescript.vtsls",
+      "name": "typescript.vtsls"
     },
     "typst": {
       "category": "lang",
