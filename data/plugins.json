@@ -1,7 +1,7 @@
 {
   "version": "v15.15.0",
   "commit": "83d90f339defdb109a6ede333865a66ffc7ef6aa",
-  "generated": "2026-04-05 18:35:49",
+  "generated": "2026-04-05 20:00:50",
   "extraction_report": {
     "total_plugins": 104,
     "mapped_plugins": 96,
@@ -1108,9 +1108,9 @@
         "rust"
       ],
       "version_info": {
-        "commit": "6563b3e06bcd214dc999f7791d04176ad1af1402",
-        "sha256": "1bvan8f4srk7z7wqpxq7k4273z6y7njsnlxpjyq8jappwmfb2y7p",
-        "fetched_at": "2026-04-05T15:57:40Z"
+        "commit": "7b8dd7abb9a7f442b356aa03714aefce09610339",
+        "sha256": "1vzp5vf5wpkpsp40zwwkl9l29ifiap4h2hr8wxjhgznsjk3y8y5y",
+        "fetched_at": "2026-04-05T20:00:18Z"
       }
     },
     {
