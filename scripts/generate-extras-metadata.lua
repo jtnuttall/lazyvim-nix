@@ -66,9 +66,14 @@ local function main()
 
       for _, subdir in ipairs(subdirs) do
         if vim.fn.isdirectory(subdir) == 1 then
-          local init_file = subdir .. "/init.lua"
-          if vim.fn.filereadable(init_file) == 1 then
+          local extra_paths = vim.fn.glob(subdir .. "/*.lua", false, true)
+          for _, extra_path in ipairs(extra_paths) do
+            local extra_file = vim.fn.fnamemodify(extra_path, ":t")
             local extra_name = vim.fn.fnamemodify(subdir, ":t")
+            if (extra_file ~= "init.lua") then
+              local subextra_name = vim.fn.fnamemodify(extra_file, ":r")
+              extra_name = string.format("%s.%s", extra_name, subextra_name)
+            end
             local key_name = extra_name:gsub("-", "_")
 
             extras_data[category][key_name] = {
