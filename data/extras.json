@@ -428,26 +428,31 @@
     "typescript": {
       "category": "lang",
       "import": "lazyvim.plugins.extras.lang.typescript",
+      "is_nested": false,
       "name": "typescript"
     },
     "typescript.biome": {
       "category": "lang",
       "import": "lazyvim.plugins.extras.lang.typescript.biome",
+      "is_nested": true,
       "name": "typescript.biome"
     },
     "typescript.oxc": {
       "category": "lang",
       "import": "lazyvim.plugins.extras.lang.typescript.oxc",
+      "is_nested": true,
       "name": "typescript.oxc"
     },
     "typescript.tsgo": {
       "category": "lang",
       "import": "lazyvim.plugins.extras.lang.typescript.tsgo",
+      "is_nested": true,
       "name": "typescript.tsgo"
     },
     "typescript.vtsls": {
       "category": "lang",
       "import": "lazyvim.plugins.extras.lang.typescript.vtsls",
+      "is_nested": true,
       "name": "typescript.vtsls"
     },
     "typst": {

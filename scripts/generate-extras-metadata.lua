@@ -70,7 +70,8 @@ local function main()
           for _, extra_path in ipairs(extra_paths) do
             local extra_file = vim.fn.fnamemodify(extra_path, ":t")
             local extra_name = vim.fn.fnamemodify(subdir, ":t")
-            if (extra_file ~= "init.lua") then
+            local is_nested = extra_file ~= "init.lua"
+            if is_nested then
               local subextra_name = vim.fn.fnamemodify(extra_file, ":r")
               extra_name = string.format("%s.%s", extra_name, subextra_name)
             end
@@ -79,6 +80,7 @@ local function main()
             extras_data[category][key_name] = {
               name = extra_name,
               category = category,
+              is_nested = is_nested,
               import = string.format("lazyvim.plugins.extras.%s.%s", category, extra_name)
             }
             total_count = total_count + 1
