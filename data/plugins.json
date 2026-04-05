@@ -1,7 +1,7 @@
 {
   "version": "v15.15.0",
   "commit": "83d90f339defdb109a6ede333865a66ffc7ef6aa",
-  "generated": "2026-04-05 12:20:05",
+  "generated": "2026-04-05 18:35:49",
   "extraction_report": {
     "total_plugins": 104,
     "mapped_plugins": 96,
@@ -126,9 +126,9 @@
         "BufNewFile *.lean"
       ],
       "version_info": {
-        "commit": "103704df1203f5f2bee81153bd7c13e62a8e0775",
-        "sha256": "1k4vzplqxvjjyss0xyh2n40qv0z04y7kgiq8cncm5mw0jbs6kki9",
-        "fetched_at": "2026-04-05T15:57:40Z"
+        "commit": "c72ed9f5653d434f44a3149f6ed6b803c9e6348c",
+        "sha256": "1fklgnrr8l2vcxp0sknkljrdssd60i4z8q78fcmkcy0b4w8xy6jg",
+        "fetched_at": "2026-04-05T18:35:12Z"
       }
     },
     {
