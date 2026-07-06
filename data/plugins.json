@@ -1,15 +1,13 @@
 {
-  "version": "v15.15.0",
-  "commit": "83d90f339defdb109a6ede333865a66ffc7ef6aa",
-  "generated": "2026-04-02 17:28:42",
+  "version": "v16.0.0",
+  "commit": "c10948c50b18fae7f256433afdef09e432410480",
+  "generated": "2026-07-06 06:25:11",
   "extraction_report": {
-    "total_plugins": 104,
-    "mapped_plugins": 95,
-    "unmapped_plugins": 9,
+    "total_plugins": 105,
+    "mapped_plugins": 97,
+    "unmapped_plugins": 8,
     "multi_module_plugins": 9,
     "mapping_suggestions": [
-      {
-      },
       {
       },
       {
@@ -40,9 +38,9 @@
       "is_core": false,
       "lazy": true,
       "version_info": {
-        "commit": "e100f40b117381dadf42a34b0718f8e4350715b2",
-        "sha256": "0krjx8xlij764z4vgvpfbb9gmla1kqmpw37sa3qlagym1ldaxjqc",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "22859d754b5de738cfe9945e0910729f63deefd0",
+        "sha256": "0dpdblsmx4rbnclhy9acn7gyp3c1xhsg0397gbl057ma5xp3rq0w",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -56,12 +54,12 @@
       "is_core": false,
       "cmd": "CopilotChat",
       "version_info": {
-        "commit": "d2d2574863529cb76b62b028cb5c3196ef5796d6",
-        "lazyvim_version": "d2d2574863529cb76b62b028cb5c3196ef5796d6",
+        "commit": "f0c2a23ab79dc295f5e0eef0d8b587a39020c852",
+        "lazyvim_version": "f0c2a23ab79dc295f5e0eef0d8b587a39020c852",
         "lazyvim_version_type": "commit",
         "branch": "main",
-        "sha256": "1fgqnl2r1lqpfc310vr37cfdnkacrcz134a09r28s1qx8wi3lrqi",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "sha256": "1g3axqqqv9brfxfawa8h15fd476imi2rsm7wzg0jad86brc6s74c",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -92,9 +90,9 @@
       "is_core": false,
       "lazy": true,
       "version_info": {
-        "commit": "a47388e5417e7f1cfa6962cc441a23c4c5fb2151",
-        "sha256": "0dczn08k6niwxvi0k8sl40jxb75gxasx7x7f29dy05j1gy06gi6i",
-        "fetched_at": "2025-10-18T04:20:16Z"
+        "commit": "51e407a46ddb15e49727139b5b1ae3650cd6a069",
+        "sha256": "0v8qii3pbkk9lzzgfivw3nw7m9pgry1myqkv63jvcmr9mc1z9dw3",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -108,9 +106,9 @@
       "is_core": false,
       "lazy": true,
       "version_info": {
-        "commit": "1b212c2eee76d787bbea6aa5e92a2b534e7b4f8f",
-        "sha256": "1qvcqfmdzmyl9x8d1782wvmg81nhw65dj3rg890m7ypqx7gwqc02",
-        "fetched_at": "2025-10-18T04:19:57Z"
+        "commit": "6141a40173c6efa98242dc951ed4b6f892c97027",
+        "sha256": "1k58wc5n3msa5dssx34mxagkb75b4kvyh0qgr1m2myc90ddf3isj",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -128,9 +126,9 @@
         "BufNewFile *.lean"
       ],
       "version_info": {
-        "commit": "58c6d4819ef433ba141cd4e3604a0316c83d99de",
-        "sha256": "0fgyj3k4xjc0n7da00dhs5lrcp7464v74ny46d7db35ai8qwdimf",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "0f15c344487fe73a12cdec3924b01ba66aa8e3d3",
+        "sha256": "073d7b065pnxay2cy8lpldip8gd3midhklvicylkpmfsv181kvv2",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -145,11 +143,11 @@
       "lazy": false,
       "priority": 10000,
       "version_info": {
-        "commit": "83d90f339defdb109a6ede333865a66ffc7ef6aa",
+        "commit": "459a4c3b1059671e766a46c7cc223827dc67e3d0",
         "lazyvim_version": "*",
         "lazyvim_version_type": "version",
-        "sha256": "080ls3ci90hpsa7162zl0nminf842sln5bij7r7dhxnb32pms0r0",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "sha256": "0i3wma53mf6hjkn8c4ak76js06wyamhq9r4zjf1znf81z5v2wa0p",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -166,9 +164,9 @@
         "GrugFarWithin"
       ],
       "version_info": {
-        "commit": "dc4684e163971bb1f5bfb93fbd4bb3e892bf9b15",
-        "sha256": "1225sn36wqy8bdlyhbhajivhjhp936kbq307d4p94lcagvrvf7vp",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "c69859c1d5427ab5fc7ed12380ab521b4e336691",
+        "sha256": "0yp64zp64zk5skf3blx359dmchy9wwfv4nf30hhdagvm8phbkkpx",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -188,9 +186,9 @@
         "codecompanion"
       ],
       "version_info": {
-        "commit": "c7188a8f9d2953696b6303caccbf39c51fa2c1b1",
-        "sha256": "0sbrqrfi2ymfqfincjkl546d7yh59m31l1ng8wbv4s5ikydajdx9",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "f422cb5c6855f150e2ddcfaf44e7157b98b34f6a",
+        "sha256": "0fpzs3ghgkswrmkqdq7ndwqmvi1aka8k72swzqlas8qql5m58hms",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -220,9 +218,9 @@
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
-        "commit": "ecf783607efaf33c69c6f80a737a93d572cfc688",
-        "sha256": "1mq3ald2i6n94pqilnxikmxsn93dpryv7vvvfhpf4gxix1aqlnvj",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "16b436c0124dae26250986fd4e660529d6bb14f0",
+        "sha256": "1402cm35sc2r0996aw51w42f8ajmmqxiwria0q224sx6jx6655vp",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -236,9 +234,9 @@
       "is_core": false,
       "lazy": false,
       "version_info": {
-        "commit": "d63b617f32acb781f20236a5252e01b9996db2a8",
-        "sha256": "153npskxjgjxffg7w2sfy92r2wad2cc3aid158ay3c12ndvyznpv",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "c56ebe0f8445e251673981c40ac2d74659ecd6ed",
+        "sha256": "0hg5g9prv4lbj49dhvg58z8gqjy90pjymkpapcgyknwmg4pi8b0p",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -252,9 +250,9 @@
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
-        "commit": "0d1e93684da00ab7c057410fecfc24f434698898",
-        "sha256": "0456q474765p0r0q7frn1n9drl05d16alv7kn9qnw1235d20k81a",
-        "fetched_at": "2025-10-18T04:20:12Z"
+        "commit": "8629e6b2dfa8c66677b9d489eb02480cbcfa9599",
+        "sha256": "0xi6j98rxph7287h21n693pnqvzk2fvciz90hyq8k39mw3f2dxwn",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -270,9 +268,9 @@
         "BufRead Cargo.toml"
       ],
       "version_info": {
-        "commit": "ac9fa498a9edb96dc3056724ff69d5f40b898453",
-        "sha256": "10hc28r9k4syay1pir24mk6kjj96llilqkyz8ch6rjmxyi7r5ycd",
-        "fetched_at": "2025-10-26T20:02:59Z"
+        "commit": "694357861ec9ebf12475ddcdd04ea45a0923c32d",
+        "sha256": "1841gc5rxyl811rn07i7zr5agnwax51rddlzhl6dhw32pgww5apv",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -296,10 +294,8 @@
       "owner": "ThePrimeagen",
       "repo": "refactoring.nvim",
       "loadOrder": 16,
-      "dependencies": [
-        "nvim-lua/plenary.nvim",
-        "nvim-treesitter/nvim-treesitter"
-      ],
+      "dependencies": {
+      },
       "source_file": "extras.editor.refactoring",
       "is_core": false,
       "event": [
@@ -307,9 +303,9 @@
         "BufNewFile"
       ],
       "version_info": {
-        "commit": "6784b54587e6d8a6b9ea199318512170ffb9e418",
-        "sha256": "1wl2167fly4r3yzpkhl0qlprcn1p4n6p6cg6g1dy3sas8mzzan98",
-        "fetched_at": "2025-10-23T03:39:36Z"
+        "commit": "64e10d782ae5b9653558482910213b8946651456",
+        "sha256": "1wb42dfl54ld2p40sjzghdxbxw618p2w48acbwy9fvndd9imrjcm",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -354,9 +350,9 @@
       "source_file": "extras.util.chezmoi",
       "is_core": false,
       "version_info": {
-        "commit": "73b30df35c6b645ebd2e6a440eea8463ef3c3f47",
-        "sha256": "0c4pjigwd5h299lriai27vnc6r728hbwhrl8m5hballr83mxh2g2",
-        "fetched_at": "2025-11-02T16:46:47Z"
+        "commit": "7a498ea65f658993237fb0469001bdf71f68cf94",
+        "sha256": "0g28bcgn9z29nn4aa8pnqa545sc3c7ryxwrl6xmsa0l1m23cxyrd",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -371,9 +367,9 @@
       "is_core": false,
       "enabled": true,
       "version_info": {
-        "commit": "b960d5038c5c505c52e56a54490f9bbb1f0e6ef6",
-        "sha256": "0cp00vbj6zf0wlkiqm9zx0wk6gw76jls5grblks1bbax0rrzh4nz",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "d7f8ee64155b7790188f17a993390f32577cfb81",
+        "sha256": "0fzzbh000f5jdysq748hrl4m2ygrab0gnbfi5amx3swqqrb1msn7",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -387,10 +383,10 @@
       "is_core": false,
       "lazy": true,
       "version_info": {
-        "commit": "4f1c58a59d3a4da095743dd6f04b73caa0cefc3d",
+        "commit": "6ff1f21b2e2b77ec59f7433ce2d9fbc052d908ac",
         "lazyvim_version_type": "version",
-        "sha256": "184a4qdlvvzh9rlyih6iny48jv1cmxi2vnlwpd2wmra5dkbk94d6",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "sha256": "1v42d8bjzynv048gzjv1dxgigwbvvh2ww33ky7xqa3j081fh5d75",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -404,9 +400,9 @@
       "is_core": true,
       "lazy": true,
       "version_info": {
-        "commit": "16408d203973da7e43fab87c6f9d3bf7fa98fa8b",
-        "sha256": "0qwc7nmccwrz4f0qgxxj5ww8y3mavc41b0mwxfgfihjpd86frrhb",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "e068ab5f8261f23f6f71ffd8791ae40315b77b9c",
+        "sha256": "1gd70443mfvdrm8iqgjais04grrlrh48qfhv1wg2rf6vyy1rv926",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -439,9 +435,9 @@
       "source_file": "extras.ai.claudecode",
       "is_core": false,
       "version_info": {
-        "commit": "432121f0f5b9bda041030d1e9e83b7ba3a93dd8f",
-        "sha256": "18pqjzyahxa0b66ycwrg8l0v81xszayv8z7rhnrlddmfqkzc44mg",
-        "fetched_at": "2026-03-09T20:52:25Z"
+        "commit": "2390c6e45c4789072c293ac69de051d169668b29",
+        "sha256": "1flmisbbg38xx368dwak0h588q6n4skkx01c2cggp6afcwzjn3rk",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -471,9 +467,9 @@
       "is_core": false,
       "cmd": "StartupTime",
       "version_info": {
-        "commit": "c12649b2458e34ec6dde8f1bdfe830661a613a6b",
-        "sha256": "17hplw12fw8x23hvhqmvpgm8c7sa49vcwghrfyj5qk51h78715jb",
-        "fetched_at": "2026-03-09T20:52:25Z"
+        "commit": "5f33e50f1e2e2a80370c9094e4c303ea54cd2aea",
+        "sha256": "19mx29gskahcnjgdrmsjrbzj9f09l2745qr4pf0xm6i5p2dx21g5",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -586,9 +582,9 @@
       "lazy": false,
       "priority": 1000,
       "version_info": {
-        "commit": "ad9ede6a9cddf16cedbd31b8932d6dcdee9b716e",
-        "sha256": "11b0hsxy2wi8q1zcmzcj37xq13im1w299k385pzy2cskk7acfl7f",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "882c996cf28183f4d63640de0b4c02ec886d01f2",
+        "sha256": "14hhnbivyqmvkj42iccjlqq6484s7i0bmazpcxq976974y61fkc1",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -656,9 +652,9 @@
       "is_core": true,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "123a9fb12e7229342f807ec9e6de478b1102b041",
-        "sha256": "1819dm9grjz6v6y6b80bxdl24q16hrnk1psnlypsldf0j5gbf4ir",
-        "fetched_at": "2025-11-02T16:46:47Z"
+        "commit": "a59d6092213447450191122c9346f309161504cb",
+        "sha256": "0salf56vrbyjmdswbrp86gj391pf4kc4am8cmfaazdyh8pw498ds",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -689,9 +685,9 @@
       "event": "VimEnter",
       "enabled": true,
       "version_info": {
-        "commit": "a9d8fb72213c8b461e791409e7feabb74eb6ce73",
-        "sha256": "1vwbjj1c83lbsvf6qgyym05jvhvy6z1j0jhfbbhh45yg6lhx9chg",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "6c6a89d5b068b5251c8bdf0dd57bb921bcfeeb09",
+        "sha256": "056mjyxpr49kq4a82m4psnd4syg31b88rjy8gmi44i0fzxca2jw3",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -705,9 +701,9 @@
       "is_core": false,
       "cmd": "Outline",
       "version_info": {
-        "commit": "c293eb56db880a0539bf9d85b4a27816960b863e",
-        "sha256": "1bnnik7fqcrg1q0lzbf3yzlzldajjdxsk5kgv5nhp9hfi3jb9ay4",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "2a132953b944561d45b52e4541ebfff71934a742",
+        "sha256": "1ixfzdiillcb9p2m536rw46cmrfydzimlkvsfbm3056q6agw6jz2",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -822,9 +818,9 @@
         "DBUIFindBuffer"
       ],
       "version_info": {
-        "commit": "07e92e22114cc5b1ba4938d99897d85b58e20475",
-        "sha256": "1zh9smaxav1v8l94lyvlnh2q4r648s20x9ylcl0c3459xlkgvzrr",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "afd07819d8efcefc3317205b855ad4e3513b0011",
+        "sha256": "0nzcslzzsjx8im9b3xcxszjfl1w67lnx61pfcjnfblhcfllml8wg",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
@@ -869,32 +865,48 @@
       "is_core": false,
       "lazy": false,
       "version_info": {
-        "commit": "9306903316c3ddd250676b7cf97c84a84c9c8f99",
-        "sha256": "0ygznkmkzygsvmg57vk13ajrvawmwa5w9la7k22z9q2k20jnp0cb",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "a5949d2800c1866c878956d49c51fc8d003c6b99",
+        "sha256": "09kclwjnyi7nv0p7cynpk5vwsd6za8d520mw6npninbj2djc7g1z",
+        "fetched_at": "2026-07-06T06:24:37Z"
+      }
+    },
+    {
+      "name": "lewis6991/async.nvim",
+      "owner": "lewis6991",
+      "repo": "async.nvim",
+      "loadOrder": 50,
+      "dependencies": {
+      },
+      "source_file": "extras.editor.refactoring",
+      "is_core": false,
+      "lazy": true,
+      "version_info": {
+        "commit": "e2a813be9cd143ab1181de6d8a0720e0230cd86e",
+        "sha256": "01vhih72dd4c0ph2p5z11q7s63p3nc93pvjl41dpksiysvgc9f3g",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "lewis6991/gitsigns.nvim",
       "owner": "lewis6991",
       "repo": "gitsigns.nvim",
-      "loadOrder": 50,
+      "loadOrder": 51,
       "dependencies": {
       },
       "source_file": "core.editor",
       "is_core": true,
       "event": "LazyFile",
       "version_info": {
-        "commit": "e1fb5425c8812214209b3f24eaa582c6c552cf98",
-        "sha256": "0k54vj9fv1pfdwxgkj3wrl5g40n9rh5zb4g0b4z14qxp5jb4l8sn",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "eb60cc7b94c46005237fd34170d76f3a089a90aa",
+        "sha256": "1cj0cr4nz2njfa9zfsh1vmpqhmml4w2g2q8gj6gg43mxizm378an",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "linux-cultist/venv-selector.nvim",
       "owner": "linux-cultist",
       "repo": "venv-selector.nvim",
-      "loadOrder": 51,
+      "loadOrder": 52,
       "dependencies": {
       },
       "source_file": "extras.lang.python",
@@ -902,16 +914,16 @@
       "cmd": "VenvSelect",
       "ft": "python",
       "version_info": {
-        "commit": "bcb2f58533c59b01565285eba49693f00bc460f5",
-        "sha256": "05z14ngssrpi898zg1463zdkabs285fw5xxh6gsh44w57mw17zm0",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "cc4bb3975de8835291f9bb45889e96c6b2795fc4",
+        "sha256": "119x37qxvy2b6l295x0czffkwivx4gm0rwnc8pz7gqhfzfx4jr7q",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "lukas-reineke/indent-blankline.nvim",
       "owner": "lukas-reineke",
       "repo": "indent-blankline.nvim",
-      "loadOrder": 52,
+      "loadOrder": 53,
       "dependencies": {
       },
       "source_file": "extras.ui.indent-blankline",
@@ -927,52 +939,52 @@
       "name": "m00qek/baleia.nvim",
       "owner": "m00qek",
       "repo": "baleia.nvim",
-      "loadOrder": 53,
+      "loadOrder": 54,
       "dependencies": {
       },
       "source_file": "extras.lang.clojure",
       "is_core": false,
       "version_info": {
-        "commit": "32617940adb2eea56e85a64883a19961ceac9641",
-        "sha256": "1aw8vkcgnkf7f19s86hw741rr326s79d7ig7whx330vrchjscg9d",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "710537ff5cd669c5a76c5f5b6a9169fd9b913d18",
+        "sha256": "0b84bjccw2qirhwr6pma5dj4aw5l1v9mwk6l0aphmvxsq274k8x1",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "mason-org/mason-lspconfig.nvim",
       "owner": "mason-org",
       "repo": "mason-lspconfig.nvim",
-      "loadOrder": 54,
+      "loadOrder": 55,
       "dependencies": {
       },
       "source_file": "core.lsp",
       "is_core": true,
       "version_info": {
-        "commit": "25f609e7fca78af7cede4f9fa3af8a94b1c4950b",
-        "sha256": "0x8v81f8ry6lmdybzyvwdnchkx75k9isy8bw2yr3c3hpsgqcsfan",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "47059d71b42d74b0a1e9f61c1d99d301039c3b5b",
+        "sha256": "0wirly3kdapn79ddx9y6jkamc9bd3mbsnff401q75aw9s1x7v22d",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "mason-org/mason.nvim",
       "owner": "mason-org",
       "repo": "mason.nvim",
-      "loadOrder": 55,
+      "loadOrder": 56,
       "dependencies": {
       },
       "source_file": "core.formatting",
       "is_core": true,
       "version_info": {
-        "commit": "44d1e90e1f66e077268191e3ee9d2ac97cc18e65",
-        "sha256": "0bl21c54mqj5z0vqzbifsnmgnpzpdznsi46jllm19hafwablmq11",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "2a6940af80375532e5e9e7c1f2fc6319a1b7a69d",
+        "sha256": "1f7nm20ynjgsipxxi2pbmbhvqqnwjn7pk41njcknhycrkjbkj7ng",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "mfussenegger/nvim-ansible",
       "owner": "mfussenegger",
       "repo": "nvim-ansible",
-      "loadOrder": 56,
+      "loadOrder": 57,
       "dependencies": {
       },
       "source_file": "extras.lang.ansible",
@@ -990,7 +1002,7 @@
       "name": "mfussenegger/nvim-dap",
       "owner": "mfussenegger",
       "repo": "nvim-dap",
-      "loadOrder": 57,
+      "loadOrder": 58,
       "dependencies": [
         "rcarriga/nvim-dap-ui",
         "theHamsta/nvim-dap-virtual-text"
@@ -998,16 +1010,16 @@
       "source_file": "extras.dap.core",
       "is_core": false,
       "version_info": {
-        "commit": "4f5deb110d9ff8994d96c21df95e2271d11214f9",
-        "sha256": "09ygrzl0pqvwz8ng1is50z2dskfq54q9c24fqkwg1ak0f4pwqwhz",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "9e848e09a697ee95302a3ef2dd43fd6eb709e570",
+        "sha256": "19zmb4k36f3zcc7qj9w0nrczhg2bwcq9d8cs77nl9adv0c5vfy90",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "mfussenegger/nvim-jdtls",
       "owner": "mfussenegger",
       "repo": "nvim-jdtls",
-      "loadOrder": 58,
+      "loadOrder": 59,
       "dependencies": [
         "folke/which-key.nvim"
       ],
@@ -1017,32 +1029,32 @@
         "java"
       ],
       "version_info": {
-        "commit": "77ccaeb422f8c81b647605da5ddb4a7f725cda90",
-        "sha256": "1whmvkj50jpvhcm43h88qq3zwrrml9ca02k19ml62qmdwbyqj9n9",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "6e9d953f0b82bccdb834cfde0e893f3119c22592",
+        "sha256": "0jsbcmbxharqfwwvx6s4g1a7fpj70b5b71nm14bshhacix732i70",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "mfussenegger/nvim-lint",
       "owner": "mfussenegger",
       "repo": "nvim-lint",
-      "loadOrder": 59,
+      "loadOrder": 60,
       "dependencies": {
       },
       "source_file": "core.linting",
       "is_core": true,
       "event": "LazyFile",
       "version_info": {
-        "commit": "4b03656c09c1561f89b6aa0665c15d292ba9499d",
-        "sha256": "1vlvhjb9sz2vpg10166dkas3q3krlzz3cxba7fc9jjc8czghhl30",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "a219b2c9e5b4765e5c845aba119dad55806fcaf1",
+        "sha256": "05fk4rybn4b4ffnq0xpk54l81q7dz3f9dpj2zh9i0wv46k6n2054",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "monaqa/dial.nvim",
       "owner": "monaqa",
       "repo": "dial.nvim",
-      "loadOrder": 60,
+      "loadOrder": 61,
       "dependencies": {
       },
       "source_file": "extras.editor.dial",
@@ -1057,7 +1069,7 @@
       "name": "mrcjkb/haskell-snippets.nvim",
       "owner": "mrcjkb",
       "repo": "haskell-snippets.nvim",
-      "loadOrder": 61,
+      "loadOrder": 62,
       "dependencies": [
         "L3MON4D3/LuaSnip"
       ],
@@ -1070,16 +1082,16 @@
         "cabalproject"
       ],
       "version_info": {
-        "commit": "6d8c9161077bf71e54df1e39c91b072a235a3bba",
-        "sha256": "1r0h3d6nk6026vjdnzm26ssjp4vwdkrlpk674phd5w1x1rrydvb6",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "5be33b79f0320ad9ef7f558507f2e365deebef4f",
+        "sha256": "1dgl76gzwdipys6rzqpm2c9agrhplpyzmy5mmmpq7nwq3rdpa4pz",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "mrcjkb/haskell-tools.nvim",
       "owner": "mrcjkb",
       "repo": "haskell-tools.nvim",
-      "loadOrder": 62,
+      "loadOrder": 63,
       "dependencies": {
       },
       "source_file": "extras.lang.haskell",
@@ -1091,17 +1103,17 @@
         "cabalproject"
       ],
       "version_info": {
-        "commit": "f2310c0725118e6e67b0213445f129c7d404f070",
+        "commit": "9089735745188d8d6f859d7d285ba4c3679ce339",
         "lazyvim_version_type": "version",
-        "sha256": "01aynzvmgcl3nd6iddlrbijrpnsr15lg8nz3ymknadbyb7ffw7n1",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "sha256": "1527qrv06qhzzgzjm1c5rlaj75d5x63xhafr49drmwz822ji90z4",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "mrcjkb/rustaceanvim",
       "owner": "mrcjkb",
       "repo": "rustaceanvim",
-      "loadOrder": 63,
+      "loadOrder": 64,
       "dependencies": {
       },
       "source_file": "extras.lang.rust",
@@ -1110,16 +1122,16 @@
         "rust"
       ],
       "version_info": {
-        "commit": "f69c85a955b9a83d495e3dc8d43adb6364a0b765",
-        "sha256": "17q0d5nqxx9apn9lg9vh094dcab5rk6i14vmqx3xffnfjyh4zz9m",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "24958d97c0e2393339e59404ebe7ee687951ea24",
+        "sha256": "0flal7lyx6jbc79rh0pfq3mi7k86779n3681pfip9x5bdjgbk37y",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "neovim/nvim-lspconfig",
       "owner": "neovim",
       "repo": "nvim-lspconfig",
-      "loadOrder": 64,
+      "loadOrder": 65,
       "dependencies": [
         "mason-org/mason.nvim",
         "mason-org/mason-lspconfig.nvim"
@@ -1131,48 +1143,48 @@
         "BufNewFile"
       ],
       "version_info": {
-        "commit": "8e2084bf5e40c79c1f42210a6ef96a0a4793a763",
-        "sha256": "06lbdl1ynyngmy6lpfn26xz7vi6wwzz7pjh8nm6s2jnsa6is0wdv",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "d224a1920728ba129880efc700d4a0180ac4ecbb",
+        "sha256": "1pfrcdwv90sxmfm324b43iy96gzyqgxn2ccxd30cazj1r7p225cw",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-lua/plenary.nvim",
       "owner": "nvim-lua",
       "repo": "plenary.nvim",
-      "loadOrder": 65,
+      "loadOrder": 66,
       "dependencies": {
       },
       "source_file": "core.util",
       "is_core": true,
       "lazy": true,
       "version_info": {
-        "commit": "b9fd5226c2f76c951fc8ed5923d85e4de065e509",
-        "sha256": "1kg043h7dqcrqqgg8pp6hsldx7jdhlh8qwad2kkckia191xgnjgm",
-        "fetched_at": "2025-10-26T20:02:59Z"
+        "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b",
+        "sha256": "1bms9ihcz2gsk88mr00izxn7sjl1lfc62mk0fy54z20g756c8iwy",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-lualine/lualine.nvim",
       "owner": "nvim-lualine",
       "repo": "lualine.nvim",
-      "loadOrder": 66,
+      "loadOrder": 67,
       "dependencies": {
       },
       "source_file": "core.ui",
       "is_core": true,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "47f91c416daef12db467145e16bed5bbfe00add8",
-        "sha256": "1q34vy3rcwv4nz1b2n2hvp2yxs8clczzvyf3mpvcir8bxcgxk4is",
-        "fetched_at": "2025-12-08T01:23:21Z"
+        "commit": "221ce6b2d999187044529f49da6554a92f740a96",
+        "sha256": "100jgcrv4k1rivszx2xd51qb2hxra20rhdvlzkg8yxq4gnxwdy78",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.ai",
       "owner": "nvim-mini",
       "repo": "mini.ai",
-      "loadOrder": 67,
+      "loadOrder": 68,
       "dependencies": {
       },
       "multiModule": {
@@ -1184,32 +1196,32 @@
       "is_core": true,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "4b0a6207341d895b6cfe9bcb1e4d3e8607bfe4f4",
-        "sha256": "0w5vxfxw0704drl7smd9ay6n6p95dm5kjpmfn88xr190pbaxsw2y",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "cb20f298ebf5ae91924cd0c6c310712de2ef4086",
+        "sha256": "0zrd9mwnxfk269bcr61shcjhyydajdbgqbwxdi9r1i3z5ar8xpyn",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.animate",
       "owner": "nvim-mini",
       "repo": "mini.animate",
-      "loadOrder": 68,
+      "loadOrder": 69,
       "dependencies": {
       },
       "source_file": "extras.ui.mini-animate",
       "is_core": false,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "8814b56e282cd86635ce9a392ed56b6a85f59731",
-        "sha256": "0sjlbnkq5lhsxfs3kpgyc0dcwsxz8pj2a1rsvvraj7p0smw8ffb5",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "343092309be1a16f35bc756cc037256af06173ce",
+        "sha256": "17qhp94sikgznr1cw16rv0004l32b0y6hg1qanmvw55d194kza06",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.comment",
       "owner": "nvim-mini",
       "repo": "mini.comment",
-      "loadOrder": 69,
+      "loadOrder": 70,
       "dependencies": {
       },
       "multiModule": {
@@ -1221,16 +1233,16 @@
       "is_core": false,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "597d32ed2c9fbfbf9a250bec7c6b9035f71214f5",
-        "sha256": "1i110g0d110j538pvcraz2dr32d7cv0ygrzd0ha5mcnfhncs3pvq",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "4677392f091e8b5c18d4b535130220a6d1da4aca",
+        "sha256": "1krpqlb2pwkzndyn3grrdxcshsyqdxhypnvac4gxgffc8fh1v1np",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.diff",
       "owner": "nvim-mini",
       "repo": "mini.diff",
-      "loadOrder": 70,
+      "loadOrder": 71,
       "dependencies": {
       },
       "multiModule": {
@@ -1242,47 +1254,47 @@
       "is_core": false,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "ff3cd5e76e812fa18bde0f8126d6f3bb62008c79",
-        "sha256": "0x1dblx3gvc4mnh19a82a235rmdb189l779185xyg471q0j6picp",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "0743d26bd858ebe32efcf5c86a91a422a000f273",
+        "sha256": "10qjb1w9ymyws0k8jdngckad5apj02dpm5i5aldi6mgf1i6aq436",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.files",
       "owner": "nvim-mini",
       "repo": "mini.files",
-      "loadOrder": 71,
+      "loadOrder": 72,
       "dependencies": {
       },
       "source_file": "extras.editor.mini-files",
       "is_core": false,
       "version_info": {
-        "commit": "b4796e09eb103f9f2d1e00aa2dab3753b879b17b",
-        "sha256": "1ln986s51sd44j8qgwj7gyv4l8w78qp8fdmmkwwj7mjp2pcjjxcr",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "057c16f0cafe59c9e1bf9d894723d6ae074b76fd",
+        "sha256": "05y8zp2vz8h9mb11iapf2c83ylgwg9bzbd073zaxvprrp77w5ziv",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.hipatterns",
       "owner": "nvim-mini",
       "repo": "mini.hipatterns",
-      "loadOrder": 72,
+      "loadOrder": 73,
       "dependencies": {
       },
       "source_file": "extras.util.mini-hipatterns",
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
-        "commit": "2c5dce6dc7443de814d16f7470549811ee86e664",
-        "sha256": "14zm01i0f88lwx4vk1g3yx3i9ryj7y1lpls194bmj7qp6khg30km",
-        "fetched_at": "2026-03-09T20:52:25Z"
+        "commit": "607d604e650cdf21d71f863d040c496a1d0cb320",
+        "sha256": "1s6s0y5038kzxb18186hp06bgw35k6grls4gwah54p2asxgl69zg",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.icons",
       "owner": "nvim-mini",
       "repo": "mini.icons",
-      "loadOrder": 73,
+      "loadOrder": 74,
       "dependencies": {
       },
       "multiModule": {
@@ -1294,16 +1306,16 @@
       "is_core": true,
       "lazy": true,
       "version_info": {
-        "commit": "5b9076dae1bfbe47ba4a14bc8b967cde0ab5d77e",
-        "sha256": "0kn883pq9xzcvqmdyd3a1dv2pf7kvcin23dwk4cw6cqn78mgyrsf",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "24dbea2195c477e57d581215839a6ab915f34b14",
+        "sha256": "1i8x6b6p588z3gqg9qs3f08h6aflpn1502hcp4m9jsmc9q39l2w9",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.indentscope",
       "owner": "nvim-mini",
       "repo": "mini.indentscope",
-      "loadOrder": 74,
+      "loadOrder": 75,
       "dependencies": {
       },
       "multiModule": {
@@ -1315,17 +1327,17 @@
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
-        "commit": "065c7713fb4cd0124fe1462f15f27feeb8b04406",
+        "commit": "942bc13ccc624c825b086373b8bd6787b98245c8",
         "lazyvim_version_type": "version",
-        "sha256": "0pbhx4lkrnbai6wn70sygy1c0r7m05bq2p27znmslazn3p4lpynh",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "sha256": "0dxkbxn4k3rda9lxhm320qypw1rx4hilhxc4sbgx8w281myns68l",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.move",
       "owner": "nvim-mini",
       "repo": "mini.move",
-      "loadOrder": 75,
+      "loadOrder": 76,
       "dependencies": {
       },
       "multiModule": {
@@ -1337,16 +1349,16 @@
       "is_core": false,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "b8ba0b77e91b5f0fe8e014e03f7f59799dec1d96",
-        "sha256": "0cx37w3hj79zkwja46dn9yabzbp93ik9ghzdv10v1l8asmdb12d8",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "b9e452f9c83565a1520e14f7531632160f3b0170",
+        "sha256": "019yyn0j76jnlzrjqw63a7kcai89l1d0p03fk45ya9aa9vrchm0x",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.pairs",
       "owner": "nvim-mini",
       "repo": "mini.pairs",
-      "loadOrder": 76,
+      "loadOrder": 77,
       "dependencies": {
       },
       "multiModule": {
@@ -1358,16 +1370,16 @@
       "is_core": true,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "b7fde3719340946feb75017ef9d75edebdeb0566",
-        "sha256": "1y44fj6p25rqcja34bkmm4mzjkqv82gh4hvm4979s91fqr7ij1bv",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "fd150ac39b78e6a2286f5138e472b7dc7eba43b9",
+        "sha256": "0j9jygq87rvxixjyl12cclg7y4fqx7kvbcpyhsg6fjj8pbrc808j",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.snippets",
       "owner": "nvim-mini",
       "repo": "mini.snippets",
-      "loadOrder": 77,
+      "loadOrder": 78,
       "dependencies": [
         "rafamadriz/friendly-snippets"
       ],
@@ -1375,16 +1387,16 @@
       "is_core": false,
       "event": "InsertEnter",
       "version_info": {
-        "commit": "c7a5fd5e767dcc732940f59f2a83c64ea7346a3e",
-        "sha256": "1apinnzf3r1rx0plwbirhrna375y58c5xslm22yf0ymc89qfzkwh",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "cf5607c66571d130663fd20761d7cbebdbbf713d",
+        "sha256": "17l3k5bagjyz8i0bd5h5il9sy06wjh28c8ywcnqc0xc1s2lqd102",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.starter",
       "owner": "nvim-mini",
       "repo": "mini.starter",
-      "loadOrder": 78,
+      "loadOrder": 79,
       "dependencies": {
       },
       "multiModule": {
@@ -1396,17 +1408,17 @@
       "is_core": false,
       "event": "VimEnter",
       "version_info": {
-        "commit": "cdf909e5bda577e09c61fa6d9a36bb2a88dbc636",
+        "commit": "a1c26c1c4acd08beb5b0057c663acb6e5f5b7042",
         "lazyvim_version_type": "version",
-        "sha256": "0i7wzxk7n62pbbh9h8hb20wm7qq40i3dcdlcpqzpgcbhlmgsrj2g",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "sha256": "0pmqrci1gk2n51mh0jxmxvwn4i80p5a24alcbi7v7nz9xgrvskpr",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-mini/mini.surround",
       "owner": "nvim-mini",
       "repo": "mini.surround",
-      "loadOrder": 79,
+      "loadOrder": 80,
       "dependencies": {
       },
       "multiModule": {
@@ -1417,48 +1429,48 @@
       "source_file": "extras.coding.mini-surround",
       "is_core": false,
       "version_info": {
-        "commit": "d205d1741d1fcc1f3117b4e839bf00f74ad72fa2",
-        "sha256": "0r5gsl2phlqcx9q8dj36k40fsq3xmxh2ys5mqwqfr85wfimjnb0b",
-        "fetched_at": "2026-03-09T20:52:25Z"
+        "commit": "a2f644f3759edd3d3f8b6a6d55378408bfe6d290",
+        "sha256": "05pcanskdbz1p6pp6566mgwbzyf41wxwbn676ml6vccrw80jhrbx",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-neo-tree/neo-tree.nvim",
       "owner": "nvim-neo-tree",
       "repo": "neo-tree.nvim",
-      "loadOrder": 80,
+      "loadOrder": 81,
       "dependencies": {
       },
       "source_file": "extras.editor.neo-tree",
       "is_core": false,
       "cmd": "Neotree",
       "version_info": {
-        "commit": "08edbf0ca8b5a05086c14c824e139cc67020c718",
-        "sha256": "1czamn9ypw6npql66rmklyadqa6dhn72zix5vq3mbp1x9z7qzbzs",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "b01ee1769144c4491ea44bc329cb84040e9793be",
+        "sha256": "1iw8a7issa4zxc9iw0acw90jclph6nhwsq22qwmz43f6ng58y6lb",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-neotest/neotest",
       "owner": "nvim-neotest",
       "repo": "neotest",
-      "loadOrder": 81,
+      "loadOrder": 82,
       "dependencies": [
         "nvim-neotest/nvim-nio"
       ],
       "source_file": "extras.test.core",
       "is_core": false,
       "version_info": {
-        "commit": "fd0b7986dd0ae04e38ec7dc0c78a432e3820839c",
-        "sha256": "0lkck8pb5d65v2xhbg0hbxinzii9yzg4g10dbanq0j7wbpbwximm",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "fb84d87285698f7055f618083c351984449119b8",
+        "sha256": "13lp07q4spq9zmjd3abipyl305g8p57qv9nc60wqxxydypzswi96",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-treesitter/nvim-treesitter",
       "owner": "nvim-treesitter",
       "repo": "nvim-treesitter",
-      "loadOrder": 82,
+      "loadOrder": 83,
       "dependencies": {
       },
       "source_file": "core.treesitter",
@@ -1474,70 +1486,70 @@
         "TSUninstall"
       ],
       "version_info": {
-        "commit": "539abf6da5ee8702e37b82cc953131dadd570da2",
-        "lazyvim_version": "539abf6da5ee8702e37b82cc953131dadd570da2",
+        "commit": "4916d6592ede8c07973490d9322f187e07dfefac",
+        "lazyvim_version": "4916d6592ede8c07973490d9322f187e07dfefac",
         "lazyvim_version_type": "commit",
         "branch": "main",
-        "sha256": "0h40m2l9b51hb0dpm7i8mjzh5cps2yb3qj3k1c0l4xgpmjjhgcn0",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "sha256": "0wgwbxi6h99fsp901xysm0424lhgrh9fq1nlck02m53qbfs7l11x",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-treesitter/nvim-treesitter-context",
       "owner": "nvim-treesitter",
       "repo": "nvim-treesitter-context",
-      "loadOrder": 83,
+      "loadOrder": 84,
       "dependencies": {
       },
       "source_file": "extras.ui.treesitter-context",
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
-        "commit": "b0c45cefe2c8f7b55fc46f34e563bc428ef99636",
-        "sha256": "1l93ni1rnsaizklh7k321izvfsjzdbh5wvzl8q7kvy1wjs43x2ib",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "b311b30818951d01f7b4bf650521b868b3fece16",
+        "sha256": "05j26xaj672vw2bqw7amdwsx06sh2hvjx59c6rd4plhd0fyhjnfq",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvim-treesitter/nvim-treesitter-textobjects",
       "owner": "nvim-treesitter",
       "repo": "nvim-treesitter-textobjects",
-      "loadOrder": 84,
+      "loadOrder": 85,
       "dependencies": {
       },
       "source_file": "core.treesitter",
       "is_core": true,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "93d60a475f0b08a8eceb99255863977d3a25f310",
-        "lazyvim_version": "93d60a475f0b08a8eceb99255863977d3a25f310",
+        "commit": "851e865342e5a4cb1ae23d31caf6e991e1c99f1e",
+        "lazyvim_version": "851e865342e5a4cb1ae23d31caf6e991e1c99f1e",
         "lazyvim_version_type": "commit",
         "branch": "main",
-        "sha256": "0mxbg0aqr6g2mg2p0d3zslqrqd5mrfdm1rcvsk2x49nqfnglhnqz",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "sha256": "03dbmmc1s63ygm11mn27sx3bg43ygcy12c40kdbc3giha8953skw",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvimdev/dashboard-nvim",
       "owner": "nvimdev",
       "repo": "dashboard-nvim",
-      "loadOrder": 85,
+      "loadOrder": 86,
       "dependencies": {
       },
       "source_file": "extras.ui.dashboard-nvim",
       "is_core": false,
       "lazy": false,
       "version_info": {
-        "commit": "0775e567b6c0be96d01a61795f7b64c1758262f6",
-        "sha256": "0h46n9hgyivqm43p8jq6dwnaln0y7ilayvd04vfb0mc8bmxcmrfi",
-        "fetched_at": "2025-10-18T04:20:34Z"
+        "commit": "f787e3462c2ee2b6117b17c1aa4ddf66cb6f57fe",
+        "sha256": "086wyfq9ay00bzqq5vbk4r0qra78irfbklz5gln4n5rs2573yfbz",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "nvimtools/none-ls.nvim",
       "owner": "nvimtools",
       "repo": "none-ls.nvim",
-      "loadOrder": 86,
+      "loadOrder": 87,
       "dependencies": [
         "mason-org/mason.nvim"
       ],
@@ -1545,16 +1557,16 @@
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
-        "commit": "c9317c2a8629d4e39e7cf47be74cb67f3ab37cda",
-        "sha256": "1phrq9shyhlshfafxx8d2n1f5ajwfcilxac7ri6rqzkasn3xhq1y",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "01f8e62ea11603e59ad9ff7afcfa94fd183f76d6",
+        "sha256": "1x8bbq4zh1gqmqd3633zxzv6airwf9bzl9jml2lzyks4bi8gfv02",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "p00f/clangd_extensions.nvim",
       "owner": "p00f",
       "repo": "clangd_extensions.nvim",
-      "loadOrder": 87,
+      "loadOrder": 88,
       "dependencies": {
       },
       "source_file": "extras.lang.clangd",
@@ -1566,16 +1578,16 @@
         "objcpp"
       ],
       "version_info": {
-        "commit": "92b720768fad9d8a333a3cbb167f0bab550f9f50",
-        "sha256": "1gwi9kikihdql1ba9wkwd6xa6mg7sw1mzc2zqw0hf8qai81vlm72",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "78c2ecd659d54972be17aa6ba2deac3c53223b80",
+        "sha256": "07r11g3cg4n2xn8cxhz8l34nrjak6rh9iv1sv1j620xi9yx0d5ia",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "pwntester/octo.nvim",
       "owner": "pwntester",
       "repo": "octo.nvim",
-      "loadOrder": 88,
+      "loadOrder": 89,
       "dependencies": {
       },
       "source_file": "extras.util.octo",
@@ -1587,16 +1599,16 @@
       ],
       "cmd": "Octo",
       "version_info": {
-        "commit": "b51e52888e678441a266bfd5ae2dc0a02a21d67e",
-        "sha256": "10yxrrm6cg3cb96rz2iyjvz6wvbhrqypflfsw89p8wh3xypfib2n",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "b9a73e167f851a98d8f29d62658d3640bb8a7314",
+        "sha256": "1ixs5986ydcgd0k5jpr119nyqv53ncmaad80v647q5ynm3fwraxz",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "qvalentin/helm-ls.nvim",
       "owner": "qvalentin",
       "repo": "helm-ls.nvim",
-      "loadOrder": 89,
+      "loadOrder": 90,
       "dependencies": {
       },
       "source_file": "extras.lang.helm",
@@ -1612,23 +1624,23 @@
       "name": "rcarriga/nvim-dap-ui",
       "owner": "rcarriga",
       "repo": "nvim-dap-ui",
-      "loadOrder": 90,
+      "loadOrder": 91,
       "dependencies": [
         "nvim-neotest/nvim-nio"
       ],
       "source_file": "extras.dap.core",
       "is_core": false,
       "version_info": {
-        "commit": "f5b6673f374626515401c5bc51b005f784a4f252",
-        "sha256": "1kf2h70riv76cby1xkwcaqy48vp3fjjdhgi1xca0mpyd9vagbbdw",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "1a66cabaa4a4da0be107d5eda6d57242f0fe7e49",
+        "sha256": "0ygsgm8qqyk74pckjp17sd0w4arniqbiqxvhv119pz7zhl7i9y17",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "saghen/blink.cmp",
       "owner": "saghen",
       "repo": "blink.cmp",
-      "loadOrder": 91,
+      "loadOrder": 92,
       "dependencies": [
         "rafamadriz/friendly-snippets",
         "saghen/blink.compat"
@@ -1640,18 +1652,18 @@
         "CmdlineEnter"
       ],
       "version_info": {
-        "commit": "679a2ffad4bae720bb12e6bcdf57b0dd8b8a80f8",
+        "commit": "9dcb1f3a9164f10c8950a790aace576f2e89dc78",
         "lazyvim_version": "*",
         "lazyvim_version_type": "version",
-        "sha256": "0jmwaa343fa72b6f2mjsviw1hxv3r53xz1ll2rc34bllwqmprslb",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "sha256": "15irgjkfb5pv6xz420p54698r8rrqnwzshmvlmhp7r79rkkq4vn1",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "scalameta/nvim-metals",
       "owner": "scalameta",
       "repo": "nvim-metals",
-      "loadOrder": 92,
+      "loadOrder": 93,
       "dependencies": [
         "nvim-lua/plenary.nvim"
       ],
@@ -1663,16 +1675,16 @@
         "java"
       ],
       "version_info": {
-        "commit": "48b9d29a4e1370495db4d4b5ccbc17b285bc98eb",
-        "sha256": "17kr79k6br1im58wd0v1xy51r9lyzhaansiqd6g45x4aqq5vmkhl",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "a4b20656bf1014404dd63bf9fd5f22fcc50fee52",
+        "sha256": "03qdnhkk4rnq23pdgsakwpk9hw12lsbaxsw2zyq14afzc7rrqnnx",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "smjonas/inc-rename.nvim",
       "owner": "smjonas",
       "repo": "inc-rename.nvim",
-      "loadOrder": 93,
+      "loadOrder": 94,
       "dependencies": {
       },
       "source_file": "extras.editor.inc-rename",
@@ -1688,39 +1700,39 @@
       "name": "sphamba/smear-cursor.nvim",
       "owner": "sphamba",
       "repo": "smear-cursor.nvim",
-      "loadOrder": 94,
+      "loadOrder": 95,
       "dependencies": {
       },
       "source_file": "extras.ui.smear-cursor",
       "is_core": false,
       "event": "VeryLazy",
       "version_info": {
-        "commit": "c85bdbb25db096fbcf616bc4e1357bd61fe2c199",
-        "sha256": "1fsd7wz7bls623a60ia0j1ssw6wi4vrf9xzq41zl3m6540bgsgjk",
-        "fetched_at": "2026-03-09T20:52:25Z"
+        "commit": "9e9378d6ee34bb3782e0e8c63d9ec8ca618b479b",
+        "sha256": "0sv80i4dfxr5g1yg9s60bym7w17sk2wvdlkwi7m1xi8575gjbgc4",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "stevearc/aerial.nvim",
       "owner": "stevearc",
       "repo": "aerial.nvim",
-      "loadOrder": 95,
+      "loadOrder": 96,
       "dependencies": {
       },
       "source_file": "extras.editor.aerial",
       "is_core": false,
       "event": "LazyFile",
       "version_info": {
-        "commit": "645d108a5242ec7b378cbe643eb6d04d4223f034",
-        "sha256": "0ixdhq7rnpjc8yasmwkb197skn8j0zfb697zrf41gncrzw1ws35s",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "28fe6e822ae344544c379d60fcb13c9519a1f08a",
+        "sha256": "03lk9czjrq56mnbhlik8vlblbg4z8yc8206m6dpyf8734s70bn15",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "stevearc/conform.nvim",
       "owner": "stevearc",
       "repo": "conform.nvim",
-      "loadOrder": 96,
+      "loadOrder": 97,
       "dependencies": [
         "mason-org/mason.nvim"
       ],
@@ -1729,16 +1741,16 @@
       "cmd": "ConformInfo",
       "lazy": true,
       "version_info": {
-        "commit": "086a40dc7ed8242c03be9f47fbcee68699cc2395",
-        "sha256": "08bqi34xjnzvckaa61klr36hp846xyr39iqd0nba6x850y8194k8",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "619363c30309d29ffa631e67c8183f2a72caa373",
+        "sha256": "07vw8kbrf5glfskmh29rn6grya513hrlywa867n5hf1apc5szid4",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "stevearc/overseer.nvim",
       "owner": "stevearc",
       "repo": "overseer.nvim",
-      "loadOrder": 97,
+      "loadOrder": 98,
       "dependencies": {
       },
       "source_file": "extras.editor.overseer",
@@ -1752,16 +1764,16 @@
       ],
       "lazy": false,
       "version_info": {
-        "commit": "f818eefff81f4b12fb7cf236f1b6c16768a2fcbc",
-        "sha256": "1s03fy7wnx2avxpy226yylvq1hcswwkvfklgnmfjbyi183489fvz",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "a93d9f6d6defdac4bcd6d2c8ba988650e42e0a0e",
+        "sha256": "0bayl8adgmfxvxp3c3blp67hc2fmf1agnanyiqvxlvfmhd8cxl3q",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "supermaven-inc/supermaven-nvim",
       "owner": "supermaven-inc",
       "repo": "supermaven-nvim",
-      "loadOrder": 98,
+      "loadOrder": 99,
       "dependencies": {
       },
       "source_file": "extras.ai.supermaven",
@@ -1781,7 +1793,7 @@
       "name": "tpope/vim-dadbod",
       "owner": "tpope",
       "repo": "vim-dadbod",
-      "loadOrder": 99,
+      "loadOrder": 100,
       "dependencies": {
       },
       "source_file": "extras.lang.sql",
@@ -1797,7 +1809,7 @@
       "name": "tpope/vim-repeat",
       "owner": "tpope",
       "repo": "vim-repeat",
-      "loadOrder": 100,
+      "loadOrder": 101,
       "dependencies": {
       },
       "source_file": "extras.editor.leap",
@@ -1813,23 +1825,23 @@
       "name": "windwp/nvim-ts-autotag",
       "owner": "windwp",
       "repo": "nvim-ts-autotag",
-      "loadOrder": 101,
+      "loadOrder": 102,
       "dependencies": {
       },
       "source_file": "core.treesitter",
       "is_core": true,
       "event": "LazyFile",
       "version_info": {
-        "commit": "8e1c0a389f20bf7f5b0dd0e00306c1247bda2595",
-        "sha256": "1qwvl8b055p1aqqi2qsgf787bp3ln25khdxcg42b6a1jaabngb3b",
-        "fetched_at": "2026-03-06T19:13:16Z"
+        "commit": "88c1453db4ba7dd24131086fe51fdf74e587d275",
+        "sha256": "18ilqgm01cgfngxrlrdiddjb3xqh3pzgcxk360jxri8307vmzw3f",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "xvzc/chezmoi.nvim",
       "owner": "xvzc",
       "repo": "chezmoi.nvim",
-      "loadOrder": 102,
+      "loadOrder": 103,
       "dependencies": {
       },
       "source_file": "extras.util.chezmoi",
@@ -1838,16 +1850,16 @@
         "ChezmoiEdit"
       ],
       "version_info": {
-        "commit": "ad26a6c4f5be0c348612518fcb1b7116649e026f",
-        "sha256": "1pwdpm2snlwzfc92fh7hap6rxsrlqk0y0y8ybf2jc2jd08ws7lzn",
-        "fetched_at": "2025-12-08T01:23:21Z"
+        "commit": "4167bbec76f693f481a5243f1be521ff0ccf1a6d",
+        "sha256": "0bzvdxmbzmi6qaxm6ay4bxsxrs1pkaw5gwqgsay87041m4mp72p6",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "yetone/avante.nvim",
       "owner": "yetone",
       "repo": "avante.nvim",
-      "loadOrder": 103,
+      "loadOrder": 104,
       "dependencies": {
       },
       "source_file": "extras.ai.avante",
@@ -1869,16 +1881,16 @@
         "AvanteToggle"
       ],
       "version_info": {
-        "commit": "8c84af0f09e5d9058362ac58401a8e7b047d826e",
-        "sha256": "1p79c3a6lqvl6v9b89z2hmqndhzcibiknki5aci46kzf3jhs2nww",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "78a22cb50482bd0e85f042b04e730e05f335c615",
+        "sha256": "1rz3n2llcfc0g2zafaxspwkb0g15n6hwzjz7ynva5dp2i9cm4m4v",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     },
     {
       "name": "zbirenbaum/copilot.lua",
       "owner": "zbirenbaum",
       "repo": "copilot.lua",
-      "loadOrder": 104,
+      "loadOrder": 105,
       "dependencies": {
       },
       "source_file": "extras.ai.copilot",
@@ -1886,9 +1898,9 @@
       "event": "BufReadPost",
       "cmd": "Copilot",
       "version_info": {
-        "commit": "faa347cef2a9429eec14dada549e000a3b8d0fc9",
-        "sha256": "12g1wpa9395n0y6xxx8xxh0y611kkkfqvkfk6qfkzgdjj64dwy1b",
-        "fetched_at": "2026-04-02T17:28:07Z"
+        "commit": "d521d3959f81f4fa58870ed329754f1dd5057511",
+        "sha256": "0ci9k88i63qcinrkz2w629i0v4r9qnhxmylbysinfbp10fi70zp6",
+        "fetched_at": "2026-07-06T06:24:37Z"
       }
     }
   ]

@@ -1,17 +1,7 @@
 # Plugin Mapping Analysis Report
-Generated: 2026-04-02 17:28:42
-Total unmapped plugins: 9
+Generated: 2026-07-06 06:25:11
+Total unmapped plugins: 8
 Package verification: ENABLED
-
-## ✅ Verified Mappings
-
-Add these to `data/mappings.json`:
-
-```json
-{
-  "dstein64/vim-startuptime": "vim-startuptime"
-}
-```
 
 ## ❌ Failed Mappings
 
