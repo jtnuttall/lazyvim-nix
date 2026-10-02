@@ -30,12 +30,12 @@
       "nixpkg": "curl"
     },
     {
-      "name": "stylua",
-      "nixpkg": "stylua"
-    },
-    {
       "name": "lua_ls",
       "nixpkg": "lua-language-server"
+    },
+    {
+      "name": "stylua",
+      "nixpkg": "stylua"
     },
     {
       "name": "shfmt",
@@ -43,6 +43,16 @@
     }
   ],
   "extras": {
+    "ai.copilot-native": [
+      {
+        "name": "copilot"
+      }
+    ],
+    "ai.sidekick": [
+      {
+        "name": "copilot"
+      }
+    ],
     "editor.fzf": [
       {
         "name": "delta",
@@ -79,7 +89,33 @@
         ]
       }
     ],
+    "lang.angular": [
+      {
+        "name": "angularls",
+        "nixpkg": "angular-language-server"
+      },
+      {
+        "name": "vtsls",
+        "nixpkg": "vtsls",
+        "runtime_dependencies": [
+          {
+            "name": "nodejs",
+            "nixpkg": "nodejs"
+          },
+          {
+            "name": "npm"
+          }
+        ]
+      },
+      {
+        "name": "js-debug-adapter"
+      }
+    ],
     "lang.ansible": [
+      {
+        "name": "ansiblels",
+        "nixpkg": "ansible-language-server"
+      },
       {
         "name": "ansible-lint",
         "nixpkg": "ansible-lint",
@@ -94,6 +130,27 @@
         ]
       }
     ],
+    "lang.astro": [
+      {
+        "name": "astro"
+      },
+      {
+        "name": "vtsls",
+        "nixpkg": "vtsls",
+        "runtime_dependencies": [
+          {
+            "name": "nodejs",
+            "nixpkg": "nodejs"
+          },
+          {
+            "name": "npm"
+          }
+        ]
+      },
+      {
+        "name": "js-debug-adapter"
+      }
+    ],
     "lang.clangd": [
       {
         "name": "clangd",
@@ -105,6 +162,10 @@
       }
     ],
     "lang.cmake": [
+      {
+        "name": "neocmake",
+        "nixpkg": "neocmakelsp"
+      },
       {
         "name": "cmakelang",
         "nixpkg": "python3Packages.cmakelang",
@@ -132,9 +193,20 @@
         ]
       }
     ],
+    "lang.dart": [
+      {
+        "name": "dartls",
+        "nixpkg": "dart"
+      }
+    ],
     "lang.docker": [
       {
-        "name": "docker_compose_language_service"
+        "name": "docker_compose_language_service",
+        "nixpkg": "docker-compose-language-service"
+      },
+      {
+        "name": "dockerls",
+        "nixpkg": "dockerfile-language-server"
       },
       {
         "name": "hadolint",
@@ -180,7 +252,16 @@
         ]
       }
     ],
+    "lang.elixir": [
+      {
+        "name": "elixirls",
+        "nixpkg": "elixir-ls"
+      }
+    ],
     "lang.elm": [
+      {
+        "name": "elmls"
+      },
       {
         "name": "elm-format",
         "nixpkg": "elmPackages.elm-format",
@@ -193,6 +274,16 @@
             "name": "npm"
           }
         ]
+      }
+    ],
+    "lang.ember": [
+      {
+        "name": "ember"
+      }
+    ],
+    "lang.erlang": [
+      {
+        "name": "erlangls"
       }
     ],
     "lang.gleam": [
@@ -279,11 +370,15 @@
     ],
     "lang.helm": [
       {
-        "name": "helm",
-        "nixpkg": "kubernetes-helm"
+        "name": "helm_ls",
+        "nixpkg": "helm-ls"
       }
     ],
     "lang.java": [
+      {
+        "name": "jdtls",
+        "nixpkg": "jdt-language-server"
+      },
       {
         "name": "java-debug-adapter"
       },
@@ -297,13 +392,26 @@
         "nixpkg": "vscode-langservers-extracted"
       }
     ],
+    "lang.julia": [
+      {
+        "name": "julials"
+      }
+    ],
     "lang.kotlin": [
+      {
+        "name": "kotlin_language_server",
+        "nixpkg": "kotlin-language-server"
+      },
       {
         "name": "ktlint",
         "nixpkg": "ktlint"
       }
     ],
     "lang.markdown": [
+      {
+        "name": "marksman",
+        "nixpkg": "marksman"
+      },
       {
         "name": "markdownlint-cli2",
         "nixpkg": "markdownlint-cli2",
@@ -331,18 +439,28 @@
         ]
       }
     ],
+    "lang.nix": [
+      {
+        "name": "nil_ls",
+        "nixpkg": "nil"
+      }
+    ],
+    "lang.nushell": [
+      {
+        "name": "nushell",
+        "nixpkg": "nushell"
+      }
+    ],
+    "lang.ocaml": [
+      {
+        "name": "ocamllsp",
+        "nixpkg": "ocamlPackages.ocaml-lsp"
+      }
+    ],
     "lang.php": [
       {
-        "name": "intelephense",
-        "runtime_dependencies": [
-          {
-            "name": "nodejs",
-            "nixpkg": "nodejs"
-          },
-          {
-            "name": "npm"
-          }
-        ]
+        "name": "phpactor",
+        "nixpkg": "phpactor"
       },
       {
         "name": "phpcs"
@@ -353,10 +471,23 @@
     ],
     "lang.prisma": [
       {
-        "name": "prisma"
+        "name": "prismals",
+        "nixpkg": "prisma-language-server"
       }
     ],
     "lang.python": [
+      {
+        "name": "pyright",
+        "runtime_dependencies": [
+          {
+            "name": "nodejs",
+            "nixpkg": "nodejs"
+          },
+          {
+            "name": "npm"
+          }
+        ]
+      },
       {
         "name": "ruff",
         "nixpkg": "python3Packages.ruff",
@@ -369,12 +500,18 @@
             "name": "pip"
           }
         ]
-      },
+      }
+    ],
+    "lang.r": [
       {
-        "name": "ruff_lsp"
+        "name": "r_language_server",
+        "nixpkg": "rPackages.languageserver"
       }
     ],
     "lang.rego": [
+      {
+        "name": "regal"
+      },
       {
         "name": "regols",
         "nixpkg": "regols",
@@ -384,24 +521,9 @@
             "nixpkg": "go"
           }
         ]
-      },
-      {
-        "name": "regal"
       }
     ],
     "lang.ruby": [
-      {
-        "name": "solargraph",
-        "runtime_dependencies": [
-          {
-            "name": "ruby",
-            "nixpkg": "ruby"
-          },
-          {
-            "name": "gem"
-          }
-        ]
-      },
       {
         "name": "rubocop",
         "runtime_dependencies": [
@@ -415,16 +537,8 @@
         ]
       },
       {
-        "name": "standardrb",
-        "runtime_dependencies": [
-          {
-            "name": "ruby",
-            "nixpkg": "ruby"
-          },
-          {
-            "name": "gem"
-          }
-        ]
+        "name": "ruby_lsp",
+        "nixpkg": "ruby-lsp"
       },
       {
         "name": "erb-formatter",
@@ -458,26 +572,13 @@
         "nixpkg": "rust-analyzer"
       },
       {
-        "name": "rust_analyzer",
-        "nixpkg": "rust-analyzer"
-      },
-      {
         "name": "codelldb",
         "nixpkg": "vscode-extensions.vadimcn.vscode-lldb"
-      },
+      }
+    ],
+    "lang.solidity": [
       {
-        "name": "bacon",
-        "nixpkg": "bacon",
-        "runtime_dependencies": [
-          {
-            "name": "cargo",
-            "nixpkg": "cargo"
-          },
-          {
-            "name": "rustc",
-            "nixpkg": "rustc"
-          }
-        ]
+        "name": "solidity_ls"
       }
     ],
     "lang.sql": [
@@ -495,6 +596,27 @@
         ]
       }
     ],
+    "lang.svelte": [
+      {
+        "name": "svelte"
+      },
+      {
+        "name": "vtsls",
+        "nixpkg": "vtsls",
+        "runtime_dependencies": [
+          {
+            "name": "nodejs",
+            "nixpkg": "nodejs"
+          },
+          {
+            "name": "npm"
+          }
+        ]
+      },
+      {
+        "name": "js-debug-adapter"
+      }
+    ],
     "lang.tailwind": [
       {
         "name": "tailwindcss",
@@ -503,8 +625,8 @@
     ],
     "lang.terraform": [
       {
-        "name": "terraform",
-        "nixpkg": "terraform"
+        "name": "terraformls",
+        "nixpkg": "terraform-ls"
       },
       {
         "name": "tflint",
@@ -514,6 +636,10 @@
     "lang.tex": [
       {
         "name": "pplatex"
+      },
+      {
+        "name": "texlab",
+        "nixpkg": "texlab"
       }
     ],
     "lang.thrift": [
@@ -528,6 +654,9 @@
       }
     ],
     "lang.twig": [
+      {
+        "name": "twiggy_language_server"
+      },
       {
         "name": "twigcs"
       },
@@ -560,6 +689,22 @@
       }
     ],
     "lang.typescript.init": [
+      {
+        "name": "tsx"
+      },
+      {
+        "name": "vtsls",
+        "nixpkg": "vtsls",
+        "runtime_dependencies": [
+          {
+            "name": "nodejs",
+            "nixpkg": "nodejs"
+          },
+          {
+            "name": "npm"
+          }
+        ]
+      },
       {
         "name": "js-debug-adapter"
       }
@@ -594,20 +739,8 @@
     ],
     "lang.typescript.tsc": [
       {
-        "name": "tsgo",
-        "nixpkg": "typescript-go",
-        "runtime_dependencies": [
-          {
-            "name": "nodejs",
-            "nixpkg": "nodejs"
-          },
-          {
-            "name": "npm"
-          }
-        ]
-      },
-      {
-        "name": "tsc"
+        "name": "tsc",
+        "nixpkg": "typescript"
       }
     ],
     "lang.typescript.vtsls": [
@@ -644,6 +777,19 @@
             "name": "npm"
           }
         ]
+      },
+      {
+        "name": "vue_ls",
+        "nixpkg": "vue-language-server"
+      },
+      {
+        "name": "js-debug-adapter"
+      }
+    ],
+    "lang.yaml": [
+      {
+        "name": "yamlls",
+        "nixpkg": "yaml-language-server"
       }
     ],
     "lang.zig": [
@@ -659,6 +805,10 @@
     ],
     "util.dot": [
       {
+        "name": "bashls",
+        "nixpkg": "bash-language-server"
+      },
+      {
         "name": "shellcheck",
         "nixpkg": "shellcheck"
       }
@@ -670,7 +820,7 @@
       }
     ]
   },
-  "generated": "2026-10-02 03:57:40",
+  "generated": "2026-10-02 04:27:50",
   "lazyvim_path": "/tmp/claude-1000/-home-jeremy--nixos/fb43f983-727c-42c5-ae45-ab718d45acea/scratchpad/lv",
   "mason_path": "/home/jeremy/Projects/github.com/jtnuttall/lazyvim-nix/tmp/update-cache/mason-registry"
 }

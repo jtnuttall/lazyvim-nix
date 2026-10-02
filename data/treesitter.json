@@ -25,6 +25,10 @@
     "yaml"
   ],
   "extras": {
+    "lang.angular": [
+      "angular",
+      "scss"
+    ],
     "lang.astro": [
       "astro",
       "css"
@@ -152,6 +156,9 @@
       "bibtex",
       "latex"
     ],
+    "lang.thrift": [
+      "thrift"
+    ],
     "lang.twig": [
       "twig"
     ],
@@ -164,6 +171,27 @@
     ],
     "lang.zig": [
       "zig"
+    ],
+    "util.dot": [
+      "git_config"
+    ],
+    "util.gh": [
+      "git_config",
+      "gitcommit",
+      "git_rebase",
+      "gitignore",
+      "gitattributes"
+    ],
+    "util.octo": [
+      "git_config",
+      "gitcommit",
+      "git_rebase",
+      "gitignore",
+      "gitattributes"
+    ],
+    "util.rest": [
+      "http",
+      "graphql"
     ]
   }
 }

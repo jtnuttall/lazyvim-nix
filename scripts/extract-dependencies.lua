@@ -4,6 +4,7 @@
 -- Creates a dependencies file with tools, runtimes, and nixpkgs mappings
 
 local extras_scan = require("lib.extras_scan")
+local lazy_eval = require("lib.lazy_eval")
 local verify_enabled = os.getenv("VERIFY_NIXPKGS_PACKAGES") == "1"
 
 local function read_file(path)
@@ -16,23 +17,10 @@ local function read_file(path)
     return content
 end
 
--- Language identifiers and config keys that should NOT be treated as system dependencies
+-- Config keys and internal identifiers that should NOT be treated as system
+-- dependencies in the text-level scans (vim.fn.executable checks). Configured
+-- tools come from evaluating the spec files instead, see lib/spec_eval.lua.
 local EXCLUDED_IDENTIFIERS = {
-    -- Language names
-    "angular", "astro", "bash", "c", "c_sharp", "clojure", "cmake", "cpp", "css", "dart",
-    "dockerfile", "eex", "elixir", "elm", "erlang", "fsharp", "go", "graphql", "haskell",
-    "hcl", "heex", "html", "java", "javascript", "jsdoc", "json", "json5", "jsonc", "julia",
-    "kotlin", "latex", "lua", "luadoc", "luap", "markdown", "markdown_inline", "ninja", "nix",
-    "nu", "nushell", "ocaml", "php", "python", "query", "r", "rasi", "regex", "rego", "rnoweb",
-    "ron", "rst", "ruby", "rust", "scala", "scss", "sql", "svelte", "thrift", "toml", "tsx",
-    "typescript", "typst", "vim", "vimdoc", "vue", "xml", "yaml", "zig", "twig", "solidity",
-
-    -- LSP server names (these are configured, not system deps)
-    "angularls", "ansiblels", "bashls", "dartls", "dockerls", "elixirls", "elmls", "erlangls",
-    "julials", "kotlin_language_server", "nil_ls", "ocamllsp", "prismals", "r_language_server",
-    "ruby_lsp", "solidity_ls", "terraformls", "tsserver", "vue_ls", "yamlls", "bacon_ls",
-    "twiggy_language_server", "jdtls", "phpactor", "marksman", "texlab", "helm_ls", "neocmake",
-
     -- Configuration keys and internal identifiers
     "FileType", "RUFF_TRACE", "arguments", "before_init", "buf_name", "capabilities", "chrome",
     "cmd", "cmd_env", "codelenses", "command", "completionmode", "copilot", "count", "desc", "diagnostics",
@@ -164,142 +152,64 @@ local function extract_executables_from_content(content, relative_path)
     return unique_executables
 end
 
--- Collect the top-level keys of the Lua table literal whose opening brace is
--- at `open_pos`. Nested tables, string literals and comments are skipped, so
--- server settings, keymap options or `jump1=true` inside a command string
--- never masquerade as server names.
-local function table_top_level_keys(content, open_pos)
-    local keys = {}
-    local depth = 0
-    local expect_key = false
-    local i = open_pos
-    local len = #content
+-- Extras are evaluated against a base that includes the extras most language
+-- extras hook into through `optional` plugin specs (nvim-dap, neotest, none-ls): a
+-- language extra's debug adapter or test tool only exists in lazy.nvim's view
+-- once those are enabled, and the manifest records it with the language.
+local BASE_EXTRAS = { "dap.core", "test.core", "lsp.none-ls" }
 
-    while i <= len do
-        local c = content:sub(i, i)
-        if content:sub(i, i + 1) == "--" then
-            local nl = content:find("\n", i, true)
-            i = nl or (len + 1)
-        elseif c == '"' or c == "'" then
-            local j = i + 1
-            while j <= len do
-                local d = content:sub(j, j)
-                if d == "\\" then
-                    j = j + 2
-                elseif d == c then
-                    break
-                else
-                    j = j + 1
-                end
-            end
-            i = j + 1
-        elseif c == "{" then
-            depth = depth + 1
-            expect_key = depth == 1
-            i = i + 1
-        elseif c == "}" then
-            depth = depth - 1
-            if depth == 0 then
-                break
-            end
-            expect_key = false
-            i = i + 1
-        elseif c == "," then
-            expect_key = depth == 1
-            i = i + 1
-        elseif c:match("%s") then
-            i = i + 1
-        elseif depth == 1 and expect_key then
-            if c:match("[%a_]") then
-                local key = content:match("^[%w_%-]+", i)
-                if content:match("^%s*=[^=]", i + #key) then
-                    table.insert(keys, key)
-                end
-                i = i + #key
-            elseif c == "[" then
-                local key = content:match('^%[%s*["\']([^"\']+)["\']%s*%]%s*=[^=]', i)
-                if key then
-                    table.insert(keys, key)
-                end
-                i = i + 1
-            else
-                i = i + 1
-            end
-            expect_key = false
-        else
-            i = i + 1
+local function list_minus(list, remove)
+    local removed = {}
+    for _, item in ipairs(remove) do
+        removed[item] = true
+    end
+    local result = {}
+    for _, item in ipairs(list) do
+        if not removed[item] then
+            table.insert(result, item)
         end
     end
-
-    return keys
+    return result
 end
 
--- Extract configured tools (LSP servers, formatters, etc.) from file content
-local function extract_configured_tools(file_content)
-    local tools = {}
-
-    -- Extract LSP servers from opts.servers: only the top-level keys of the
-    -- servers table are server names (`["*"]` is LazyVim's wildcard entry)
-    for open_pos in file_content:gmatch("servers%s*=%s*(){") do
-        for _, server_name in ipairs(table_top_level_keys(file_content, open_pos)) do
-            if server_name:match("^[%w_%-]+$") and not should_exclude_tool(server_name) then
-                table.insert(tools, server_name)
-            end
-        end
+local function print_eval_warnings()
+    for _, warning in ipairs(lazy_eval.take_warnings()) do
+        print("  Warning: " .. warning)
     end
-
-    -- Extract Mason ensure_installed
-    for ensure_block in file_content:gmatch('ensure_installed[^{]*{([^}]*)}') do
-        for tool in ensure_block:gmatch('"([^"]+)"') do
-            if not should_exclude_tool(tool) then
-                table.insert(tools, tool)
-            end
-        end
-    end
-
-    -- Extract from table.insert patterns
-    for tool in file_content:gmatch('table%.insert%(opts%.ensure_installed,%s*"([^"]+)"') do
-        if not should_exclude_tool(tool) then
-            table.insert(tools, tool)
-        end
-    end
-
-    return tools
 end
 
--- Tools LazyVim's core (non-extras) plugin specs configure: the lua_ls server
--- and the stylua/shfmt Mason defaults. These are needed by every install, so
--- they belong with the health.lua dependencies rather than any extra.
-local function extract_core_configured_tools(lazyvim_path)
-    local plugins_dir = lazyvim_path .. "/lua/lazyvim/plugins"
-    local handle = io.popen(string.format(
-        "find %q -name '*.lua' -not -path '*/extras/*' | sort",
-        plugins_dir
-    ))
-    if not handle then
-        return {}
-    end
-
-    local tools = {}
-    local seen = {}
-    for path in handle:lines() do
-        for _, tool in ipairs(extract_configured_tools(read_file(path) or "")) do
-            if not seen[tool] then
-                seen[tool] = true
-                table.insert(tools, tool)
-            end
-        end
-    end
-    handle:close()
-
+-- Tools LazyVim core configures (lua_ls server, stylua/shfmt Mason defaults).
+local function extract_core_configured_tools()
+    local tools = lazy_eval.tools({})
+    print_eval_warnings()
     if #tools > 0 then
         print("Core configured tools: " .. table.concat(tools, ", "))
     end
     return tools
 end
 
+-- Tools one extra adds on top of the base it is evaluated against.
+local function extract_extra_configured_tools(extra_module, core_tools)
+    local base_extras = BASE_EXTRAS
+    for _, base in ipairs(BASE_EXTRAS) do
+        if base == extra_module then
+            base_extras = {}
+            break
+        end
+    end
+    local base_tools = #base_extras > 0 and lazy_eval.tools(base_extras) or core_tools
+    local with_extra = {}
+    for _, base in ipairs(base_extras) do
+        table.insert(with_extra, base)
+    end
+    table.insert(with_extra, extra_module)
+    local tools = list_minus(lazy_eval.tools(with_extra), base_tools)
+    print_eval_warnings()
+    return tools
+end
+
 -- Scan LazyVim extras directory for dependencies
-local function extract_extra_dependencies(lazyvim_path, extras_entries, cache_ops)
+local function extract_extra_dependencies(lazyvim_path, extras_entries, cache_ops, core_tools)
     local extras_deps = {}
     extras_entries = extras_entries or extras_scan.collect(lazyvim_path)
 
@@ -312,7 +222,7 @@ local function extract_extra_dependencies(lazyvim_path, extras_entries, cache_op
 
         local cached = nil
         if cache_ops and entry.hash and cache_ops.get_tools then
-            cached = cache_ops.get_tools(entry.hash)
+            cached = cache_ops.get_tools(entry.hash .. "-lazy1")
         end
 
         if cached then
@@ -320,7 +230,7 @@ local function extract_extra_dependencies(lazyvim_path, extras_entries, cache_op
             print(string.format("  Using cached tools for %s", relative_path))
         else
             local executables = extract_executables_from_content(file_content, relative_path)
-            local configured_tools = extract_configured_tools(file_content)
+            local configured_tools = extract_extra_configured_tools(entry.module, core_tools)
 
             if #executables > 0 or #configured_tools > 0 then
                 local all_tools = {}
@@ -349,7 +259,7 @@ local function extract_extra_dependencies(lazyvim_path, extras_entries, cache_op
                         preview:sub(1, 60) .. (preview:len() > 60 and "..." or "")))
 
                     if cache_ops and entry.hash and cache_ops.store_tools then
-                        cache_ops.store_tools(entry.hash, unique_tools)
+                        cache_ops.store_tools(entry.hash .. "-lazy1", unique_tools)
                     end
                 end
             end
@@ -568,6 +478,33 @@ local function resolve_package_name(dep_name)
         ["haskell-debug-adapter"] = "haskellPackages.haskell-debug-adapter",
         lua_ls = "lua-language-server",
         shfmt = "shfmt",
+        tsc = "typescript",
+        -- LSP servers (lspconfig name -> nixpkgs attr); unmapped ones stay
+        -- as warnings so the user can supply them via extraPackages
+        angularls = "angular-language-server",
+        ansiblels = "ansible-language-server",
+        bashls = "bash-language-server",
+        dartls = "dart",
+        dockerls = "dockerfile-language-server",
+        docker_compose_language_service = "docker-compose-language-service",
+        elixirls = "elixir-ls",
+        helm_ls = "helm-ls",
+        jdtls = "jdt-language-server",
+        kotlin_language_server = "kotlin-language-server",
+        marksman = "marksman",
+        neocmake = "neocmakelsp",
+        nil_ls = "nil",
+        nushell = "nushell",
+        ocamllsp = "ocamlPackages.ocaml-lsp",
+        phpactor = "phpactor",
+        prismals = "prisma-language-server",
+        r_language_server = "rPackages.languageserver",
+        ruby_lsp = "ruby-lsp",
+        terraformls = "terraform-ls",
+        texlab = "texlab",
+        tsserver = "typescript-language-server",
+        vue_ls = "vue-language-server",
+        yamlls = "yaml-language-server",
     }
 
     if direct_mappings[dep_name] then
@@ -653,7 +590,7 @@ local function resolve_and_verify_package(dep_name, verification_report)
 end
 
 -- Main extraction function
-local function extract_dependencies(lazyvim_path, mason_path, output_file, extras_entries, cache_ops)
+local function extract_dependencies(lazyvim_path, mason_path, output_file, extras_entries, cache_ops, lazy_path)
     print("=== LazyVim Dependencies Extraction ===")
     print("LazyVim path: " .. lazyvim_path)
     print("Mason path: " .. (mason_path or "not provided"))
@@ -661,8 +598,12 @@ local function extract_dependencies(lazyvim_path, mason_path, output_file, extra
 
     -- Extract core dependencies from health.lua
     print("\n=== Extracting core dependencies ===")
+    assert(lazy_path, "extract_dependencies needs the path of a lazy.nvim checkout")
+    lazy_eval.setup(lazy_path, lazyvim_path, vim.fn.tempname() .. "-lazyvim-nix")
+
     local core_deps = extract_core_dependencies(lazyvim_path)
-    for _, tool in ipairs(extract_core_configured_tools(lazyvim_path)) do
+    local core_tools = extract_core_configured_tools()
+    for _, tool in ipairs(core_tools) do
         local present = false
         for _, existing in ipairs(core_deps) do
             if existing == tool then present = true break end
@@ -674,7 +615,7 @@ local function extract_dependencies(lazyvim_path, mason_path, output_file, extra
 
     -- Extract extra dependencies
     print("\n=== Extracting extra dependencies ===")
-    local extra_deps = extract_extra_dependencies(lazyvim_path, extras_entries, cache_ops)
+    local extra_deps = extract_extra_dependencies(lazyvim_path, extras_entries, cache_ops, core_tools)
 
     -- Get all unique tools
     local all_tools = get_all_tools(core_deps, extra_deps)
@@ -894,9 +835,10 @@ local function main()
     local lazyvim_path = arg[1]
     local mason_path = arg[2]  -- Optional
     local output_file = arg[3] or "data/dependencies.json"
+    local lazy_path = arg[4]
 
     if not lazyvim_path then
-        print("Usage: " .. arg[0] .. " <lazyvim_path> [mason_path] [output_file]")
+        print("Usage: " .. arg[0] .. " <lazyvim_path> <mason_path> <output_file> <lazy_nvim_path>")
         print("Example: " .. arg[0] .. " /tmp/lazyvim-temp /tmp/mason-registry data/dependencies.json")
         os.exit(1)
     end
@@ -919,7 +861,7 @@ local function main()
         end
     end
 
-    extract_dependencies(lazyvim_path, mason_path, output_file)
+    extract_dependencies(lazyvim_path, mason_path, output_file, nil, nil, lazy_path)
 end
 
 -- Run if called directly
@@ -933,6 +875,6 @@ return {
     extract_core_dependencies = extract_core_dependencies,
     extract_extra_dependencies = extract_extra_dependencies,
     should_exclude_tool = should_exclude_tool,
-    extract_configured_tools = extract_configured_tools,
+    extract_extra_configured_tools = extract_extra_configured_tools,
     resolve_package_name = resolve_package_name
 }

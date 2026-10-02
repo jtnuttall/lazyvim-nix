@@ -4,6 +4,7 @@
 -- Generates treesitter-mappings.json for use in module.nix
 
 local extras_scan = require("lib.extras_scan")
+local lazy_eval = require("lib.lazy_eval")
 
 -- JSON encoder with pretty printing support
 local function encode_json(obj, indent, current_indent)
@@ -63,129 +64,56 @@ local function encode_json(obj, indent, current_indent)
   end
 end
 
-local function read_file(filepath)
-  local file = io.open(filepath, "r")
-  if not file then
-    return nil
-  end
-  local content = file:read("*all")
-  file:close()
-  return content
-end
 
 -- Helper function to extract parsers from ensure_installed
-local function extract_parsers_from_content(content)
-  local parsers = {}
 
-  -- Match the full treesitter plugin block including nested braces
-  -- First find the start, then match to the closing brace of the outer table
-  local block_start = content:find('"nvim%-treesitter/nvim%-treesitter"')
-  if not block_start then
-    return parsers
+local function list_minus(list, remove)
+  local removed = {}
+  for _, item in ipairs(remove) do
+    removed[item] = true
   end
-
-  -- Find the opening brace of the plugin spec that contains this string
-  -- Walk backwards to find the enclosing `{`
-  local brace_start = block_start
-  local depth = 0
-  for i = block_start, 1, -1 do
-    local ch = content:sub(i, i)
-    if ch == "}" then depth = depth + 1 end
-    if ch == "{" then
-      if depth == 0 then
-        brace_start = i
-        break
-      end
-      depth = depth - 1
+  local result = {}
+  for _, item in ipairs(list) do
+    if not removed[item] then
+      table.insert(result, item)
     end
   end
-
-  -- Now find the matching closing brace
-  depth = 0
-  local brace_end = #content
-  for i = brace_start, #content do
-    local ch = content:sub(i, i)
-    if ch == "{" then depth = depth + 1 end
-    if ch == "}" then
-      depth = depth - 1
-      if depth == 0 then
-        brace_end = i
-        break
-      end
-    end
-  end
-
-  local treesitter_block = content:sub(brace_start, brace_end)
-
-  local patterns = {
-    -- Static opts: opts = { ensure_installed = { ... } }
-    'opts%s*=%s*{[^}]*ensure_installed%s*=%s*{%s*([^}]-)%s*}',
-    -- Function opts with ensure_installed assignment: opts = function(...) ... ensure_installed = { ... }
-    'opts%s*=%s*function%s*%(.-%).-ensure_installed%s*=%s*{%s*([^}]-)%s*}',
-    -- vim.list_extend pattern: vim.list_extend(opts.ensure_installed, { ... })
-    'vim%.list_extend%s*%(%s*opts%.ensure_installed%s*,%s*{%s*([^}]-)%s*}',
-  }
-
-  for _, pattern in ipairs(patterns) do
-    local match = treesitter_block:match(pattern)
-    if match then
-      for parser in match:gmatch('"([^"]+)"') do
-        table.insert(parsers, parser)
-      end
-      break
-    end
-  end
-
-  return parsers
+  return result
 end
 
--- Extract core treesitter parsers from main treesitter configuration
-local function extract_core_parsers(lazyvim_repo)
-  local treesitter_file = lazyvim_repo .. "/lua/lazyvim/plugins/treesitter.lua"
-  local content = read_file(treesitter_file)
-
-  if not content then
-    error("Could not read treesitter.lua file: " .. treesitter_file)
-  end
-
-  local parsers = {}
-  local pattern = 'ensure_installed%s*=%s*{%s*([^}]-)%s*}'
-  local match = content:match(pattern)
-
-  if match then
-    for parser in match:gmatch('"([^"]+)"') do
-      table.insert(parsers, parser)
-    end
-  end
-
+-- Parsers LazyVim core asks nvim-treesitter for, as lazy.nvim resolves them.
+local function extract_core_parsers()
+  local parsers = lazy_eval.parsers({})
   if #parsers == 0 then
-    error("No core parsers found in treesitter.lua")
+    error("No core parsers found in LazyVim's nvim-treesitter spec")
   end
-
   return parsers
 end
 
-local function extract_extra_parsers_from_entries(entries, cache_ops)
+-- Parsers each extra adds on top of core.
+local function extract_extra_parsers_from_entries(entries, cache_ops, core_parsers)
   local extras = {}
 
   for _, entry in ipairs(entries) do
-    if entry.module:match("^lang%.") then
-      local content = entry.content
-      local cached = nil
-      if cache_ops and entry.hash and cache_ops.get_parsers then
-        cached = cache_ops.get_parsers(entry.hash)
-      end
+    local cached = nil
+    if cache_ops and entry.hash and cache_ops.get_parsers then
+      cached = cache_ops.get_parsers(entry.hash .. "-lazy1")
+    end
 
-      if cached then
+    if cached then
+      if #cached > 0 then
         extras[entry.module] = cached
-      elseif content and content:match('"nvim%-treesitter/nvim%-treesitter"') then
-        local parsers = extract_parsers_from_content(content)
-        if #parsers > 0 then
-          extras[entry.module] = parsers
-          if cache_ops and entry.hash and cache_ops.store_parsers then
-            cache_ops.store_parsers(entry.hash, parsers)
-          end
-        end
+      end
+    else
+      local parsers = list_minus(lazy_eval.parsers({ entry.module }), core_parsers)
+      for _, warning in ipairs(lazy_eval.take_warnings()) do
+        print("  Warning: " .. warning)
+      end
+      if #parsers > 0 then
+        extras[entry.module] = parsers
+      end
+      if cache_ops and entry.hash and cache_ops.store_parsers then
+        cache_ops.store_parsers(entry.hash .. "-lazy1", parsers)
       end
     end
   end
@@ -193,7 +121,7 @@ local function extract_extra_parsers_from_entries(entries, cache_ops)
   return extras
 end
 
-local function generate_mappings(lazyvim_repo, extras_entries, output_file, cache_ops)
+local function generate_mappings(lazyvim_repo, extras_entries, output_file, cache_ops, lazy_path)
   output_file = output_file or "data/treesitter.json"
   extras_entries = extras_entries or extras_scan.collect(lazyvim_repo)
 
@@ -202,11 +130,14 @@ local function generate_mappings(lazyvim_repo, extras_entries, output_file, cach
   print("")
 
   print("Extracting core parsers...")
-  local core_parsers = extract_core_parsers(lazyvim_repo)
+  if lazy_path then
+    lazy_eval.setup(lazy_path, lazyvim_repo, vim.fn.tempname() .. "-lazyvim-nix")
+  end
+  local core_parsers = extract_core_parsers()
   print("Found " .. #core_parsers .. " core parsers")
 
   print("Extracting extra parsers...")
-  local extra_parsers = extract_extra_parsers_from_entries(extras_entries, cache_ops)
+  local extra_parsers = extract_extra_parsers_from_entries(extras_entries, cache_ops, core_parsers)
   local extra_count = 0
   local extra_category_count = 0
   for _, parsers in pairs(extra_parsers) do
@@ -248,7 +179,7 @@ local function main()
     os.exit(1)
   end
 
-  generate_mappings(lazyvim_repo, nil, output_file)
+  generate_mappings(lazyvim_repo, nil, output_file, nil, arg[3])
 end
 
 if arg and arg[0] and arg[0]:match("extract%-treesitter") then
@@ -258,6 +189,5 @@ end
 return {
   generate_mappings = generate_mappings,
   extract_core_parsers = extract_core_parsers,
-  extract_parsers_from_content = extract_parsers_from_content,
   extract_extra_parsers_from_entries = extract_extra_parsers_from_entries,
 }

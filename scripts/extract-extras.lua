@@ -65,15 +65,15 @@ local function build_cache_ops(cache_root)
   }
 end
 
-function M.run(lazyvim_path, mason_path, dependencies_output, treesitter_output, cache_root, extras_entries)
+function M.run(lazyvim_path, mason_path, dependencies_output, treesitter_output, cache_root, extras_entries, lazy_path)
   local cache_ops = nil
   if cache_root and cache_root ~= "" then
     cache_ops = build_cache_ops(cache_root)
   end
 
   extras_entries = extras_entries or extras_scan.collect(lazyvim_path)
-  dependencies.extract_dependencies(lazyvim_path, mason_path, dependencies_output, extras_entries, cache_ops)
-  treesitter.generate_mappings(lazyvim_path, extras_entries, treesitter_output, cache_ops)
+  dependencies.extract_dependencies(lazyvim_path, mason_path, dependencies_output, extras_entries, cache_ops, lazy_path)
+  treesitter.generate_mappings(lazyvim_path, extras_entries, treesitter_output, cache_ops, lazy_path)
 end
 
 local function main()
@@ -92,7 +92,7 @@ local function main()
     mason_path = nil
   end
 
-  M.run(lazyvim_path, mason_path, dependencies_output, treesitter_output, cache_root)
+  M.run(lazyvim_path, mason_path, dependencies_output, treesitter_output, cache_root, nil, arg[6])
 end
 
 if arg and arg[0] and arg[0]:match("extract%-extras") then

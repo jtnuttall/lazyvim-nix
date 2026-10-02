@@ -20,6 +20,8 @@ EXTRAS_CACHE_ROOT="$CACHE_DIR/extras"
 RELEASE_CACHE_ROOT="$CACHE_DIR/releases"
 CACHE_SCHEMA_VERSION="2"
 STARTER_REPO="https://github.com/LazyVim/starter.git"
+LAZY_REPO="https://github.com/folke/lazy.nvim.git"
+LAZY_CACHE="$CACHE_DIR/lazy.nvim"
 
 mkdir -p "$CACHE_DIR"
 mkdir -p "$RELEASE_CACHE_ROOT"
@@ -118,6 +120,26 @@ git -C "$STARTER_CACHE" reset --hard FETCH_HEAD >/dev/null 2>&1
 STARTER_COMMIT=$(git -C "$STARTER_CACHE" rev-parse HEAD)
 echo "    Starter commit: $STARTER_COMMIT"
 
+# lazy.nvim is used to resolve LazyVim's plugin specs (scripts/lib/lazy_eval.lua)
+echo "==> Preparing lazy.nvim cache..."
+if [ ! -d "$LAZY_CACHE/.git" ]; then
+    git clone --filter=blob:none "$LAZY_REPO" "$LAZY_CACHE" >/dev/null 2>&1 || {
+        echo "Error: Failed to clone lazy.nvim"
+        exit 1
+    }
+fi
+git -C "$LAZY_CACHE" fetch --tags --force --prune --depth 1 origin >/dev/null 2>&1 || {
+    echo "Error: Failed to update lazy.nvim cache"
+    exit 1
+}
+LAZY_TAG=$(git -C "$LAZY_CACHE" tag -l 'v[0-9]*' | sort -rV | head -1)
+mkdir -p "$TEMP_DIR/lazy.nvim"
+git -C "$LAZY_CACHE" archive "$LAZY_TAG" | tar -x -C "$TEMP_DIR/lazy.nvim" || {
+    echo "Error: Failed to extract lazy.nvim $LAZY_TAG"
+    exit 1
+}
+echo "    lazy.nvim: $LAZY_TAG"
+
 # Copy starter lazy.lua to data directory
 if [ -f "$STARTER_CACHE/lua/config/lazy.lua" ]; then
     cp "$STARTER_CACHE/lua/config/lazy.lua" "$REPO_ROOT/data/starter-lazy.lua"
@@ -185,7 +207,8 @@ if [ "$USED_RELEASE_CACHE" -eq 0 ]; then
         "${MASON_CACHE:-}" \
         "$LAZYVIM_VERSION" \
         "$LAZYVIM_COMMIT" \
-        "$EXTRAS_CACHE_ROOT" || {
+        "$EXTRAS_CACHE_ROOT" \
+        "$TEMP_DIR/lazy.nvim" || {
             echo "Error: Failed to extract metadata"
             exit 1
         }

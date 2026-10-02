@@ -10,7 +10,7 @@ local extras_runner = require("extract-extras")
 local extras_scan = require("lib.extras_scan")
 
 local function usage()
-  print("Usage: run-update.lua <lazyvim_path> <plugins_output> <dependencies_output> <treesitter_output> <mason_path> <lazyvim_version> <lazyvim_commit> <extras_cache_root>")
+  print("Usage: run-update.lua <lazyvim_path> <plugins_output> <dependencies_output> <treesitter_output> <mason_path> <lazyvim_version> <lazyvim_commit> <extras_cache_root> <lazy_nvim_path>")
   os.exit(1)
 end
 
@@ -23,8 +23,9 @@ local function main()
   local lazyvim_version = arg[6]
   local lazyvim_commit = arg[7]
   local extras_cache_root = arg[8]
+  local lazy_path = arg[9]
 
-  if not (lazyvim_path and plugins_output and dependencies_output and treesitter_output and lazyvim_version and lazyvim_commit) then
+  if not (lazyvim_path and plugins_output and dependencies_output and treesitter_output and lazyvim_version and lazyvim_commit and lazy_path) then
     usage()
   end
 
@@ -36,7 +37,7 @@ local function main()
   ExtractLazyVimPlugins(lazyvim_path, plugins_output, lazyvim_version, lazyvim_commit, {
     extras_entries = extras_entries,
   })
-  extras_runner.run(lazyvim_path, mason_path, dependencies_output, treesitter_output, extras_cache_root, extras_entries)
+  extras_runner.run(lazyvim_path, mason_path, dependencies_output, treesitter_output, extras_cache_root, extras_entries, lazy_path)
 end
 
 main()
