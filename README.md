@@ -88,7 +88,7 @@ Control which packages get installed automatically:
 programs.lazyvim = {
   enable = true;
 
-  # Core LazyVim dependencies (git, ripgrep, fd, etc.)
+  # Core LazyVim dependencies (git, ripgrep, fd, lua-language-server, stylua, shfmt, etc.)
   installCoreDependencies = true;  # default: true
 
   extras = {

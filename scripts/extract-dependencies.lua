@@ -267,6 +267,37 @@ local function extract_configured_tools(file_content)
     return tools
 end
 
+-- Tools LazyVim's core (non-extras) plugin specs configure: the lua_ls server
+-- and the stylua/shfmt Mason defaults. These are needed by every install, so
+-- they belong with the health.lua dependencies rather than any extra.
+local function extract_core_configured_tools(lazyvim_path)
+    local plugins_dir = lazyvim_path .. "/lua/lazyvim/plugins"
+    local handle = io.popen(string.format(
+        "find %q -name '*.lua' -not -path '*/extras/*' | sort",
+        plugins_dir
+    ))
+    if not handle then
+        return {}
+    end
+
+    local tools = {}
+    local seen = {}
+    for path in handle:lines() do
+        for _, tool in ipairs(extract_configured_tools(read_file(path) or "")) do
+            if not seen[tool] then
+                seen[tool] = true
+                table.insert(tools, tool)
+            end
+        end
+    end
+    handle:close()
+
+    if #tools > 0 then
+        print("Core configured tools: " .. table.concat(tools, ", "))
+    end
+    return tools
+end
+
 -- Scan LazyVim extras directory for dependencies
 local function extract_extra_dependencies(lazyvim_path, extras_entries, cache_ops)
     local extras_deps = {}
@@ -535,6 +566,8 @@ local function resolve_package_name(dep_name)
         lua = "lua",
         ocaml = "ocaml",
         ["haskell-debug-adapter"] = "haskellPackages.haskell-debug-adapter",
+        lua_ls = "lua-language-server",
+        shfmt = "shfmt",
     }
 
     if direct_mappings[dep_name] then
@@ -629,6 +662,15 @@ local function extract_dependencies(lazyvim_path, mason_path, output_file, extra
     -- Extract core dependencies from health.lua
     print("\n=== Extracting core dependencies ===")
     local core_deps = extract_core_dependencies(lazyvim_path)
+    for _, tool in ipairs(extract_core_configured_tools(lazyvim_path)) do
+        local present = false
+        for _, existing in ipairs(core_deps) do
+            if existing == tool then present = true break end
+        end
+        if not present then
+            table.insert(core_deps, tool)
+        end
+    end
 
     -- Extract extra dependencies
     print("\n=== Extracting extra dependencies ===")

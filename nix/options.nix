@@ -89,7 +89,9 @@ with lib;
     description = ''
       Whether to automatically install core LazyVim dependencies.
 
-      Core dependencies include: git, ripgrep, fd, lazygit, fzf, curl.
+      Core dependencies include: git, ripgrep, fd, lazygit, fzf, curl, plus the
+      tools LazyVim core configures out of the box: lua-language-server (lua_ls),
+      stylua and shfmt.
 
       When false, you must manually provide these tools via extraPackages
       or ensure they're available in your system PATH.

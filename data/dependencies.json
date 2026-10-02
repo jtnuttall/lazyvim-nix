@@ -28,6 +28,18 @@
     {
       "name": "curl",
       "nixpkg": "curl"
+    },
+    {
+      "name": "stylua",
+      "nixpkg": "stylua"
+    },
+    {
+      "name": "lua_ls",
+      "nixpkg": "lua-language-server"
+    },
+    {
+      "name": "shfmt",
+      "nixpkg": "shfmt"
     }
   ],
   "extras": {
@@ -658,7 +670,7 @@
       }
     ]
   },
-  "generated": "2026-10-02 03:51:21",
+  "generated": "2026-10-02 03:57:40",
   "lazyvim_path": "/tmp/claude-1000/-home-jeremy--nixos/fb43f983-727c-42c5-ae45-ab718d45acea/scratchpad/lv",
   "mason_path": "/home/jeremy/Projects/github.com/jtnuttall/lazyvim-nix/tmp/update-cache/mason-registry"
 }
