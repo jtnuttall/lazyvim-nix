@@ -164,14 +164,85 @@ local function extract_executables_from_content(content, relative_path)
     return unique_executables
 end
 
+-- Collect the top-level keys of the Lua table literal whose opening brace is
+-- at `open_pos`. Nested tables, string literals and comments are skipped, so
+-- server settings, keymap options or `jump1=true` inside a command string
+-- never masquerade as server names.
+local function table_top_level_keys(content, open_pos)
+    local keys = {}
+    local depth = 0
+    local expect_key = false
+    local i = open_pos
+    local len = #content
+
+    while i <= len do
+        local c = content:sub(i, i)
+        if content:sub(i, i + 1) == "--" then
+            local nl = content:find("\n", i, true)
+            i = nl or (len + 1)
+        elseif c == '"' or c == "'" then
+            local j = i + 1
+            while j <= len do
+                local d = content:sub(j, j)
+                if d == "\\" then
+                    j = j + 2
+                elseif d == c then
+                    break
+                else
+                    j = j + 1
+                end
+            end
+            i = j + 1
+        elseif c == "{" then
+            depth = depth + 1
+            expect_key = depth == 1
+            i = i + 1
+        elseif c == "}" then
+            depth = depth - 1
+            if depth == 0 then
+                break
+            end
+            expect_key = false
+            i = i + 1
+        elseif c == "," then
+            expect_key = depth == 1
+            i = i + 1
+        elseif c:match("%s") then
+            i = i + 1
+        elseif depth == 1 and expect_key then
+            if c:match("[%a_]") then
+                local key = content:match("^[%w_%-]+", i)
+                if content:match("^%s*=[^=]", i + #key) then
+                    table.insert(keys, key)
+                end
+                i = i + #key
+            elseif c == "[" then
+                local key = content:match('^%[%s*["\']([^"\']+)["\']%s*%]%s*=[^=]', i)
+                if key then
+                    table.insert(keys, key)
+                end
+                i = i + 1
+            else
+                i = i + 1
+            end
+            expect_key = false
+        else
+            i = i + 1
+        end
+    end
+
+    return keys
+end
+
 -- Extract configured tools (LSP servers, formatters, etc.) from file content
 local function extract_configured_tools(file_content)
     local tools = {}
 
-    -- Extract LSP servers from opts.servers
-    for servers_block in file_content:gmatch('servers%s*=%s*{([^}]*)}') do
-        for server_name in servers_block:gmatch('([%w_%-]+)%s*=') do
-            if not should_exclude_tool(server_name) then
+    -- Extract LSP servers from opts.servers: only the top-level keys of the
+    -- servers table are server names (`["*"]` is LazyVim's wildcard entry)
+    for open_pos in file_content:gmatch("servers%s*=%s*(){") do
+        for _, server_name in ipairs(table_top_level_keys(file_content, open_pos)) do
+            if server_name:match("^[%w_%-]+$") and not should_exclude_tool(server_name) then
                 table.insert(tools, server_name)
             end
         end
@@ -462,7 +533,8 @@ local function resolve_package_name(dep_name)
         php = "php",
         ["dotnet-sdk"] = "dotnet-sdk",
         lua = "lua",
-        ocaml = "ocaml"
+        ocaml = "ocaml",
+        ["haskell-debug-adapter"] = "haskellPackages.haskell-debug-adapter",
     }
 
     if direct_mappings[dep_name] then
@@ -819,5 +891,6 @@ return {
     extract_core_dependencies = extract_core_dependencies,
     extract_extra_dependencies = extract_extra_dependencies,
     should_exclude_tool = should_exclude_tool,
+    extract_configured_tools = extract_configured_tools,
     resolve_package_name = resolve_package_name
 }

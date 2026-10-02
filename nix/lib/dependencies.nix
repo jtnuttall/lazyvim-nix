@@ -28,16 +28,7 @@
         # Helper function to warn about unmapped tools
         warnUnmappedTool = toolName: extraName:
           if ignoreBuildNotifications then null
-          else builtins.trace ''
-            Warning: Tool '${toolName}' in extra '${extraName}' has no nixpkgs mapping.
-
-            This tool will be skipped during installation. To resolve this:
-            1. Manually install the tool via extraPackages, or
-            2. Consider contributing a nixpkgs mapping at:
-               https://github.com/user/lazyvim-nix/issues
-
-            Include the tool name '${toolName}' and suggest a nixpkgs package name.
-          '' null;
+          else builtins.trace "lazyvim-nix: tool '${toolName}' (extra '${extraName}') has no nixpkgs mapping and will not be installed; add it to extraPackages" null;
 
         # Get core packages (only if installCoreDependencies is enabled)
         corePackages = if cfg.installCoreDependencies then
