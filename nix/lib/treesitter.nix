@@ -16,7 +16,6 @@
   pkgs,
   treesitterMappings,
   extractLang,
-  ignoreBuildNotifications ? false,
 }:
 
 let

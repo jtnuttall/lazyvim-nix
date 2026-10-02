@@ -26,7 +26,6 @@ let
     inherit lib pkgs;
     treesitterMappings = fixtureTreesitterMappings;
     inherit extractLang;
-    ignoreBuildNotifications = true;
   };
 
   inherit (tsLib) automaticTreesitterParsers expandParserDependencies

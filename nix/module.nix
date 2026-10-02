@@ -21,7 +21,6 @@ let
     inherit lib pkgs;
     inherit (dataLib) treesitterMappings;
     inherit (dataLib) extractLang;
-    inherit (cfg) ignoreBuildNotifications;
   };
   dependenciesLib = import ./lib/dependencies.nix {
     inherit lib pkgs;

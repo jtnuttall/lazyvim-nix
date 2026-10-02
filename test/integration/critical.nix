@@ -131,7 +131,6 @@
           pkgs = testConfig.pkgs;
           treesitterMappings = { core = [ ]; extras = { }; };
           extractLang = parser: parser.grammarName or parser.language;
-          ignoreBuildNotifications = false;
         };
         parserNames = treesitterLib.automaticTreesitterParsers testConfig.config.programs.lazyvim [ ];
       in builtins.elem "html" parserNames && !builtins.elem "html_tags" parserNames
@@ -150,7 +149,6 @@
           inherit pkgs;
           treesitterMappings = { core = [ ]; extras = { }; };
           extractLang = parser: parser.grammarName or parser.language;
-          ignoreBuildNotifications = false;
         };
       in !(builtins.tryEval (treesitterLib.treesitterGrammars [ "definitely_missing_parser" ])).success
     ''
@@ -173,7 +171,6 @@
           inherit pkgs;
           treesitterMappings = { core = [ "lua" ]; extras = { }; };
           extractLang = parser: parser.grammarName or parser.language;
-          ignoreBuildNotifications = false;
         };
         parserNames = treesitterLib.automaticTreesitterParsers cfg [ ];
         drv = treesitterLib.treesitterParsers cfg parserNames;

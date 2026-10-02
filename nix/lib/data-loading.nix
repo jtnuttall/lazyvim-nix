@@ -29,7 +29,6 @@
     let
       grammarName = pkg.grammarName or null;
       language = pkg.language or null;
-      pname = pkg.pname or "";
       name = pkg.name or "";
       # nvim-treesitter grammars have associatedQuery in passthru
       hasAssociatedQuery = (pkg.passthru or {}) ? associatedQuery;
