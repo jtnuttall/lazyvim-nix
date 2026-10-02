@@ -141,9 +141,17 @@ let
         else targetVersion != null && nixpkgsVersion != null &&
              (targetVersion == nixpkgsVersion || targetVersion == "*");
 
+      # nvim-treesitter is always taken from nixpkgs, whatever the strategy: its
+      # grammars (grammarPlugins) and queries are generated from that exact
+      # revision, so sourcing the plugin from anywhere else would reintroduce
+      # parser/query skew.
+      isNvimTreesitter = pluginSpec.name == "nvim-treesitter/nvim-treesitter";
+
       # Decision logic based on strategy
       useNixpkgs =
-        if cfg.pluginSource == "latest" then
+        if isNvimTreesitter && nixPlugin != null then
+          true
+        else if cfg.pluginSource == "latest" then
           # Strategy "latest": Follow LazyVim specifications exactly
           # Use nixpkgs only if it matches AND LazyVim doesn't require special handling
           nixpkgsMatchesTarget && !lazyvimRequiresBranch && !lazyvimRequiresNoReleases

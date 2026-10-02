@@ -78,7 +78,7 @@ programs.lazyvim = {
 };
 ```
 
-**Note:** Treesitter grammars are [installed automatically](https://github.com/pfassina/lazyvim-nix/wiki/Configuration-Reference#treesitterparsers) based on enabled language extras.
+**Note:** Treesitter grammars are [installed automatically](https://github.com/pfassina/lazyvim-nix/wiki/Configuration-Reference#treesitterparsers) based on enabled language extras. They come from `pkgs.vimPlugins.nvim-treesitter.grammarPlugins`, so they follow your nixpkgs pin. Anything you list in `treesitterParsers` is installed as-is and overrides the nixpkgs grammar of the same language, which also lets you add out-of-tree grammars (e.g. the output of `pkgs.tree-sitter.buildGrammar`).
 
 ### Dependency Control
 

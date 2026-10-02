@@ -46,15 +46,6 @@ allowing LazyVim to find each module individually while using the same Nix packa
 Contains mappings between LazyVim extras and the treesitter parsers they require,
 organized by core parsers and extras-specific parsers.
 
-## parser-manifest.json
-
-**Purpose**: Generated parser build metadata for coherent `pluginSource = "latest"` parser builds
-
-Contains the full parser install metadata extracted from the pinned upstream
-`nvim-treesitter` `lua/nvim-treesitter/parsers.lua`, including the source URL,
-revision, optional subdirectory, and prefetched hash needed to build parsers from
-the same source of truth as the shipped queries.
-
 ## plugins.json
 
 **Purpose**: Complete LazyVim plugin specifications

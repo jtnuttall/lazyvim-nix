@@ -1,6 +1,7 @@
 # Unit tests for treesitter parser resolution
 # Imports the real nix/lib/treesitter.nix and nix/lib/data-loading.nix and
-# verifies parser derivation, dependency expansion, and extractLang behavior.
+# verifies parser derivation, dependency expansion, user package handling,
+# and extractLang behavior.
 { pkgs, testLib, ... }:
 
 let
@@ -29,7 +30,7 @@ let
   };
 
   inherit (tsLib) automaticTreesitterParsers expandParserDependencies
-    treesitterGrammars treesitterGrammarsFromSource hasParserManifest;
+    treesitterGrammars treesitterParsers toParserPlugin;
 
   baseCfg = {
     enable = true;
@@ -38,8 +39,14 @@ let
 
   coreOnlyParsers = automaticTreesitterParsers baseCfg [ ];
 
-  # Real shipped parser manifest (used by expandParserDependencies)
-  parserManifest = builtins.fromJSON (builtins.readFile ../../data/parser-manifest.json);
+  nixpkgsLua = pkgs.vimPlugins.nvim-treesitter-parsers.lua;
+
+  # An out-of-tree grammar as users would build it (never actually built here)
+  rawGrammar = language: pkgs.tree-sitter.buildGrammar {
+    inherit language;
+    version = "0.0.0";
+    src = pkgs.emptyDirectory;
+  };
 
 in {
   # Core parsers are always included
@@ -100,8 +107,8 @@ in {
      in builtins.elem "wgsl" parsers && !(builtins.elem "lua" parsers) && !(builtins.elem "rust" parsers))
     true;
 
-  # expandParserDependencies: transitive requires from the real manifest are
-  # pulled in (xml requires dtd)
+  # expandParserDependencies: transitive requires from nixpkgs' grammar
+  # metadata are pulled in (xml requires dtd)
   test-parser-dependency-closure-includes-transitive-requires = testLib.testEval
     "parser-dependency-closure-includes-transitive-requires"
     (builtins.elem "dtd" (expandParserDependencies [ "xml" ]))
@@ -114,29 +121,64 @@ in {
     1;
 
   # expandParserDependencies: query-only namespaces (html_tags) that are not
-  # real manifest parsers are not pulled in
-  test-parser-dependency-closure-skips-non-manifest-requires = testLib.testEval
-    "parser-dependency-closure-skips-non-manifest-requires"
+  # grammars are not pulled in
+  test-parser-dependency-closure-skips-query-only-requires = testLib.testEval
+    "parser-dependency-closure-skips-query-only-requires"
     (builtins.elem "html_tags" (expandParserDependencies [ "html" ]))
     false;
 
-  # treesitterGrammars ("nixpkgs" strategy): produces a parser derivation
+  # expandParserDependencies: languages unknown to nixpkgs (out-of-tree
+  # grammars) are kept and simply have no dependencies
+  test-parser-dependency-closure-keeps-unknown-languages = testLib.testEval
+    "parser-dependency-closure-keeps-unknown-languages"
+    (expandParserDependencies [ "haskell_literate" ])
+    [ "haskell_literate" ];
+
+  # treesitterGrammars: produces a parser derivation from nixpkgs grammars
   test-treesitter-grammars-is-derivation = testLib.testEval
     "treesitter-grammars-is-derivation"
     (lib.isDerivation (treesitterGrammars [ "lua" ]))
     true;
 
-  # treesitterGrammarsFromSource ("latest" strategy): a parser missing from
-  # the manifest fails with a clear error instead of building silently
-  test-treesitter-from-source-missing-parser-throws = testLib.testEval
-    "treesitter-from-source-missing-parser-throws"
-    (builtins.tryEval (treesitterGrammarsFromSource [ "definitely_missing_parser" ])).success
+  # treesitterGrammars: a language nixpkgs does not ship fails with a clear
+  # error instead of being silently dropped
+  test-treesitter-grammars-missing-parser-throws = testLib.testEval
+    "treesitter-grammars-missing-parser-throws"
+    (builtins.tryEval (treesitterGrammars [ "definitely_missing_parser" ])).success
     false;
 
-  # The shipped parser manifest is detected as available
-  test-has-parser-manifest = testLib.testEval
-    "has-parser-manifest"
-    hasParserManifest
+  # toParserPlugin: nixpkgs grammar plugins pass through untouched
+  test-to-parser-plugin-passthrough = testLib.testEval
+    "to-parser-plugin-passthrough"
+    ((toParserPlugin nixpkgsLua).outPath == nixpkgsLua.outPath)
+    true;
+
+  # toParserPlugin: raw grammars are wrapped into parser/<language>.so plugins
+  test-to-parser-plugin-wraps-raw-grammar = testLib.testEval
+    "to-parser-plugin-wraps-raw-grammar"
+    (let plugin = toParserPlugin (rawGrammar "haskell_literate");
+     in lib.isDerivation plugin && plugin.grammarName == "haskell_literate")
+    true;
+
+  # treesitterParsers: user packages are installed alongside nixpkgs grammars
+  test-treesitter-parsers-includes-user-packages = testLib.testEval
+    "treesitter-parsers-includes-user-packages"
+    (let
+       cfg = baseCfg // { treesitterParsers = [ (rawGrammar "haskell_literate") ]; };
+       drv = treesitterParsers cfg (automaticTreesitterParsers cfg [ ]);
+       names = map (p: p.grammarName) drv.parsers;
+     in builtins.elem "haskell_literate" names && builtins.elem "lua" names)
+    true;
+
+  # treesitterParsers: a user package overrides the nixpkgs grammar of the
+  # same language instead of being installed next to it
+  test-treesitter-parsers-user-package-overrides-nixpkgs = testLib.testEval
+    "treesitter-parsers-user-package-overrides-nixpkgs"
+    (let
+       cfg = baseCfg // { treesitterParsers = [ (rawGrammar "lua") ]; };
+       drv = treesitterParsers cfg [ "lua" ];
+     in builtins.length drv.parsers == 1
+        && (builtins.head drv.parsers).outPath != nixpkgsLua.outPath)
     true;
 
   # extractLang: grammarPlugins / nvim-treesitter-parsers style (grammarName)
@@ -164,35 +206,16 @@ in {
     (extractLang { grammarName = "correct"; language = "wrong"; passthru.associatedQuery = { }; })
     "correct";
 
-  # extractLang: deprecated tree-sitter-grammars packages (language but no
-  # associatedQuery) throw a migration error
-  test-extract-lang-deprecated-throws = testLib.testEval
-    "extract-lang-deprecated-throws"
-    (builtins.tryEval (extractLang {
-      language = "rust";
-      pname = "tree-sitter-rust";
-      name = "tree-sitter-rust";
-    })).success
-    false;
+  # extractLang: raw grammars (buildGrammar output, tree-sitter-grammars.*)
+  # are accepted by their language attribute
+  test-extract-lang-raw-grammar = testLib.testEval
+    "extract-lang-raw-grammar"
+    (extractLang (rawGrammar "haskell_literate"))
+    "haskell_literate";
 
   # extractLang: unknown package formats throw
   test-extract-lang-unknown-throws = testLib.testEval
     "extract-lang-unknown-throws"
     (builtins.tryEval (extractLang { name = "mystery-package"; })).success
     false;
-
-  # Shipped parser manifest sanity: covers runtime languages and preserves
-  # the requires metadata that dependency expansion relies on
-  test-parser-manifest-covers-runtime-languages = testLib.testEval
-    "parser-manifest-covers-runtime-languages"
-    (parserManifest.parsers ? make &&
-     parserManifest.parsers ? gotmpl &&
-     parserManifest.parsers ? xml &&
-     parserManifest.parsers ? dtd)
-    true;
-
-  test-parser-manifest-preserves-requires = testLib.testEval
-    "parser-manifest-preserves-requires"
-    (parserManifest.parsers.xml.requires or [ ] == [ "dtd" ])
-    true;
 }

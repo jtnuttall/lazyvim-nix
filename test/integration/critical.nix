@@ -104,8 +104,8 @@
     ''
     "true";
 
-  # Latest mode should NOT pull in query-only namespaces (e.g. html_tags)
-  # that appear in upstream requires but are not buildable manifest entries.
+  # Dependency expansion should NOT pull in query-only namespaces (e.g. html_tags)
+  # that appear in upstream requires but are not grammars nixpkgs can build.
   test-plugin-source-latest-skips-query-only-requires = testLib.testNixExpr
     "plugin-source-latest-skips-query-only-requires"
     ''
@@ -138,40 +138,46 @@
     ''
     "true";
 
-  # Latest mode must fail loudly when asked for a parser that is not in the
-  # generated manifest, rather than silently falling back to a mismatched grammar.
-  test-plugin-source-latest-missing-parser-fails-clearly = testLib.testNixExpr
-    "plugin-source-latest-missing-parser-fails-clearly"
+  # A parser that nixpkgs does not ship must fail loudly rather than being
+  # silently dropped from the installed set.
+  test-missing-parser-fails-clearly = testLib.testNixExpr
+    "missing-parser-fails-clearly"
     ''
       let
-        testConfig = {
-          config = {
-            home.homeDirectory = "/tmp/test";
-            home.username = "testuser";
-            home.stateVersion = "23.11";
-            programs.lazyvim = {
-              enable = true;
-              pluginSource = "latest";
-              treesitterParsers = [
-                {
-                  grammarName = "definitely_missing_parser";
-                  name = "mock-definitely-missing-parser";
-                }
-              ];
-            };
-          };
-          lib = (import <nixpkgs> {}).lib;
-          pkgs = import <nixpkgs> {};
-        };
+        pkgs = import <nixpkgs> {};
         treesitterLib = import ${../../nix/lib/treesitter.nix} {
-          lib = testConfig.lib;
-          pkgs = testConfig.pkgs;
+          lib = pkgs.lib;
+          inherit pkgs;
           treesitterMappings = { core = [ ]; extras = { }; };
           extractLang = parser: parser.grammarName or parser.language;
           ignoreBuildNotifications = false;
         };
-        parserNames = treesitterLib.automaticTreesitterParsers testConfig.config.programs.lazyvim [ ];
-      in !(builtins.tryEval (treesitterLib.treesitterGrammarsFromSource parserNames)).success
+      in !(builtins.tryEval (treesitterLib.treesitterGrammars [ "definitely_missing_parser" ])).success
+    ''
+    "true";
+
+  # Out-of-tree grammars supplied via treesitterParsers are installed as-is
+  test-out-of-tree-parser-installed = testLib.testNixExpr
+    "out-of-tree-parser-installed"
+    ''
+      let
+        pkgs = import <nixpkgs> {};
+        grammar = pkgs.tree-sitter.buildGrammar {
+          language = "haskell_literate";
+          version = "0.0.0";
+          src = pkgs.emptyDirectory;
+        };
+        cfg = { enable = true; treesitterParsers = [ grammar ]; };
+        treesitterLib = import ${../../nix/lib/treesitter.nix} {
+          lib = pkgs.lib;
+          inherit pkgs;
+          treesitterMappings = { core = [ "lua" ]; extras = { }; };
+          extractLang = parser: parser.grammarName or parser.language;
+          ignoreBuildNotifications = false;
+        };
+        parserNames = treesitterLib.automaticTreesitterParsers cfg [ ];
+        drv = treesitterLib.treesitterParsers cfg parserNames;
+      in builtins.elem "haskell_literate" (map (p: p.grammarName) drv.parsers)
     ''
     "true";
 

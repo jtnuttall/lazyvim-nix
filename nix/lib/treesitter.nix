@@ -1,4 +1,16 @@
 # Treesitter management utilities for LazyVim Nix module
+#
+# Parsers come from nixpkgs' nvim-treesitter grammar set
+# (pkgs.vimPlugins.nvim-treesitter.grammarPlugins). Their revisions therefore
+# follow the consumer's nixpkgs pin (and `inputs.nixpkgs.follows`), and the
+# nvim-treesitter plugin + queries are taken from the same nixpkgs package
+# (see plugin-resolution.nix), so parsers and queries always come from one
+# nvim-treesitter revision.
+#
+# Any package that ships a compiled grammar can be added through
+# `programs.lazyvim.treesitterParsers`. It is installed as-is and takes
+# precedence over the nixpkgs grammar of the same language, which is how you
+# pin a single parser or bring in an out-of-tree grammar.
 {
   lib,
   pkgs,
@@ -8,24 +20,16 @@
 }:
 
 let
-  parserManifestPath = ../../data/parser-manifest.json;
-  parserManifestExists = builtins.pathExists parserManifestPath;
-  parserManifest =
-    if parserManifestExists then
-      builtins.fromJSON (builtins.readFile parserManifestPath)
-    else
-      { parsers = { }; };
+  grammarPlugins = pkgs.vimPlugins.nvim-treesitter.grammarPlugins or { };
 
+  hasGrammar = parserName: builtins.hasAttr parserName grammarPlugins;
+
+  # nixpkgs records each grammar's buildable dependencies (e.g. xml -> dtd)
+  # in passthru.requires. Query-only namespaces such as html_tags or ecma are
+  # not grammars and never appear there, so no extra filtering is needed
+  # beyond "is this a grammar we can install".
   parserRequires =
-    parserName:
-    let
-      spec = parserManifest.parsers.${parserName} or null;
-      requires = if spec == null then [ ] else spec.requires or [ ];
-    in
-    # Some upstream `requires` entries are query-only namespaces like `html_tags`
-    # or `ecma`, not standalone buildable parsers. Only expand dependencies that
-    # exist as real manifest-backed parser entries.
-    lib.filter (requiredParser: builtins.hasAttr requiredParser parserManifest.parsers) requires;
+    parserName: lib.filter hasGrammar ((grammarPlugins.${parserName} or { }).requires or [ ]);
 
   expandParserDependencies =
     parserNames:
@@ -46,78 +50,68 @@ let
     in
     go [ ] parserNames;
 
-  # Build a single parser from source using tree-sitter.buildGrammar
-  buildParserFromSource =
-    parserName:
+  # Normalize a user-supplied package into the vim-plugin layout nvim expects
+  # on the runtimepath: parser/<language>.so.
+  #   - pkgs.vimPlugins.nvim-treesitter-parsers.* / grammarPlugins.*: already
+  #     in that layout, used verbatim
+  #   - raw grammars (pkgs.tree-sitter.buildGrammar output,
+  #     nvim-treesitter.allGrammars.*, pkgs.tree-sitter-grammars.*): $out/parser
+  #     is the shared object itself, so it is linked into place
+  toParserPlugin =
+    pkg:
     let
-      spec = parserManifest.parsers.${parserName} or null;
+      language = extractLang pkg;
     in
-    if spec == null then
+    if pkg ? grammarName then
+      pkg
+    else
+      pkgs.runCommand "treesitter-grammar-${language}"
+        {
+          passthru = {
+            grammarName = language;
+            grammar = pkg;
+          };
+        }
+        ''
+          mkdir -p $out/parser
+          if [ -f ${pkg}/parser ]; then
+            ln -s ${pkg}/parser $out/parser/${language}.so
+          elif [ -f ${pkg}/parser/${language}.so ]; then
+            ln -s ${pkg}/parser/${language}.so $out/parser/${language}.so
+          else
+            echo "treesitter parser package for '${language}' (${pkg}) ships neither parser nor parser/${language}.so" >&2
+            exit 1
+          fi
+        '';
+
+  # nixpkgs grammar packages for a list of parser names. Fails loudly (and
+  # eagerly: callers seq the result) when a
+  # requested language is not in nixpkgs, instead of silently dropping it.
+  nixpkgsGrammars =
+    parserNames:
+    let
+      missing = lib.filter (parserName: !(hasGrammar parserName)) parserNames;
+    in
+    if missing != [ ] then
       throw ''
-        treesitter parser '${parserName}' is not available in lazyvim-nix's generated parser manifest.
+        lazyvim-nix could not find the following treesitter parsers in
+        pkgs.vimPlugins.nvim-treesitter.grammarPlugins:
+          ${lib.concatStringsSep ", " missing}
 
-        programs.lazyvim.pluginSource = "latest" requires parser/query coherence and only builds parsers
-        from the pinned nvim-treesitter source recorded in data/parser-manifest.json.
-
-        Regenerate the manifest with scripts/update-plugins.sh or switch to programs.lazyvim.pluginSource = "nixpkgs"
-        if you explicitly want nixpkgs parser packages instead.
+        Parsers are taken from nixpkgs so they follow your nixpkgs pin. Either
+        update nixpkgs, or provide the grammar yourself through
+        programs.lazyvim.treesitterParsers: any package that ships a compiled
+        parser (for example the output of pkgs.tree-sitter.buildGrammar) is
+        accepted and installed as-is.
       ''
     else
-      let
-        # Build the grammar from source
-        revShort = builtins.substring 0 7 spec.revision;
-        grammar = pkgs.tree-sitter.buildGrammar {
-          language = parserName;
-          version = "0.0.0+rev-${revShort}";
-          src = pkgs.fetchgit {
-            inherit (spec) url;
-            rev = spec.revision;
-            inherit (spec) sha256;
-            fetchSubmodules = false;
-          };
-          # Add tree-sitter + nodejs for grammars that need parser generation
-          generate = true;
-          # Override configurePhase for cross-nixpkgs compatibility:
-          # - nixpkgs 24.11: its configurePhase runs tree-sitter generate
-          #   unconditionally, which fails for monorepo grammars whose grammar.js
-          #   depends on sibling packages not available in the sandbox (e.g. tsx
-          #   depends on tree-sitter-javascript)
-          # - nixpkgs unstable: its configurePhase has tree-sitter.json version
-          #   checks that fail for pinned-commit builds
-          # Subdirectory navigation (cd) replaces the location attribute to avoid
-          # conflicts with nixpkgs' setSourceRoot mechanism.
-          configurePhase = ''
-            runHook preConfigure
-            ${lib.optionalString (spec.location or null != null) "cd ${spec.location}"}
-            runHook postConfigure
-          '';
-          # Only generate when src/parser.c is not checked into the repo
-          preBuild = ''
-            if [[ ! -e src/parser.c ]]; then
-              tree-sitter generate
-            fi
-          '';
-        };
-
-        # Wrap the grammar as a vim plugin with the parser in the right location
-        vimPlugin =
-          pkgs.runCommand "treesitter-grammar-${parserName}"
-            {
-              passthru = {
-                inherit grammar;
-                grammarName = parserName;
-              };
-            }
-            ''
-              mkdir -p $out/parser
-              ln -s ${grammar}/parser $out/parser/${parserName}.so
-            '';
-      in
-      vimPlugin;
+      map (parserName: grammarPlugins.${parserName}) parserNames;
 
 in
 {
-  # Derive automatic treesitter parsers
+  # Derive the list of parser language names to install:
+  # core parsers + parsers of enabled extras + user packages, closed over
+  # nixpkgs' requires metadata.
   automaticTreesitterParsers =
     cfg: enabledExtraNames:
     if cfg.enable then
@@ -138,72 +132,33 @@ in
     else
       expandParserDependencies (map extractLang cfg.treesitterParsers);
 
-  # Treesitter configuration - use nvim-treesitter's grammar plugins directly (for "nixpkgs" strategy)
+  # nixpkgs grammars only, for a list of parser names.
   treesitterGrammars =
-    automaticTreesitterParsers:
+    parserNames:
     let
-      # automaticTreesitterParsers now contains parser names, not packages
-      parserNames = automaticTreesitterParsers;
-
-      # Use nvim-treesitter's grammar plugins which are compatible
-      parserPackages = lib.filter (pkg: pkg != null) (
-        map (
-          parserName:
-          pkgs.vimPlugins.nvim-treesitter.grammarPlugins.${parserName} or (
-            if ignoreBuildNotifications then
-              null
-            else
-              builtins.trace "Warning: treesitter parser '${parserName}' not found in nvim-treesitter grammar plugins" null
-          )
-        ) parserNames
-      );
-
-      parsers = pkgs.symlinkJoin {
-        name = "treesitter-parsers";
-        paths = parserPackages;
-      };
+      parsers = nixpkgsGrammars parserNames;
     in
-    parsers;
+    builtins.seq parsers (pkgs.symlinkJoin {
+      name = "treesitter-parsers";
+      paths = parsers;
+      passthru = { inherit parsers; };
+    });
 
-  # Build treesitter grammars from source using parser-manifest.json (for "latest" strategy)
-  # This ensures parsers match the nvim-treesitter version specified in plugins.json
-  treesitterGrammarsFromSource =
-    automaticTreesitterParsers:
+  # The full parser set the module installs: the user's packages verbatim,
+  # plus nixpkgs grammars for every other requested language.
+  treesitterParsers =
+    cfg: parserNames:
     let
-      parserNames = automaticTreesitterParsers;
-      missingParsers = lib.filter (
-        parserName: !(builtins.hasAttr parserName parserManifest.parsers)
-      ) parserNames;
-
-      _ =
-        if missingParsers != [ ] then
-          throw ''
-            lazyvim-nix could not build the following treesitter parsers from the generated parser manifest:
-              ${lib.concatStringsSep ", " missingParsers}
-
-            programs.lazyvim.pluginSource = "latest" only uses parsers recorded in data/parser-manifest.json
-            so queries and parsers stay aligned to the same pinned nvim-treesitter source.
-
-            Regenerate the manifest with scripts/update-plugins.sh or switch to programs.lazyvim.pluginSource = "nixpkgs"
-            if you explicitly want nixpkgs parser packages instead.
-          ''
-        else
-          null;
-
-      # Build parsers from source using parser-manifest.json
-      parserPackages = lib.filter (pkg: pkg != null) (map buildParserFromSource parserNames);
-
-      parsers = builtins.seq _ (
-        pkgs.symlinkJoin {
-          name = "treesitter-parsers-from-source";
-          paths = parserPackages;
-        }
-      );
+      userParsers = map toParserPlugin cfg.treesitterParsers;
+      userLanguages = map (parser: parser.grammarName) userParsers;
+      remaining = lib.filter (parserName: !(builtins.elem parserName userLanguages)) parserNames;
+      parsers = nixpkgsGrammars remaining ++ userParsers;
     in
-    parsers;
+    builtins.seq parsers (pkgs.symlinkJoin {
+      name = "treesitter-parsers";
+      paths = parsers;
+      passthru = { inherit parsers; };
+    });
 
-  # Check if parser manifest is available
-  hasParserManifest = parserManifestExists && (parserManifest.parsers or { }) != { };
-
-  inherit expandParserDependencies;
+  inherit expandParserDependencies toParserPlugin;
 }

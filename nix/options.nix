@@ -46,33 +46,40 @@ with lib;
     type = types.listOf types.package;
     default = [];
     example = literalExpression ''
-      with pkgs.vimPlugins.nvim-treesitter-parsers; [
+      (with pkgs.vimPlugins.nvim-treesitter-parsers; [
         # Additional parsers beyond what LazyVim extras provide
         wgsl    # WebGPU Shading Language
         templ   # Go templ files
         zig
+      ]) ++ [
+        # Out-of-tree grammar, built from source and installed as-is
+        (pkgs.tree-sitter.buildGrammar {
+          language = "haskell_literate";
+          version = "0.0.1";
+          src = pkgs.fetchFromGitHub { /* ... */ };
+        })
       ]
     '';
     description = ''
       Additional Treesitter parser packages to install.
 
       Most parsers are automatically installed when you enable LazyVim extras
-      (e.g., lang.rust enables rust parser, lang.go enables go parser).
-      Only add parsers here for languages not covered by your enabled extras.
+      (e.g., lang.rust enables rust parser, lang.go enables go parser). Those
+      come from pkgs.vimPlugins.nvim-treesitter.grammarPlugins, so their
+      revisions follow your nixpkgs pin.
 
-      Supported package sources:
-        - pkgs.vimPlugins.nvim-treesitter-parsers.* (recommended)
-        - pkgs.vimPlugins.nvim-treesitter.grammarPlugins.*
-        - pkgs.vimPlugins.nvim-treesitter.allGrammars (for all 324 parsers)
+      Packages listed here are installed as-is and take precedence over the
+      nixpkgs grammar of the same language. That makes this the place to pin a
+      single parser to another revision, or to add a grammar nixpkgs does not
+      ship. Accepted package shapes:
+        - pkgs.vimPlugins.nvim-treesitter-parsers.* (nixpkgs grammars)
+        - pkgs.vimPlugins.nvim-treesitter.grammarPlugins.* (same thing)
+        - pkgs.vimPlugins.nvim-treesitter.allGrammars.*
+        - pkgs.tree-sitter.buildGrammar { ... } output (out-of-tree grammars)
+        - pkgs.tree-sitter-grammars.*
 
-      The package values are used to identify parser languages. When
-      programs.lazyvim.pluginSource = "latest", lazyvim-nix builds the actual
-      parser artifacts from data/parser-manifest.json so they stay aligned with
-      LazyVim's pinned nvim-treesitter queries. In that mode, manual parser
-      selections must resolve to languages that exist in the generated manifest.
-
-      DEPRECATED: pkgs.tree-sitter-grammars is no longer supported.
-      It has fewer grammars (131 vs 324) and may have compatibility issues.
+      Queries for out-of-tree grammars are not provided automatically; ship
+      them via configFiles (queries/<language>/*.scm).
     '';
   };
 

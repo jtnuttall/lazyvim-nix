@@ -124,7 +124,8 @@ let
   resolvedPlugins = map (pluginLib.resolvePlugin cfg) allPluginSpecs;
 
   # Extract the resolved nvim-treesitter plugin for query file linking
-  # Must come from the same resolved list to match the parser strategy
+  # (always nixpkgs' nvim-treesitter, see plugin-resolution.nix, so the queries
+  # match the grammarPlugins the parsers come from)
   resolvedTreesitterPlugin =
     let
       tsPlugins = lib.zipListsWith (spec: plugin:
@@ -143,15 +144,10 @@ let
   # Generate extras import statements
   extrasImportSpecs = configLib.extrasImportSpecs enabledExtras;
 
-  # Treesitter configuration
-  # Select grammar source based on pluginSource strategy:
-  # - "latest": Build parsers from source to match nvim-treesitter version
-  # - "nixpkgs": Use nixpkgs grammarPlugins (current behavior)
-  treesitterGrammars =
-    if cfg.pluginSource == "latest" then
-      treesitterLib.treesitterGrammarsFromSource automaticTreesitterParsers
-    else
-      treesitterLib.treesitterGrammars automaticTreesitterParsers;
+  # Treesitter parsers: nixpkgs grammars (pkgs.vimPlugins.nvim-treesitter.grammarPlugins)
+  # for every automatically derived language, plus any packages supplied through
+  # treesitterParsers (installed as-is, overriding nixpkgs for that language).
+  treesitterGrammars = treesitterLib.treesitterParsers cfg automaticTreesitterParsers;
 
   # Filter queries to only include languages with installed parsers (plus
   # virtual base directories needed for `; inherits:` resolution). Without
